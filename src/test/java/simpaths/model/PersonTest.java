@@ -814,6 +814,11 @@ public class PersonTest {
     // Pension wealth update tests
     // Steps: mock Parameters, create Person, set fields via reflection,
     //        call updatePensionWealth(), assert pensionWealthValue.
+    // Design note: updatePensionWealth() reads pensionWealthValueL1 (the
+    //   @Lag-maintained prior balance) not pensionWealthValue. Tests
+    //   therefore set pensionWealthValueL1 as the "prior year" balance.
+    //   getPensionWealthValue() calls Parameters.checkFinite(), so we
+    //   stub it to return true in setUp.
     // Note: yEmpPersGrossMonth is stored as asinh(monthly income).
     //       We compute asinh inline (Math.log) to avoid calling the mocked
     //       Parameters.asinh(); the implementation uses Math.sinh() only.
@@ -829,6 +834,8 @@ public class PersonTest {
         void setUp() throws Exception {
             parametersMock = Mockito.mockStatic(Parameters.class);
             mockStaticDependenciesForConstructor();
+            // getPensionWealthValue() calls Parameters.checkFinite; return true so tests can read results
+            parametersMock.when(() -> Parameters.checkFinite(Mockito.any(Double.class))).thenReturn(true);
 
             testPerson = new Person(1L, 123L);
 
@@ -851,13 +858,14 @@ public class PersonTest {
             Parameters.projectPensionWealth = false;
             setPrivateField(testPerson, "pensionWealthValue", 5000.0);
             testPerson.updatePensionWealth();
-            assertEquals(5000.0, testPerson.getPensionWealthValue(), 1e-10);
+            // no-op: pensionWealthValue unchanged; read via non-throwing overload
+            assertEquals(5000.0, testPerson.getPensionWealthValue(false), 1e-10);
         }
 
         @Test
-        @DisplayName("null pensionWealthValue is treated as zero for a new entrant")
+        @DisplayName("null lag value is treated as zero for a new entrant")
         void wealthInitialisesToZeroForNewEntrant() throws Exception {
-            setPrivateField(testPerson, "pensionWealthValue", null);
+            setPrivateField(testPerson, "pensionWealthValueL1", null);
             setPrivateField(testPerson, "pensionContributor", false);
             setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", null);
@@ -871,7 +879,7 @@ public class PersonTest {
             // asinh(2500) computed inline; sinh(asinh(2500)) = 2500; annual income = 30000
             double monthly = 2500.0;
             double asinhMonthly = Math.log(monthly + Math.sqrt(monthly * monthly + 1.0));
-            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionWealthValueL1", 10000.0);
             setPrivateField(testPerson, "pensionContributor", true);
             setPrivateField(testPerson, "labC4", Les_c4.EmployedOrSelfEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
@@ -885,7 +893,7 @@ public class PersonTest {
         void employedNonContributorGetsOnlyGrowth() throws Exception {
             double monthly = 2500.0;
             double asinhMonthly = Math.log(monthly + Math.sqrt(monthly * monthly + 1.0));
-            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionWealthValueL1", 10000.0);
             setPrivateField(testPerson, "pensionContributor", false);
             setPrivateField(testPerson, "labC4", Les_c4.EmployedOrSelfEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
@@ -896,7 +904,7 @@ public class PersonTest {
         @Test
         @DisplayName("non-employed person with contributor flag set receives only investment growth")
         void nonEmployedPersonGetsOnlyGrowth() throws Exception {
-            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionWealthValueL1", 10000.0);
             setPrivateField(testPerson, "pensionContributor", true);
             setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);
@@ -907,7 +915,7 @@ public class PersonTest {
         @Test
         @DisplayName("existing wealth is carried forward and grown each year")
         void existingWealthIsCarriedForwardAndGrown() throws Exception {
-            setPrivateField(testPerson, "pensionWealthValue", 5000.0);
+            setPrivateField(testPerson, "pensionWealthValueL1", 5000.0);
             setPrivateField(testPerson, "pensionContributor", false);
             setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);

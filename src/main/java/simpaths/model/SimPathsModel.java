@@ -593,8 +593,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
 
         // Accumulate pension wealth stocks after final income is settled.
-        if (Parameters.projectPensionWealth)
+        if (Parameters.projectPensionWealth) {
+
             yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdatePensionWealth);
+            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdatePensionWealth);
+        }
 
         // CONSUMPTION AND SAVINGS MODULE
         if (enableIntertemporalOptimisations)

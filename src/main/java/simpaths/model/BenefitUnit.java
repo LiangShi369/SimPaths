@@ -30,6 +30,7 @@ import microsim.event.EventListener;
 import microsim.statistics.IDoubleSource;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.taxes.Match;
+import simpaths.model.wealth.PensionWealth;
 
 import static java.lang.StrictMath.min;
 
@@ -66,10 +67,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @NullInitialised private Double yInvestYear;
     @NullInitialised private Double yPensYear;
     @NullInitialised private Double xDiscretionaryYear;
-    @NullInitialised @Column(name="wealthTotValue") private Double wealthTotValue;            // total net wealth (includes pensions assets and housing)
-    @NullInitialised @Column(name="wealthPensValue") private Double wealthPensValue;        // total private (personal and occupational) pensions
-    @NullInitialised @Column(name="wealthPrptyValue") private Double wealthPrptyValue;        // value of main home (gross of mortgage debt)
-    @NullInitialised @Column(name="wealthMortgageDebtValue") private Double wealthMortgageDebtValue;          // value of outstanding mortgage debt
+    @NullInitialised @Column(name="wealthTotValue") private Double wealthTotValue;                      // total net wealth (includes pensions assets and housing)
+    @NullInitialised @Column(name="wealthPensValue") private Double wealthPensValue;                    // total private (personal and occupational) pensions
+    @NullInitialised @Column(name="wealthPrptyValue") private Double wealthPrptyValue;                  // value of main home (gross of mortgage debt)
+    @NullInitialised @Column(name="wealthMortgageDebtValue") private Double wealthMortgageDebtValue;    // value of outstanding mortgage debt
     @NullInitialised private Double yDispMonth;
     @NullInitialised private Double yGrossMonth;
     @NullInitialised private Double yBenAmountMonth;
@@ -325,6 +326,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         CalculateChangeInEDI, //Calculate change in equivalised disposable income
         Homeownership,
         ReceivesBenefits,
+        UpdatePensionWealth,
         UpdateStates,
         UpdateInvestmentIncome,
         ProjectDiscretionaryConsumption,
@@ -352,6 +354,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case ReceivesBenefits -> {
                 setReceivesBenefitsFlag();
+            }
+            case UpdatePensionWealth -> {
+                updatePensionWealth();
             }
             case UpdateStates -> {
                 setStates();
@@ -399,6 +404,20 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     protected void updateWealth() {
         wealthTotValue += yDispMonth * 12.0 - xDiscretionaryYear - getNonDiscretionaryConsumptionPerYear();
     }
+
+    public void updatePensionWealth() {
+        if (!Parameters.projectPensionWealth) return;
+        wealthPensValue = 0.;
+        Person male = getMale();
+        if (male != null) {
+            wealthPensValue += male.getPensionWealthValue();
+        }
+        Person female = getFemale();
+        if (female != null) {
+            wealthPensValue += female.getPensionWealthValue();
+        }
+    }
+
 
     /**
      * Returns the pension contribution per month to deduct from gross employment earnings

@@ -4,10 +4,11 @@ import simpaths.model.enums.Les_c4;
 
 public class PensionWealth {
 
-    private double value;
+    private double value;       // current value
+    private double valueL1;     // lag value
 
     public PensionWealth(double initialValue) {
-        this.value = initialValue;
+        this.valueL1 = initialValue;
     }
 
     public double getValue() {
@@ -15,7 +16,7 @@ public class PensionWealth {
     }
 
     public double computeInvestmentReturn(double growthRate) {
-        return value * growthRate;
+        return valueL1 * growthRate;
     }
 
     /**
@@ -32,8 +33,8 @@ public class PensionWealth {
      * Projects pension wealth forward one year:
      * new value = prior value + investment return + pension contribution.
      */
-    public void projectYear(double growthRate, boolean isPensionContributor, Les_c4 labC4, double annualEmploymentIncome, double contributionRate) {
-        value += computeInvestmentReturn(growthRate)
+    public void projectValue(double growthRate, boolean isPensionContributor, Les_c4 labC4, double annualEmploymentIncome, double contributionRate) {
+        value = valueL1 + computeInvestmentReturn(growthRate)
                 + computeContribution(isPensionContributor, labC4, annualEmploymentIncome, contributionRate);
     }
 }

@@ -70,7 +70,7 @@ public class PensionWealthTest {
     void projectYearAccumulatesGrowthAndContribution() {
         PensionWealth pw = new PensionWealth(10000.0);
         // growth: 10000 * 0.05 = 500; contribution: 30000 * 0.05 = 1500; total: 12000
-        pw.projectYear(0.05, true, Les_c4.EmployedOrSelfEmployed, 30000.0, 0.05);
+        pw.projectValue(0.05, true, Les_c4.EmployedOrSelfEmployed, 30000.0, 0.05);
         assertEquals(12000.0, pw.getValue(), 1e-10);
     }
 
@@ -78,7 +78,7 @@ public class PensionWealthTest {
     @DisplayName("projectYear applies only growth when contributor flag is false")
     void projectYearWithNoContributionStillAppliesGrowth() {
         PensionWealth pw = new PensionWealth(10000.0);
-        pw.projectYear(0.05, false, Les_c4.EmployedOrSelfEmployed, 30000.0, 0.05);
+        pw.projectValue(0.05, false, Les_c4.EmployedOrSelfEmployed, 30000.0, 0.05);
         assertEquals(10500.0, pw.getValue(), 1e-10);
     }
 
@@ -87,14 +87,14 @@ public class PensionWealthTest {
     void projectYearFromZeroAccumulatesContributionOnly() {
         PensionWealth pw = new PensionWealth(0.0);
         // growth: 0; contribution: 20000 * 0.05 = 1000
-        pw.projectYear(0.05, true, Les_c4.EmployedOrSelfEmployed, 20000.0, 0.05);
+        pw.projectValue(0.05, true, Les_c4.EmployedOrSelfEmployed, 20000.0, 0.05);
         assertEquals(1000.0, pw.getValue(), 1e-10);
     }
 
     @Test
-    @DisplayName("getValue returns the initial value before any projection")
-    void getValueReturnsInitialValue() {
+    @DisplayName("getValue returns zero before any projection (initial value is held in valueL1)")
+    void getValueIsZeroBeforeProjection() {
         PensionWealth pw = new PensionWealth(7500.0);
-        assertEquals(7500.0, pw.getValue(), 1e-10);
+        assertEquals(0.0, pw.getValue(), 1e-10);
     }
 }
