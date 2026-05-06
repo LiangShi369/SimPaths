@@ -742,4 +742,178 @@ public class PersonTest {
             }
         }
     }
+
+    // =====================================================================
+    // Pension contribution status tests
+    // Steps: mock Parameters, create Person, inject mock Innovations,
+    //        call updatePensionContributionStatus(), assert flag state.
+    // =====================================================================
+
+    @Nested
+    @DisplayName("Testing UpdatePensionContributionStatus")
+    class PensionContributionStatusTests {
+
+        private Person testPerson;
+        private Innovations mockInnovations;
+
+        @BeforeEach
+        void setUp() throws Exception {
+            parametersMock = Mockito.mockStatic(Parameters.class);
+            mockStaticDependenciesForConstructor();
+
+            mockInnovations = Mockito.mock(Innovations.class);
+            testPerson = new Person(1L, 123L);
+            injectInnovations(testPerson, mockInnovations);
+
+            Parameters.projectPensionWealth = true;
+            Parameters.pensionContributionProbability = 0.5;
+        }
+
+        @AfterEach
+        void tearDown() {
+            Parameters.projectPensionWealth = false;
+            Parameters.pensionContributionProbability = 0.0;
+            if (parametersMock != null) { parametersMock.close(); parametersMock = null; }
+        }
+
+        @Test
+        @DisplayName("flag is false when projection is disabled regardless of draw value")
+        void flagIsFalseWhenProjectionDisabled() {
+            Parameters.projectPensionWealth = false;
+            Mockito.when(mockInnovations.getDoubleDraw(2)).thenReturn(0.1);
+            testPerson.updatePensionContributionStatus();
+            assertFalse(testPerson.isPensionContributor());
+        }
+
+        @Test
+        @DisplayName("flag is true when draw is strictly below probability threshold")
+        void flagIsTrueWhenDrawBelowProbability() {
+            Mockito.when(mockInnovations.getDoubleDraw(2)).thenReturn(0.1);
+            testPerson.updatePensionContributionStatus();
+            assertTrue(testPerson.isPensionContributor());
+        }
+
+        @Test
+        @DisplayName("flag is false when draw equals probability threshold (strict less-than)")
+        void flagIsFalseWhenDrawEqualsThreshold() {
+            Mockito.when(mockInnovations.getDoubleDraw(2)).thenReturn(0.5);
+            testPerson.updatePensionContributionStatus();
+            assertFalse(testPerson.isPensionContributor());
+        }
+
+        @Test
+        @DisplayName("flag is false when draw is above probability threshold")
+        void flagIsFalseWhenDrawAboveProbability() {
+            Mockito.when(mockInnovations.getDoubleDraw(2)).thenReturn(0.9);
+            testPerson.updatePensionContributionStatus();
+            assertFalse(testPerson.isPensionContributor());
+        }
+    }
+
+    // =====================================================================
+    // Pension wealth update tests
+    // Steps: mock Parameters, create Person, set fields via reflection,
+    //        call updatePensionWealth(), assert pensionWealthValue.
+    // Note: yEmpPersGrossMonth is stored as asinh(monthly income).
+    //       We compute asinh inline (Math.log) to avoid calling the mocked
+    //       Parameters.asinh(); the implementation uses Math.sinh() only.
+    // =====================================================================
+
+    @Nested
+    @DisplayName("Testing UpdatePensionWealth")
+    class PensionWealthUpdateTests {
+
+        private Person testPerson;
+
+        @BeforeEach
+        void setUp() throws Exception {
+            parametersMock = Mockito.mockStatic(Parameters.class);
+            mockStaticDependenciesForConstructor();
+
+            testPerson = new Person(1L, 123L);
+
+            Parameters.projectPensionWealth = true;
+            Parameters.pensionWealthAnnualGrowthRate = 0.05;
+            Parameters.pensionContributionRate = 0.05;
+        }
+
+        @AfterEach
+        void tearDown() {
+            Parameters.projectPensionWealth = false;
+            Parameters.pensionWealthAnnualGrowthRate = 0.0;
+            Parameters.pensionContributionRate = 0.0;
+            if (parametersMock != null) { parametersMock.close(); parametersMock = null; }
+        }
+
+        @Test
+        @DisplayName("update is a no-op when projection is disabled")
+        void updateIsNoOpWhenProjectionDisabled() throws Exception {
+            Parameters.projectPensionWealth = false;
+            setPrivateField(testPerson, "pensionWealthValue", 5000.0);
+            testPerson.updatePensionWealth();
+            assertEquals(5000.0, testPerson.getPensionWealthValue(), 1e-10);
+        }
+
+        @Test
+        @DisplayName("null pensionWealthValue is treated as zero for a new entrant")
+        void wealthInitialisesToZeroForNewEntrant() throws Exception {
+            setPrivateField(testPerson, "pensionWealthValue", null);
+            setPrivateField(testPerson, "pensionContributor", false);
+            setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
+            setPrivateField(testPerson, "yEmpPersGrossMonth", null);
+            testPerson.updatePensionWealth();
+            assertEquals(0.0, testPerson.getPensionWealthValue(), 1e-10);
+        }
+
+        @Test
+        @DisplayName("employed contributor accumulates growth and contribution")
+        void employedContributorAccumulatesGrowthAndContribution() throws Exception {
+            // asinh(2500) computed inline; sinh(asinh(2500)) = 2500; annual income = 30000
+            double monthly = 2500.0;
+            double asinhMonthly = Math.log(monthly + Math.sqrt(monthly * monthly + 1.0));
+            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionContributor", true);
+            setPrivateField(testPerson, "labC4", Les_c4.EmployedOrSelfEmployed);
+            setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
+            testPerson.updatePensionWealth();
+            // 10000 + (10000 * 0.05) + (30000 * 0.05) = 12000
+            assertEquals(12000.0, testPerson.getPensionWealthValue(), 1e-4);
+        }
+
+        @Test
+        @DisplayName("employed non-contributor receives only investment growth")
+        void employedNonContributorGetsOnlyGrowth() throws Exception {
+            double monthly = 2500.0;
+            double asinhMonthly = Math.log(monthly + Math.sqrt(monthly * monthly + 1.0));
+            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionContributor", false);
+            setPrivateField(testPerson, "labC4", Les_c4.EmployedOrSelfEmployed);
+            setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
+            testPerson.updatePensionWealth();
+            assertEquals(10500.0, testPerson.getPensionWealthValue(), 1e-4);
+        }
+
+        @Test
+        @DisplayName("non-employed person with contributor flag set receives only investment growth")
+        void nonEmployedPersonGetsOnlyGrowth() throws Exception {
+            setPrivateField(testPerson, "pensionWealthValue", 10000.0);
+            setPrivateField(testPerson, "pensionContributor", true);
+            setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
+            setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);
+            testPerson.updatePensionWealth();
+            assertEquals(10500.0, testPerson.getPensionWealthValue(), 1e-4);
+        }
+
+        @Test
+        @DisplayName("existing wealth is carried forward and grown each year")
+        void existingWealthIsCarriedForwardAndGrown() throws Exception {
+            setPrivateField(testPerson, "pensionWealthValue", 5000.0);
+            setPrivateField(testPerson, "pensionContributor", false);
+            setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
+            setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);
+            testPerson.updatePensionWealth();
+            // 5000 + 5000 * 0.05 = 5250
+            assertEquals(5250.0, testPerson.getPensionWealthValue(), 1e-4);
+        }
+    }
 }

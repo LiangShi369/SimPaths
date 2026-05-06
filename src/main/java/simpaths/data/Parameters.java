@@ -227,6 +227,11 @@ public class Parameters {
     public static boolean projectPensionWealth = false;
     public static boolean projectHousingWealth = false;
     public static boolean enableIntertemporalOptimisations = false;
+
+    // pension wealth projection parameters
+    public static double pensionWealthAnnualGrowthRate  = 0.05;
+    public static double pensionContributionProbability = 0.50;
+    public static double pensionContributionRate        = 0.05;
     public static Grids grids = null;
 
     static {

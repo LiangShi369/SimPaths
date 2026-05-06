@@ -400,6 +400,16 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         wealthTotValue += yDispMonth * 12.0 - xDiscretionaryYear - getNonDiscretionaryConsumptionPerYear();
     }
 
+    /**
+     * Returns the pension contribution per month to deduct from gross employment earnings
+     * before tax evaluation, for a given person and their employment earnings per month.
+     * Returns zero when pension wealth projection is disabled or the person is not a contributor.
+     */
+    double pensionContributionPerMonth(Person person, double earningsPerMonth) {
+        if (!Parameters.projectPensionWealth || !person.isPensionContributor()) return 0.0;
+        return Parameters.pensionContributionRate * earningsPerMonth;
+    }
+
     /*
 Contemporaneous values of dhhtp_c4 are required for validation. Update and output here.
  */
@@ -1026,8 +1036,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
 
-                double maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getyMiscPersGrossMonth());
-                double femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getyMiscPersGrossMonth());
+                double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
+                double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
+                double maleIncome = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getyMiscPersGrossMonth());
+                double femaleIncome = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getyMiscPersGrossMonth());
                 double originalIncomePerMonth = maleIncome + femaleIncome;
                 double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
@@ -1041,7 +1053,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
-                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getyMiscPersGrossMonth());
+                double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
+                double originalIncomePerMonth = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getyMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1052,7 +1065,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
-                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getyMiscPersGrossMonth());
+                double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
+                double originalIncomePerMonth = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getyMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));

@@ -24,6 +24,7 @@ import simpaths.model.decisions.DecisionParams;
 import simpaths.model.enums.*;
 import simpaths.model.lifetime_incomes.AnnualIncome;
 import simpaths.model.lifetime_incomes.Individual;
+import simpaths.model.wealth.PensionWealth;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -181,6 +182,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(field="yEmpPersGrossMonthL2") @Transient private Double yEmpPersGrossMonthL3; //Lag(3) of gross personal employment income
     @Lag(field="yEmpPersGrossMonthL1") @Transient private Double yEmpPersGrossMonthL2; //Lag(2) of gross personal employment income
     @Lag(getter="getyEmpPersGrossMonth") @Transient private Double yEmpPersGrossMonthL1; //Lag(1) of gross personal employment income
+
+    // pension wealth (stock, real 2015 prices)
+    @NullInitialised @Column(name = "pensionWealthValue") private Double pensionWealthValue;
+    @Transient private boolean pensionContributor = false; // set each year by UpdatePensionContributionStatus
 
     //For matching process
     @Transient private Double demAgeDiffDesired;
@@ -806,6 +811,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Unemployment,
         Update,
         UpdateOutputVariables,
+        UpdatePensionContributionStatus,
+        UpdatePensionWealth,
         UpdatePotentialHourlyEarnings,	//Needed to union matching and labour supply
     }
 
@@ -908,6 +915,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Unemployment -> {
                 updateUnemploymentState();
             }
+            case UpdatePensionContributionStatus -> {
+                updatePensionContributionStatus();
+            }
+            case UpdatePensionWealth -> {
+                updatePensionWealth();
+            }
             default -> {
                 throw new RuntimeException("failed to identify process type in Person.onEvent");
             }
@@ -953,6 +966,23 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 demGiveBirthFlag = true;
             }
         }
+    }
+
+    public void updatePensionContributionStatus() {
+        if (!Parameters.projectPensionWealth) {
+            pensionContributor = false;
+            return;
+        }
+        pensionContributor = (statInnovations.getDoubleDraw(2) < Parameters.pensionContributionProbability);
+    }
+
+    public void updatePensionWealth() {
+        if (!Parameters.projectPensionWealth) return;
+        double prior = (pensionWealthValue != null) ? pensionWealthValue : 0.0;
+        PensionWealth pw = new PensionWealth(prior);
+        double annualEmpIncome = (yEmpPersGrossMonth != null) ? Math.sinh(yEmpPersGrossMonth) * 12.0 : 0.0;
+        pw.projectYear(Parameters.pensionWealthAnnualGrowthRate, pensionContributor, labC4, annualEmpIncome, Parameters.pensionContributionRate);
+        pensionWealthValue = pw.getValue();
     }
 
     private void updateUnemploymentState() {
@@ -5480,6 +5510,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setyEmpPersGrossMonth(double val) {
         yEmpPersGrossMonth = val;
+    }
+
+    public Double getPensionWealthValue() {
+        return pensionWealthValue;
+    }
+
+    public void setPensionWealthValue(Double v) {
+        pensionWealthValue = v;
+    }
+
+    public boolean isPensionContributor() {
+        return pensionContributor;
     }
 
     public double getyEmpPersGrossMonthL1() {

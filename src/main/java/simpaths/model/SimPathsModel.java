@@ -577,6 +577,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         // Unemployment
         yearlySchedule.addCollectionEvent(persons, Person.Processes.Unemployment);
 
+        // Determine pension contributor status before labour supply evaluation so that
+        // contributions can be deducted from gross income during tax evaluation.
+        if (Parameters.projectPensionWealth)
+            yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdatePensionContributionStatus);
+
         // update references for optimising behaviour
         // needs to be positioned after all decision states for the current period have been simulated
         if (enableIntertemporalOptimisations)
@@ -586,6 +591,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // Assign benefit status to individuals in benefit units, from donors. Based on donor tax unit status.
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
+
+        // Accumulate pension wealth stocks after final income is settled.
+        if (Parameters.projectPensionWealth)
+            yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdatePensionWealth);
 
         // CONSUMPTION AND SAVINGS MODULE
         if (enableIntertemporalOptimisations)
