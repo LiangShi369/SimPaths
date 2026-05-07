@@ -178,14 +178,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(field="yMiscPersGrossMonthL2") @Transient private Double yMiscPersGrossMonthL3; //Lag(3) of gross personal non-benefit non-employment income
     @Lag(field="yMiscPersGrossMonthL1") @Transient private Double yMiscPersGrossMonthL2; //Lag(2) of gross personal non-benefit non-employment income
     @Lag(getter="getyMiscPersGrossMonth") @Transient private Double yMiscPersGrossMonthL1; //Lag(1) of gross personal non-benefit non-employment income
-    private Double yEmpPersGrossMonth;       // asinh transform of personal labour income per month
+    @NullInitialised private Double yEmpPersGrossMonth;       // asinh transform of personal labour income per month
     @Lag(field="yEmpPersGrossMonthL2") @Transient private Double yEmpPersGrossMonthL3; //Lag(3) of gross personal employment income
     @Lag(field="yEmpPersGrossMonthL1") @Transient private Double yEmpPersGrossMonthL2; //Lag(2) of gross personal employment income
     @Lag(getter="getyEmpPersGrossMonth") @Transient private Double yEmpPersGrossMonthL1; //Lag(1) of gross personal employment income
 
     // pension wealth (stock, real 2015 prices)
-    @NullInitialised @Column(name = "pensionWealthValue") private Double pensionWealthValue;
-    @Lag(field="pensionWealthValue") @Transient private Double pensionWealthValueL1;
+    @NullInitialised @Column(name = "wealthPensValue") private Double wealthPensValue;
+    @Lag(field="wealthPensValue") @Transient private Double wealthPensValueL1;
     @NullInitialised @Transient private Boolean pensionContributor; // set each year by UpdatePensionContributionStatus
 
     //For matching process
@@ -425,6 +425,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yPensPersGrossMonthL1 = originalPerson.yPensPersGrossMonthL1;
         yPensPersGrossMonthL2 = originalPerson.yPensPersGrossMonthL2;
 
+        wealthPensValue = originalPerson.wealthPensValue;
+        wealthPensValueL1 = originalPerson.wealthPensValueL1;
+        pensionContributor = originalPerson.pensionContributor;
+
         labEmpNyear = Objects.requireNonNullElseGet(originalPerson.labEmpNyear, () -> ((Les_c4.EmployedOrSelfEmployed.equals(labC4)) ? 12 : 0));
         healthDsblLongtermFlag = originalPerson.healthDsblLongtermFlag;
         healthDsblLongtermFlagL1 = originalPerson.healthDsblLongtermFlagL1;
@@ -547,12 +551,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (originalPerson.labWageFullTimeHrly > Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrly = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrly));
         } else {
-            labWageFullTimeHrly = -9.0;
+            labWageFullTimeHrly = 0.0;
+            labHrsWorkWeek = 0;
+            labC4 = Les_c4.NotEmployed;
         }
         if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrlyL1 = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrlyL1));
         } else {
             labWageFullTimeHrlyL1 = labWageFullTimeHrly;
+            labHrsWorkWeekL1 = 0;
+            labC4L1 = Les_c4.NotEmployed;
         }
     }
 
@@ -727,13 +735,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             healthPartnerSelfRatedL1 = partner.healthSelfRated;
             demAgePartnerDiffL1 = demAge - partner.demAge;
             idPartnerL1 = partner.getId();
-            pensionWealthValue = getBenefitUnit().getPensionWealth() / 2.0;
+            wealthPensValue = getBenefitUnit().getPensionWealth() / 2.0;
         } else {
             eduHighestPartnerC4L1 = null;
             healthPartnerSelfRatedL1 = null;
             demAgePartnerDiffL1 = null;
             idPartnerL1 = null;
-            pensionWealthValue = getBenefitUnit().getPensionWealth();
+            wealthPensValue = getBenefitUnit().getPensionWealth();
         }
         demPartnerStatusL1 = getDcpst();
         yPersAndPartnerGrossDiffMonthL1 = getYnbcpdf_dv(); //Lag(1) of difference between own and partner's gross personal non-benefit income
@@ -985,11 +993,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void updatePensionWealth() {
         if (!Parameters.projectPensionWealth) return;
-        double prior = Objects.requireNonNullElse(pensionWealthValueL1, 0.0);
+        double prior = Objects.requireNonNullElse(wealthPensValueL1, 0.0);
         PensionWealth pw = new PensionWealth(prior);
         double annualEmpIncome = (yEmpPersGrossMonth != null) ? Math.sinh(yEmpPersGrossMonth) * 12.0 : 0.0;
         pw.projectValue(Parameters.pensionWealthAnnualGrowthRate, pensionContributor, labC4, annualEmpIncome, Parameters.pensionContributionRate);
-        pensionWealthValue = pw.getValue();
+        wealthPensValue = pw.getValue();
     }
 
     private void updateUnemploymentState() {
@@ -5519,22 +5527,22 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yEmpPersGrossMonth = val;
     }
 
-    public Double getPensionWealthValue() {
+    public Double getWealthPensValue() {
         return getPensionWealthValue(true);
     }
 
     public Double getPensionWealthValue(boolean throwError) {
-        if (!Parameters.checkFinite(pensionWealthValue)) {
+        if (!Parameters.checkFinite(wealthPensValue)) {
             if (throwError)
                 throw new IllegalArgumentException("pensionWealthValue is not finite");
             else
                 return 0.0;
         }
-        return pensionWealthValue;
+        return wealthPensValue;
     }
 
-    public void setPensionWealthValue(Double v) {
-        pensionWealthValue = v;
+    public void setWealthPensValue(Double v) {
+        wealthPensValue = v;
     }
 
     public Boolean isPensionContributor() {

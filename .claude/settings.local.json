@@ -11,7 +11,24 @@
       "Bash(py -m pip install python-docx -q)",
       "Bash(py generate_review.py)",
       "Bash(pip show *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(mkdir -p \"C:\\\\MyFiles\\\\99 DEV ENV\\\\JAS-MINE\\\\SimPaths\\\\src\\\\test\\\\java\\\\simpaths\\\\model\\\\wealth\")",
+      "Bash(mkdir -p \"C:\\\\MyFiles\\\\99 DEV ENV\\\\JAS-MINE\\\\SimPaths\\\\src\\\\main\\\\java\\\\simpaths\\\\model\\\\wealth\")",
+      "Bash(mvn test *)",
+      "Bash(cmd.exe /c \"where mvn\")",
+      "Bash(cmd.exe /c \"mvn --version\")",
+      "Bash(cmd.exe /c \"set PATH\")",
+      "Bash(cmd.exe /c \"dir C:\\\\ProgramData\\\\chocolatey\\\\bin\\\\mvn* 2>NUL\")",
+      "Read(//c/ProgramData/chocolatey/**)",
+      "Read(//c/tools/maven/**)",
+      "Read(//c/Users/justi/scoop/apps/maven/current/**)",
+      "Read(//c/Users/justi/**)",
+      "Bash('/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn' -f 'C:\\\\MyFiles\\\\99 DEV ENV\\\\JAS-MINE\\\\SimPaths\\\\pom.xml' test -Dtest=PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn\" test -Dtest=\"PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest\" --no-transfer-progress)",
+      "Bash(JAVA_HOME=\"/c/Users/justi/.jdks/corretto-22.0.2\" \"/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn\" test -Dtest=\"PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest\" --no-transfer-progress)"
     ]
   }
 }

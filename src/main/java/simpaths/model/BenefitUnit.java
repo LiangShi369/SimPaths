@@ -30,7 +30,6 @@ import microsim.event.EventListener;
 import microsim.statistics.IDoubleSource;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.taxes.Match;
-import simpaths.model.wealth.PensionWealth;
 
 import static java.lang.StrictMath.min;
 
@@ -261,8 +260,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         demCreatedByConstructor = "Couples";
     }
 
-    // Below is a "copy constructor" for benefitUnits: it takes an original benefit unit as input, changes the ID, copies
-    // the rest of the benefit unit's properties, and creates a new benefit unit.
+    // a "copy constructor" for benefitUnits: used by the cloneBenefitUnit method of the SimPathsModel object
+    // used to generate clones both at population load (to un-weight data) and to generate international immigrants
     public BenefitUnit(BenefitUnit originalBenefitUnit, long benefitUnitInnov, SampleEntry sampleEntry) {
 
         this(benefitUnitIdCounter++, benefitUnitInnov);
@@ -278,7 +277,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
         }
 
-
         this.log = originalBenefitUnit.log;
         yDispMonth = Objects.requireNonNullElse(originalBenefitUnit.getDisposableIncomeMonthly(),0.0);
         xDiscretionaryYear = Objects.requireNonNullElse(originalBenefitUnit.xDiscretionaryYear, 0.0);
@@ -289,13 +287,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         yPvrtyFlag = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlag,0);
         yPvrtyFlagL1 = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlagL1, yPvrtyFlag);
         yDiffDispEquivPrevYear = Objects.requireNonNullElse(originalBenefitUnit.yDiffDispEquivPrevYear,0.0);
-        if (Parameters.projectLiquidWealth)
-            initialiseLiquidWealth(
-                    originalBenefitUnit.getRefPersonForDecisions().getDemAge(),
-                    originalBenefitUnit.getWealthTotValue(),
-                    originalBenefitUnit.getPensionWealth(false),
-                    originalBenefitUnit.getHousingWealth(false)
-            );
+
+        wealthTotValue = Objects.requireNonNullElse(originalBenefitUnit.wealthTotValue,0.0);
+        wealthPensValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPensValue,0.0);
+        wealthPrptyValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPrptyValue,0.0);
+        wealthMortgageDebtValue = Objects.requireNonNullElse(originalBenefitUnit.wealthMortgageDebtValue,0.0);
+
         this.numberChildrenAll_lag1 = originalBenefitUnit.numberChildrenAll_lag1;
         this.numberChildren02_lag1 = originalBenefitUnit.numberChildren02_lag1;
         this.dem0to3L1 = originalBenefitUnit.dem0to3L1;
@@ -410,11 +407,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         wealthPensValue = 0.;
         Person male = getMale();
         if (male != null) {
-            wealthPensValue += male.getPensionWealthValue();
+            wealthPensValue += male.getWealthPensValue();
         }
         Person female = getFemale();
         if (female != null) {
-            wealthPensValue += female.getPensionWealthValue();
+            wealthPensValue += female.getWealthPensValue();
         }
     }
 
@@ -4022,15 +4019,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
      */
     public PanelEntityKey getKey() {
         return new PanelEntityKey(key.getId());
-    }
-
-    public void initialiseLiquidWealth(int age, double donorLiquidWealth, double donorPensionWealth, double donorHousingWealth) {
-        double wealth = (1.0 - Parameters.getLiquidWealthDiscount()) * donorLiquidWealth;
-        if (!Parameters.projectPensionWealth)
-            wealth += (1.0 - Parameters.getPensionWealthDiscount(age)) * donorPensionWealth;
-        if (!Parameters.projectHousingWealth)
-            wealth += (1.0 - Parameters.getHousingWealthDiscount(age)) * donorHousingWealth;
-        setWealthTotValue(wealth);
     }
 
     public double getWealthTotValue() {

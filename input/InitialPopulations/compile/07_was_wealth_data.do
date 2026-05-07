@@ -499,6 +499,18 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 		xtile pct1 = inc [fweight=dwt] if (couple_ref & grad==0), nq(10)
 		replace pct = pct1 if (pct1<.)
 		drop pct1
+		
+		// inflation adjust
+		gen CPI = .
+		forvalues yy = ${inflation_minyear}/${inflation_maxyear} {
+
+			replace CPI = inflation[`yy'-${inflation_minyear}+1,1] if year == `yy'
+		}
+		foreach var in tot_pen dvhvalue main_mort wealth inc {
+			
+			replace `var' = `var' / CPI
+		}
+		
 
 		// save control data
 		// Variables below: total value of ISAs, net value of own-business assets, net value of financial and non-financial (non-property) assets, aggregate occupational pension rights, ww, private/personal pension rights (non‑occupational)

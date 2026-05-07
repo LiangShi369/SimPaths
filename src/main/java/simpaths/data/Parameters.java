@@ -224,7 +224,7 @@ public class Parameters {
 
     // parameters to manage simulation of optimised decisions
     public static boolean projectLiquidWealth = false;
-    public static boolean projectPensionWealth = false;
+    public static boolean projectPensionWealth = true;
     public static boolean projectHousingWealth = false;
     public static boolean enableIntertemporalOptimisations = false;
 
@@ -3238,42 +3238,6 @@ public class Parameters {
         return coeffLabourSupplyUtilitySingleDep;
     }
 
-
-    public static double getLiquidWealthDiscount() {
-        return 0.0;
-    }
-
-    public static double getPensionWealthDiscount(int age) {
-        int youngAgeCeiling = 45, midAgeFloor = 55, oldAgeFloor = 65;
-        double discountYoung = 0.9, discountMid = 0.9, discountOld = 0.0;
-        if (age <= youngAgeCeiling) {
-            return discountYoung;
-        } else if (age <= midAgeFloor) {
-            return (discountYoung * (double)(midAgeFloor - age) + discountMid * (double)(age - youngAgeCeiling)) /
-                    (double)(midAgeFloor - youngAgeCeiling);
-        } else if (age < oldAgeFloor) {
-            return (discountMid * (double)(oldAgeFloor-age) + discountOld * (double)(age - midAgeFloor)) /
-                    (double)(oldAgeFloor - midAgeFloor);
-        } else {
-            return discountOld;
-        }
-    }
-
-    public static double getHousingWealthDiscount(int age) {
-        int youngAgeCeiling = 45, midAgeFloor = 55, oldAgeFloor = 65;
-        double discountYoung = 0.9, discountMid = 0.9, discountOld = 0.0;
-        if (age <= youngAgeCeiling) {
-            return discountYoung;
-        } else if (age <= midAgeFloor) {
-            return (discountYoung * (double)(midAgeFloor - age) + discountMid * (double)(age - youngAgeCeiling)) /
-                    (double)(midAgeFloor - youngAgeCeiling);
-        } else if (age < oldAgeFloor) {
-            return (discountMid * (double)(oldAgeFloor-age) + discountOld * (double)(age - midAgeFloor)) /
-                    (double)(oldAgeFloor - midAgeFloor);
-        } else {
-            return discountOld;
-        }
-    }
 
     public static double updateProbability(double init, double threshold) {
 

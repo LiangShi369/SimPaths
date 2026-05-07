@@ -870,7 +870,7 @@ public class PersonTest {
             setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", null);
             testPerson.updatePensionWealth();
-            assertEquals(0.0, testPerson.getPensionWealthValue(), 1e-10);
+            assertEquals(0.0, testPerson.getWealthPensValue(), 1e-10);
         }
 
         @Test
@@ -885,7 +885,7 @@ public class PersonTest {
             setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
             testPerson.updatePensionWealth();
             // 10000 + (10000 * 0.05) + (30000 * 0.05) = 12000
-            assertEquals(12000.0, testPerson.getPensionWealthValue(), 1e-4);
+            assertEquals(12000.0, testPerson.getWealthPensValue(), 1e-4);
         }
 
         @Test
@@ -898,7 +898,7 @@ public class PersonTest {
             setPrivateField(testPerson, "labC4", Les_c4.EmployedOrSelfEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", asinhMonthly);
             testPerson.updatePensionWealth();
-            assertEquals(10500.0, testPerson.getPensionWealthValue(), 1e-4);
+            assertEquals(10500.0, testPerson.getWealthPensValue(), 1e-4);
         }
 
         @Test
@@ -909,7 +909,7 @@ public class PersonTest {
             setPrivateField(testPerson, "labC4", Les_c4.NotEmployed);
             setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);
             testPerson.updatePensionWealth();
-            assertEquals(10500.0, testPerson.getPensionWealthValue(), 1e-4);
+            assertEquals(10500.0, testPerson.getWealthPensValue(), 1e-4);
         }
 
         @Test
@@ -921,7 +921,7 @@ public class PersonTest {
             setPrivateField(testPerson, "yEmpPersGrossMonth", 0.0);
             testPerson.updatePensionWealth();
             // 5000 + 5000 * 0.05 = 5250
-            assertEquals(5250.0, testPerson.getPensionWealthValue(), 1e-4);
+            assertEquals(5250.0, testPerson.getWealthPensValue(), 1e-4);
         }
     }
 }
