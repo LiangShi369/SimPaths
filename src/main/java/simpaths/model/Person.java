@@ -548,19 +548,23 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yBenUCReceivedFlagL1 = originalPerson.yBenUCReceivedFlagL1;
         yFinDstrssFlag = originalPerson.yFinDstrssFlag;
 
-        if (originalPerson.labWageFullTimeHrly > Parameters.MIN_HOURLY_WAGE_RATE) {
+        if (originalPerson.labWageFullTimeHrly >= Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrly = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrly));
         } else {
             labWageFullTimeHrly = 0.0;
             labHrsWorkWeek = 0;
             labC4 = Les_c4.NotEmployed;
         }
-        if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >Parameters.MIN_HOURLY_WAGE_RATE) {
+        if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >= Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrlyL1 = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrlyL1));
-        } else {
-            labWageFullTimeHrlyL1 = labWageFullTimeHrly;
-            labHrsWorkWeekL1 = 0;
-            labC4L1 = Les_c4.NotEmployed;
+        } else  {
+            if (originalPerson.labWageFullTimeHrlyL1 == null && originalPerson.labWageFullTimeHrly != null)
+                labWageFullTimeHrlyL1 = labWageFullTimeHrly;
+            if (labWageFullTimeHrlyL1 == null || labWageFullTimeHrlyL1 < Parameters.MIN_HOURLY_WAGE_RATE) {
+                labWageFullTimeHrlyL1 = 0.0;
+                labHrsWorkWeekL1 = 0;
+                labC4L1 = Les_c4.NotEmployed;
+            }
         }
     }
 
