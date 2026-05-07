@@ -964,6 +964,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
                     //If age below or equal to 29 and in continuous education follow process F1a
                     double score = Parameters.getRegFertilityF1().getScore(this, Person.DoublesVariables.class);
+                    if (!Parameters.checkFinite(score))
+                        throw new ArithmeticException("Failure to evaluate score for fertility rate");
                     prob = Parameters.getRegFertilityF1().getProbability(score + probitAdjustment);
 
                 // else {
@@ -1144,6 +1146,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthMentalHM1Level() {
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
             double score = Parameters.getRegHealthHM1Level().getScore(this, Person.DoublesVariables.class);
+            if (!Parameters.checkFinite(score))
+                throw new ArithmeticException("Failure to evaluate score for mental health level");
             double rmse = Parameters.getRMSEForRegression("HM1_L");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(1));
             healthWbScore0to36 = score + rmse*gauss;
@@ -1169,9 +1173,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelMales().getScore(this, Person.DoublesVariables.class);
+                if (!Parameters.checkFinite(dhmPrediction))
+                    throw new ArithmeticException("Failure to evaluate score for mental health level (HM2)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelFemales().getScore(this, Person.DoublesVariables.class);
+                if (!Parameters.checkFinite(dhmPrediction))
+                    throw new ArithmeticException("Failure to evaluate score for mental health level (HM2b)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else System.out.println("healthMentalHM2 method in Person class: Person has no gender!");
         } else if (healthWbScore0to36 != null) {
@@ -1952,6 +1960,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesNE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentNotEmp;
             }
         }
+        if (!Parameters.checkFinite(logFullTimeHourlyEarnings))
+            throw new ArithmeticException("Failure to project full-time earnings estimate");
 
         // Uprate and set level of potential earnings
         double upratedFullTimeHourlyEarnings = Math.exp(logFullTimeHourlyEarnings);
