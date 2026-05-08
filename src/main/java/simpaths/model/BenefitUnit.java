@@ -1744,13 +1744,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // -> then persist employment innovation with probability Parameters.labour_innovation_employment_persistence_probability
             // Otherwise
             // -> persist employment innovation with probability Parameters.labour_innovation_notinemployment_persistence_probability
-            if (occupancy.Single_Male.equals(occupancy) && male.atRiskOfWork() && male.getEmployed_Lag1() == 1) {
+            if (occupancy.Single_Male.equals(occupancy) && male.atRiskOfWork() && male.getEmployedFlagL1() == 1) {
                     labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
-            } else if (occupancy.Single_Female.equals(occupancy) && female.atRiskOfWork() && female.getEmployed_Lag1() == 1) {
+            } else if (occupancy.Single_Female.equals(occupancy) && female.atRiskOfWork() && female.getEmployedFlagL1() == 1) {
                     labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
             } else if (occupancy.equals(Occupancy.Couple) &&
-                    ((male.atRiskOfWork() && male.getEmployed_Lag1() == 1) ||
-                            (!male.atRiskOfWork() && female.atRiskOfWork() && female.getEmployed_Lag1() == 1))) {
+                    ((male.atRiskOfWork() && male.getEmployedFlagL1() == 1) ||
+                            (!male.atRiskOfWork() && female.atRiskOfWork() && female.getEmployedFlagL1() == 1))) {
                 labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
             } else {
                 labourInnov = getLabourInnovation(Parameters.labour_innovation_notinemployment_persistence_probability);

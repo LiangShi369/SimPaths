@@ -705,7 +705,7 @@ public class TaxDonorDataParser {
                                 hoursWorkedPerWeek2 = hoursWorked;
                             }
                             if (agePerson >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
-                                int dlltsd = person.getDlltsd();
+                                int dlltsd = person.getHealthDsblLongtermFlag();
                                 if (dlltsd > dlltsd1) {
                                     dlltsd2 = dlltsd1;
                                     dlltsd1 = dlltsd;

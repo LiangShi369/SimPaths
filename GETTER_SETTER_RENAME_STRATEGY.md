@@ -38,7 +38,7 @@ Avoid global text replacement across the repository. Some old names may also be 
 | --- | --- | --- | --- |
 | `Person` education fields | Completed | `mvn test -DskipTests` and `mvn -Dtest=PersonTest test` passed on 2026-04-28 | No compatibility wrappers retained. Old method references removed from Java source and tests. |
 | `Person` labour status fields | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | No compatibility wrappers retained. Old method references removed from Java source, tests, and reflective getter strings. |
-| `Person` health fields | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | No compatibility wrappers retained. Old `Person` method references removed from Java source and reflective getter strings. Non-`Person` `States` and tax donor `getDlltsd()` APIs were intentionally retained. |
+| `Person` health fields | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | No compatibility wrappers retained. Old `Person` method references removed from Java source and reflective getter strings. Non-`Person` `States.getDlltsd()` remains intentionally retained as a decision-state API. |
 | `Person` income fields | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | No compatibility wrappers retained. Old income method references removed from Java source, tests, XML/properties, and reflective getter strings. |
 | `Person` demographic fields | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | No compatibility wrappers retained. Old `Person` demographic method references removed from Java source and reflective getter strings. Non-`Person` `States.getDcpst()` API was intentionally retained. |
 | Remaining `Person` education/social-care flags | Completed | `mvn test -DskipTests` and `mvn "-Dtest=PersonTest,EmploymentHistoryFilterTest,EmploymentStatisticsTest" test` passed on 2026-04-28 | Strict field-name rule used for social-care methods. No compatibility wrappers retained. Old method references removed from Java source, tests, XML, and properties. |
@@ -160,7 +160,7 @@ Validation:
 Intentional retained names:
 
 - `States.getDlltsd()` remains unchanged because it is a decision-state API, not a `Person` accessor.
-- Tax donor classes such as `DonorPerson.getDlltsd()` remain unchanged because they are outside this `Person` model batch.
+- Tax donor/key `DLLTSD` APIs were handled later in section 18.3.
 - Health-statistics setters such as `setDhe_mcs_mean(...)` remain unchanged because they do not expose `Person` fields.
 
 Social-care fields were not included in this batch. Handle them in a separate social-care batch if needed.
@@ -562,14 +562,16 @@ Validation:
 - Result: passed
 - Remaining old local proxy setter references in Java source/tests/XML/properties: none
 
-### 17.4. To Be Determined: Person Computed Helper APIs
+### 17.4. Partially Completed: Person Computed Helper APIs
 
-These methods do not directly expose a backing field or they add fallback/defaulting/domain logic. Do not rename them until the team agrees a naming rule for computed helper methods.
+These methods do not directly expose a backing field or they add fallback/defaulting/domain logic. Rename only where the team agrees a clear computed-helper naming rule.
+
+Agreed exception:
+
+- Computed binary indicator helpers may use semantic `...FlagL1` names when they return `0/1`, derive from a lagged state field, and have no direct backing field.
 
 | Current method | Reason to defer |
 | --- | --- |
-| `getEmployed_Lag1()` | computed indicator from `labC4L1`, not a direct `employedL1` field |
-| `getNonwork_Lag1()` | computed indicator from `labC4L1`, not a direct `nonworkL1` field |
 | `getCovidModuleGrossLabourIncome_Baseline()` | returns `covidYLabGross` with defaulting; no `covidYLabGrossBaseline` backing field |
 | `setCovidModuleGrossLabourIncome_Baseline(...)` | sets `covidYLabGross`, but the "Baseline" method name is domain-specific |
 | `getHoursFormalSocialCare_L1()` | returns `careHrsFormalWeekL1` with zero floor/defaulting |
@@ -581,6 +583,19 @@ These methods do not directly expose a backing field or they add fallback/defaul
 | `getCareHoursFromSon_L1()` | computed helper, currently zero |
 | `getCareHoursFromOther_L1()` | computed from partner status and informal lag hours |
 | `getYnbcpdf_dv()` | computed current difference between own and partner non-benefit gross personal income; used as a `@Lag` source |
+
+Completed computed indicator helper renames:
+
+| Old method | New method | Reason |
+| --- | --- | --- |
+| `getEmployed_Lag1()` | `getEmployedFlagL1()` | computed `0/1` indicator from `labC4L1` |
+| `getNonwork_Lag1()` | `getNonworkFlagL1()` | computed `0/1` indicator from `labC4L1` |
+
+Validation:
+
+- Compile command: `mvn test -DskipTests`
+- Result: passed on 2026-05-08
+- Remaining old computed indicator helper references in Java source/tests/XML/properties: none
 
 
 
@@ -625,17 +640,29 @@ Intentional retained names:
 
 Recommendation: do not rename in this pass. Treat them as parameter/regression identifier APIs unless a separate configuration naming policy is agreed.
 
-### 18.3. To Be Determined: Tax Donor And Key APIs
+### 18.3. Completed: Tax Donor And Key APIs
 
-Tax donor/key classes retain survey-code or tax-matching names, for example:
+Tax donor/key `DLLTSD` accessors were renamed where the code already has a stable full-name equivalent, `healthDsblLongtermFlag`.
 
-- `DonorPerson.getDlltsd()`
-- `KeyFunction.getDlltsdMan()`
-- `KeyFunction.setDlltsdMan(...)`
-- `KeyFunction.getDlltsdWoman()`
-- `KeyFunction.setDlltsdWoman(...)`
+| Class | Old name | New name | Backing field |
+| --- | --- | --- | --- |
+| `DonorPerson` | `getDlltsd()` | `getHealthDsblLongtermFlag()` | `healthDsblLongtermFlag` |
+| `KeyFunction` | `dlltsdMan` | `healthDsblLongtermFlagMan` | `healthDsblLongtermFlagMan` |
+| `KeyFunction` | `getDlltsdMan()` | `getHealthDsblLongtermFlagMan()` | `healthDsblLongtermFlagMan` |
+| `KeyFunction` | `setDlltsdMan(...)` | `setHealthDsblLongtermFlagMan(...)` | `healthDsblLongtermFlagMan` |
+| `KeyFunction` | `dlltsdWoman` | `healthDsblLongtermFlagWoman` | `healthDsblLongtermFlagWoman` |
+| `KeyFunction` | `getDlltsdWoman()` | `getHealthDsblLongtermFlagWoman()` | `healthDsblLongtermFlagWoman` |
+| `KeyFunction` | `setDlltsdWoman(...)` | `setHealthDsblLongtermFlagWoman(...)` | `healthDsblLongtermFlagWoman` |
 
-Recommendation: defer. These are outside the main `Person` model API and are tied to donor/tax matching data semantics.
+Notes:
+
+- Persisted donor-data column names such as `DLLTSD` remain unchanged.
+- Constructor parameters and local matching variables using `dlltsd` remain unchanged where they represent survey-code/tax-key inputs rather than stored Java fields.
+
+Validation:
+
+- Compile command: `mvn test -DskipTests`
+- Result: passed on 2026-05-08
 
 ### 18.4. To Be Determined: Computed Model Helper APIs
 

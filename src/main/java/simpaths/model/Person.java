@@ -5021,11 +5021,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return (Les_c4.NotEmployed.equals(labC4)) ? 1 : 0;
     }
 
-    public int getEmployed_Lag1() {
+    public int getEmployedFlagL1() {
         return (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) ? 1 : 0;
     }
 
-    public int getNonwork_Lag1() {
+    public int getNonworkFlagL1() {
         return (Les_c4.NotEmployed.equals(labC4L1)) ? 1 : 0;
     }
 
