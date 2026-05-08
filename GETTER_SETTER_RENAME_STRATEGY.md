@@ -1,6 +1,6 @@
 # Getter and Setter Rename Strategy
 
-## Goal
+## 1. Goal
 
 Align Java getter and setter method names with the backing field names they expose or update.
 
@@ -18,7 +18,7 @@ public void setEduHighestC4(Education eduHighestC4) {
 }
 ```
 
-## Core Rule
+## 2. Core Rule
 
 Treat each getter and setter as a Java API rename.
 
@@ -32,7 +32,7 @@ For each accessor:
 
 Avoid global text replacement across the repository. Some old names may also be survey variable names, database columns, CSV headers, comments, or external configuration values, and those should not be changed unless they are genuinely Java method references.
 
-## Progress Summary
+## 3. Progress Summary
 
 | Batch | Status | Validation | Notes |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ Avoid global text replacement across the repository. Some old names may also be 
 | Statistics output beans | Completed | `mvn test -DskipTests` passed on 2026-04-29 | Renamed direct field-backed statistics output accessors in `Statistics` and `HealthStatistics`. Persisted `@Column` names unchanged. |
 | Final runtime checkpoint | Completed | Focused tests, single run, and multirun passed on 2026-04-29 | Rename scope frozen before colleague discussion. Remaining computed/helper APIs stay deferred. |
 
-## Naming Convention
+## 4. Naming Convention
 
 Use standard JavaBean-style accessor names:
 
@@ -67,7 +67,7 @@ Use standard JavaBean-style accessor names:
 - Local/transient helper accessors should keep meaningful qualifiers:
   - `setRegionLocal(...)` can remain distinct from `setRegion(...)` where both have different behavior.
 
-## Completed: Person Education Fields
+## 5. Completed: Person Education Fields
 
 Completed education-related accessor renames in `src/main/java/simpaths/model/Person.java` and Java call sites under `src/main/java` and `src/test/java`.
 
@@ -97,7 +97,7 @@ Validation:
 - Remaining old method references in Java source/tests: none
 - Compatibility wrappers: none retained
 
-## Completed: Person Labour Status Fields
+## 6. Completed: Person Labour Status Fields
 
 Completed labour-status accessor renames in `src/main/java/simpaths/model/Person.java` and Java call sites under `src/main/java` and `src/test/java`.
 
@@ -129,7 +129,7 @@ Validation:
 
 Work-history accessors such as `getLiwwh()` / `setLiwwh(...)` were not included in this batch. Handle them in a separate labour-history batch if needed.
 
-## Completed: Person Health Fields
+## 7. Completed: Person Health Fields
 
 Completed health-related accessor renames in `src/main/java/simpaths/model/Person.java` and Java call sites under `src/main/java`.
 
@@ -165,7 +165,7 @@ Intentional retained names:
 
 Social-care fields were not included in this batch. Handle them in a separate social-care batch if needed.
 
-## Completed: Person Income Fields
+## 8. Completed: Person Income Fields
 
 Completed income-related accessor renames in `src/main/java/simpaths/model/Person.java` and Java call sites under `src/main/java`.
 
@@ -202,7 +202,7 @@ Validation:
 
 The `Lag` annotation example was also updated from `getyEmpPersGrossMonth` to `getYEmpPersGrossMonth`.
 
-## Completed: Person Demographic Fields
+## 9. Completed: Person Demographic Fields
 
 Completed demographic-related accessor renames in `src/main/java/simpaths/model/Person.java` and Java call sites under `src/main/java`.
 
@@ -232,7 +232,7 @@ Intentional retained names:
 
 - `States.getDcpst()` remains unchanged because it is a decision-state API, not a `Person` accessor.
 
-## Completed: Remaining Person Education And Social-Care Flags
+## 10. Completed: Remaining Person Education And Social-Care Flags
 
 Completed remaining `Person` accessor renames that still used survey-code-like names or did not yet match backing fields. Social-care methods used the strict field-name rule for consistency.
 
@@ -260,7 +260,7 @@ Validation:
 - Remaining old method references in Java source/tests/XML/properties: none
 - Compatibility wrappers: none retained
 
-## Completed: BenefitUnit Accessors
+## 11. Completed: BenefitUnit Accessors
 
 Completed broad `BenefitUnit` accessor pass in small controlled batches rather than renaming every accessor at once.
 
@@ -280,7 +280,7 @@ Completion checkpoint:
 - Compatibility wrappers: none retained for the renamed `BenefitUnit` APIs.
 - Deliberately retained APIs: computed/domain `BenefitUnit` methods such as `getRegion()`, `getOccupancy()`, `getDemCompHhC4()`, and non-`BenefitUnit` similarly named APIs documented below.
 
-### Completed: BenefitUnit Local Proxy State
+### 11.1. Completed: BenefitUnit Local Proxy State
 
 These are used by `Expectations` to initialise proxy objects for decision/regression evaluation. The final names keep the `I_` prefix because the backing fields begin with `i_`.
 
@@ -306,7 +306,7 @@ Intentional retained names:
 
 - `Person` proxy setters backed by `i_...` fields are handled separately in the planned `Person Local Proxy Setters` batch.
 
-### Completed: BenefitUnit Children And Poverty Lags
+### 11.2. Completed: BenefitUnit Children And Poverty Lags
 
 These methods exposed lag fields but used `_lag1` names or compact child-age names. They were renamed to backing-field style.
 
@@ -336,7 +336,7 @@ Intentional retained names:
 - `Person.getAtRiskOfPoverty()` remains unchanged because it is a person-level derived API that delegates to `benefitUnit.getYPvrtyFlag()`.
 - `Person.class, "getAtRiskOfPoverty"` reflective strings in poverty plot setup remain unchanged because they target the retained `Person` method, not `BenefitUnit`.
 
-### Completed: BenefitUnit Household Income And Quintile Fields
+### 11.3. Completed: BenefitUnit Household Income And Quintile Fields
 
 These were mostly survey-code-like names or temporary names around household income/quintiles.
 
@@ -368,7 +368,7 @@ Intentional retained names:
 
 - Statistics percentile methods such as `getYdses_p20()` remain unchanged because they are not `BenefitUnit` field accessors in this batch.
 
-### Completed: BenefitUnit Wealth And Costs
+### 11.4. Completed: BenefitUnit Wealth And Costs
 
 These names were domain-readable but did not match backing fields. They were renamed using the strict field-name rule for consistency with the rest of this branch.
 
@@ -399,7 +399,7 @@ Intentional retained names:
 - Decision-grid wealth APIs such as `States.getLiquidWealth()` and `WriteGridsBean.getLiquidWealth()` remain unchanged.
 - Tax-key methods such as `DonorKeys.getChildcareCostPerWeek()` and `KeyFunction.getChildcareCostPerWeek()` remain unchanged because they are outside the `BenefitUnit` model batch.
 
-### Do Not Rename In Initial BenefitUnit Pass
+### 11.5. Do Not Rename In Initial BenefitUnit Pass
 
 - `getRegion()` / `setRegion(...)`: already direct and widely used across `Person`, filters, matching, and migration logic.
 - `getOccupancy()`: computed domain value, not a direct getter for `i_demOccupancy`.
@@ -407,11 +407,11 @@ Intentional retained names:
 - Regression enum values such as `MaleLeisure_MaleDeh_c3_Low`: these are model variable IDs, not getter/setter APIs.
 - Non-`BenefitUnit` similarly named methods, especially decision-state APIs.
 
-## Completed: Household Accessors
+## 12. Completed: Household Accessors
 
 Inspection of `src/main/java/simpaths/model/Household.java` found one clear accessor mismatch. The class is small, and most accessors are either computed/domain APIs or framework identifiers.
 
-### Completed: Household Original ID Accessor
+### 12.1. Completed: Household Original ID Accessor
 
 Completed rename:
 
@@ -434,7 +434,7 @@ Do not rename in this pass:
 - `setHouseholdIdCounter(...)` is a static counter API, not an instance-field accessor.
 - `getWeight()`, `setWeight(...)`, and `getEquivalisedDisposableIncomeYearly()` are computed/domain APIs.
 
-## Completed: Original Household ID Accessors
+## 13. Completed: Original Household ID Accessors
 
 After completing `Household`, the same field-name mismatch remained in nearby model classes. This batch was coherent, low-risk, and limited to copy-constructor/internal call sites.
 
@@ -454,7 +454,7 @@ Validation:
 - Remaining `getIdOriginalHH()` references in Java source/tests/XML/properties: none
 - Compatibility wrappers: none retained
 
-## Completed: Original Person And Benefit-Unit ID Accessors
+## 14. Completed: Original Person And Benefit-Unit ID Accessors
 
 Completed remaining original-ID accessors in `Person` and `BenefitUnit`. They had direct backing-field mismatches and limited constructor call sites.
 
@@ -475,7 +475,7 @@ Validation:
 - Remaining old original person/benefit-unit ID method references in Java source/tests/XML/properties: none
 - Compatibility wrappers: none retained
 
-## Completed: ID Accessor Checkpoint
+## 15. Completed: ID Accessor Checkpoint
 
 The ID accessor batches for `Household`, `Person`, and `BenefitUnit` have a shared focused validation checkpoint.
 
@@ -484,7 +484,7 @@ The ID accessor batches for `Household`, `Person`, and `BenefitUnit` have a shar
 - Local focused checkpoint result: passed on 2026-04-28 at 14:58:36, 29 tests run, 0 failures, 0 errors, 0 skipped
 - Maven result: `BUILD SUCCESS`
 
-## Completed: Final Runtime Checkpoint
+## 16. Completed: Final Runtime Checkpoint
 
 The current rename scope is frozen before colleague discussion.
 
@@ -496,11 +496,11 @@ The current rename scope is frozen before colleague discussion.
 - Remaining computed/helper APIs are intentionally deferred for colleague discussion.
 
 
-## Planned: Remaining Person Underscore-Style Accessors
+## 17. Planned: Remaining Person Underscore-Style Accessors
 
 Inspection of `src/main/java/simpaths/model/Person.java` found remaining public accessors with underscores. Split them into direct field-backed renames and computed helper APIs. Direct field-backed methods can continue through the normal branch workflow. Computed helpers are labelled "to be determined" because they do not have a clear one-to-one backing-field rename.
 
-### Completed: Person Direct Field-Backed Residuals
+### 17.1. Completed: Person Direct Field-Backed Residuals
 
 These had clear backing fields and were renamed under the strict field-name rule.
 
@@ -517,7 +517,7 @@ Validation:
 - Result: passed
 - Remaining old direct field-backed residual method references in Java source/tests/XML/properties: none
 
-### Completed: Person Benefit Receipt Lag Flags
+### 17.2. Completed: Person Benefit Receipt Lag Flags
 
 Completed renames:
 
@@ -537,7 +537,7 @@ Intentional exclusions:
 
 - Boolean `is...` methods such as `isReceivesBenefitsFlag_L1()`, `isReceivesBenefitsFlagUC_L1()`, and `isReceivesBenefitsFlagNonUC_L1()` are excluded because the current branch scope is getter/setter method names, not boolean predicate APIs.
 
-### Completed: Person Local Proxy Setters
+### 17.3. Completed: Person Local Proxy Setters
 
 These are used by decision expectation proxy objects. Under the strict `i_` rule, methods for fields beginning with `i_` keep the `I_` prefix.
 
@@ -562,7 +562,7 @@ Validation:
 - Result: passed
 - Remaining old local proxy setter references in Java source/tests/XML/properties: none
 
-### To Be Determined: Person Computed Helper APIs
+### 17.4. To Be Determined: Person Computed Helper APIs
 
 These methods do not directly expose a backing field or they add fallback/defaulting/domain logic. Do not rename them until the team agrees a naming rule for computed helper methods.
 
@@ -584,11 +584,11 @@ These methods do not directly expose a backing field or they add fallback/defaul
 
 
 
-## Inspected: Outside Person BenefitUnit Household
+## 18. Inspected: Outside Person BenefitUnit Household
 
 Inspection outside the current `Person` / `BenefitUnit` / `Household` pass did not find another clear model-entity field-backed accessor batch comparable to the completed work. Remaining public `get...` / `set...` methods with underscores or survey-code names mostly fall into output/statistics, parameter, tax donor, or computed helper APIs.
 
-### Completed: Statistics Output Beans
+### 18.1. Completed: Statistics Output Beans
 
 These methods are direct setters/getters in statistics output classes. Java method names were aligned to backing fields while leaving persisted `@Column` names unchanged.
 
@@ -619,13 +619,13 @@ Intentional retained names:
 - `getEdi_p50()` and `setEdi_p50(...)` remain unchanged because they already match the backing field `edi_p50`.
 - Persisted `@Column` names such as `Ydses_p20`, `dhm_mean`, and `dhe_mcs_mean` remain unchanged.
 
-### To Be Determined: Parameter And Regression Accessors
+### 18.2. To Be Determined: Parameter And Regression Accessors
 
 `simpaths.data.Parameters` contains regression accessors such as `getRegC19LS_SE()`, `getRegC19LS_E1()`, and related Covid-19 labour-transition names. These expose regression IDs/model names rather than normal domain fields.
 
 Recommendation: do not rename in this pass. Treat them as parameter/regression identifier APIs unless a separate configuration naming policy is agreed.
 
-### To Be Determined: Tax Donor And Key APIs
+### 18.3. To Be Determined: Tax Donor And Key APIs
 
 Tax donor/key classes retain survey-code or tax-matching names, for example:
 
@@ -637,7 +637,7 @@ Tax donor/key classes retain survey-code or tax-matching names, for example:
 
 Recommendation: defer. These are outside the main `Person` model API and are tied to donor/tax matching data semantics.
 
-### To Be Determined: Computed Model Helper APIs
+### 18.4. To Be Determined: Computed Model Helper APIs
 
 `SimPathsModel` has computed projection helpers such as `getPopulationProjectionByAge0_18()`, `getPopulationProjectionByAge2_10()`, and similar age-band methods. They call `getPopulationProjectionByAge(startAge, endAge)` and do not expose backing fields.
 
@@ -645,7 +645,7 @@ Recommendation: keep them in the same "computed helper" category as `Person.getE
 
 
 
-## Suggested Batch Order
+## 19. Suggested Batch Order
 
 1. `Person` education fields.
 2. `Person` labour status fields.
@@ -658,7 +658,7 @@ Recommendation: keep them in the same "computed helper" category as `Person.getE
 
 Keep each batch small enough that compile errors clearly point to missed call sites from that batch.
 
-## Validation
+## 20. Validation
 
 After each batch:
 
@@ -685,7 +685,7 @@ Get-ChildItem -Path src/main/java -Recurse -Filter *.java |
     Select-String -Pattern "getDeh_c4|setDeh_c4|setDeh_c4_lag1"
 ```
 
-## Review Checklist
+## 21. Review Checklist
 
 - [ ] Method declaration renamed.
 - [ ] Java call sites renamed.
@@ -694,7 +694,7 @@ Get-ChildItem -Path src/main/java -Recurse -Filter *.java |
 - [ ] Project compiles.
 - [ ] Relevant tests pass or skipped tests are explicitly noted.
 
-## Temporary Compatibility Wrappers
+## 22. Temporary Compatibility Wrappers
 
 Prefer complete renames without wrappers on this branch.
 
