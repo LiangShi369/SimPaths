@@ -204,6 +204,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     @GUIparameter(description = "Average over donor pool when imputing transfer payments")
     public boolean donorPoolAveraging = true;
 
+    @GUIparameter(description = "Scale simulated income by wage growth when imputing taxes and benefits")
+    public boolean taxDonorUpratingByWage = false;
+
     private int ordering = Parameters.MODEL_ORDERING;    //Used in Scheduling of model events.  Schedule model events at the same time as the collector and observer events, but a lower order, so will be fired before the collector and observer have updated.
 
     private Set<Person> persons;
@@ -380,9 +383,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // load model parameters
         Parameters.loadParameters(country, maxAge, enableIntertemporalOptimisations, projectFormalChildcare,
-                projectSocialCare, donorPoolAveraging, fixTimeTrend, flagDefaultToTimeSeriesAverages, saveImperfectTaxDBMatches,
-                timeTrendStopsIn, startYear, endYear, interestRateInnov, disposableIncomeFromLabourInnov, flagSuppressChildcareCosts,
-                flagSuppressSocialCareCosts, lifetimeIncomeImpute);
+                projectSocialCare, donorPoolAveraging, taxDonorUpratingByWage, fixTimeTrend, flagDefaultToTimeSeriesAverages,
+                saveImperfectTaxDBMatches, timeTrendStopsIn, startYear, endYear, interestRateInnov,
+                disposableIncomeFromLabourInnov, flagSuppressChildcareCosts, flagSuppressSocialCareCosts, lifetimeIncomeImpute);
         if (lifetimeIncomeGenerate) {
             ManagerProjectLifetimeIncomes.run(log, lifetimeIncomeStartBirthYear,
                     lifetimeIncomeEndBirthYear, lifetimeIncomeEndAge, lifetimeIncomeCohortSize, lifetimeIncomeWriteToCSV,
@@ -722,6 +725,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             pw.println(line);
             line = "donorPoolAveraging: " + donorPoolAveraging;
             pw.println(line);
+            line = "taxDonorUpratingByWage: " + taxDonorUpratingByWage;
+            pw.println(line);
             line = "initialisePotentialEarningsFromDatabase: " + initialisePotentialEarningsFromDatabase;
             pw.println(line);
             line = "useWeights: " + useWeights;
@@ -797,7 +802,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         EndYear,
         UnionMatching,
         LabourMarketAndIncomeUpdate,
-        SocialCareMarketClearing,
 
         //Alignment Processes
         FertilityAlignment,
@@ -876,9 +880,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                     unionMatchingNoRegion(false); //Run matching again relaxing regions this time
                 }
                 if (commentsOn) log.info("Union matching complete.");
-            }
-            case SocialCareMarketClearing -> {
-                socialCareMarketClearing();
             }
             case FertilityAlignment -> {
 
@@ -1906,21 +1907,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         }
     }
 
-    private void socialCareMarketClearing() {
-
-        // adjust provision so that aggregate provision broadly matches aggregate receipt
-        double careProvisionAdjustment = Parameters.getTimeSeriesValue(getYear(),TimeSeriesVariable.CareProvisionAdjustment);
-        SocialCareAlignment socialCareAlignment = new SocialCareAlignment(persons, careProvisionAdjustment);
-        double[] startVal = new double[] {careProvisionAdjustment};
-        double[] lowerBound = new double[] {careProvisionAdjustment - 1.5};
-        double[] upperBound = new double[] {careProvisionAdjustment + 1.5};
-        RootSearch search = new RootSearch(lowerBound, upperBound, startVal, socialCareAlignment, 1.0E-2, 0.001);
-        search.evaluate();
-        if (search.isTargetAltered()) {
-            Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.CareProvisionAdjustment);
-        }
-    }
-
 
     /*
     Private helper method used to set up alignment for different occupancy types
@@ -2928,6 +2914,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     public void setProjectFormalChildcare(boolean projectFormalChildcare) { this.projectFormalChildcare = projectFormalChildcare; }
     public boolean getDonorPoolAveraging() { return donorPoolAveraging; }
     public void setDonorPoolAveraging(boolean val) { donorPoolAveraging = val; }
+    public boolean getTaxDonorUpratingByWage() { return taxDonorUpratingByWage; }
+    public void setTaxDonorUpratingByWage(boolean val) { taxDonorUpratingByWage = val; }
 
     public Integer getPopSize() {
         return popSize;

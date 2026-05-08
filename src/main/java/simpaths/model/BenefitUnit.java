@@ -4663,9 +4663,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             if (statInnovations.getDoubleDraw(0) < prob) {
 
                 double score = Parameters.getRegChildcareC1b().getScore(this, Regressors.class);
-                double rmse = Parameters.getRMSEForRegression("C1b");
-                double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(1));
-                xChildCareWeek = Math.exp(score + rmse * gauss);
+                xChildCareWeek = Math.exp(score);
                 double costCap = childCareCostCapWeekly();
                 if (costCap > 0.0 && costCap < getXChildCareWeek()) {
                     xChildCareWeek = costCap;
@@ -4686,7 +4684,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
         careProvidedFlag = 0;
         for (Person person : getMembers()) {
-            if (!SocialCareProvision.None.equals(person.getSocialCareProvision()))
+            if (!Indicator.False.equals(person.getSocialCareProvision()))
                 careProvidedFlag = 1;
         }
     }
