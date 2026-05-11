@@ -2726,6 +2726,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         GrossEarningsYearly,
         GrossLabourIncomeMonthly,
         InverseMillsRatio,
+        InvMillsRatio,
         L1_hourly_wage,
         L1_log_hourly_wage,
         Hourly_wage_L1,
@@ -3071,6 +3072,674 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Y2021_Formal,
         Constant_Mixed,
         Constant_Formal,
+        Age65to66,
+        Age_10,
+        Age_11,
+        Age_12,
+        Age_13,
+        Age_14,
+        Age_15,
+        Age_16,
+        Age_2,
+        Age_3,
+        Age_4,
+        Age_5,
+        Age_6,
+        Age_7,
+        Age_8,
+        Age_9,
+        CareMarket,
+        CareMarketFormal,
+        CareMarketInformal,
+        CareMarketMixedPartner,
+        Dag_c,
+        Dag_c_sq,
+        Dag_post18_sq,
+        Dag_post21,
+        Dag_post21_sq,
+        Dag_post25,
+        Dag_post25_sq,
+        Dag_post26_sq,
+        Dcpagdf,
+        Dcpst_1,
+        Dcpst_2,
+        Dcpyy,
+        Ded_Dcpst_Single_L1,
+        Ded_Dehsp_c3_Low_L1,
+        Ded_Dehsp_c3_Medium_L1,
+        Ded_Dhe,
+        Ded_Dhe_Excellent_L1,
+        Ded_Dhe_Fair_L1,
+        Ded_Dhe_Good_L1,
+        Ded_Dhe_VeryGood_L1,
+        Ded_Dhe_mcs,
+        Ded_Dhe_pcs,
+        Ded_Dhesp_Fair_L1,
+        Ded_Dhesp_Good_L1,
+        Ded_Ydses_c5_Q,
+        Ded_Yplgrs_dv,
+        Ded_Ypncp,
+        Deh_c3_1,
+        Deh_c3_2,
+        Deh_c3_3,
+        Deh_c4_1,
+        Deh_c4_2,
+        Deh_c4_3,
+        Deh_c4_4,
+        Dehmf_c3_1,
+        Dehmf_c3_2,
+        Dehmf_c3_3,
+        Dehsp_c3_1,
+        Dehsp_c3_2,
+        Dehsp_c3_3,
+        Dehsp_c3_High,
+        Dehsp_c3_Low,
+        Dehsp_c3_Medium,
+        Dhe_1,
+        Dhe_mcssp,
+        Dhe_pcssp,
+        Dhesp_1,
+        Dhesp_2,
+        Dhesp_3,
+        Dhesp_4,
+        Dhesp_5,
+        Dhesp_Poor,
+        Dhh_owned,
+        Dhhtp_c4_1,
+        Dhhtp_c4_2,
+        Dhhtp_c4_3,
+        Dhhtp_c4_4,
+        Dhhtp_c4_CoupleChildren,
+        Dhhtp_c4_CoupleNoChildren,
+        Dhhtp_c4_SingleChildren,
+        Dhhtp_c4_SingleNoChildren,
+        Dlltsd01sp,
+        Dlltsdsp,
+        Dnc,
+        Dnc02,
+        Dst,
+        Elig_pen,
+        Elig_pen_L1,
+        HrsProvidedInformalIHS,
+        HrsReceivedFormalIHS,
+        HrsReceivedInformalIHS,
+        L_Dehmf_c3,
+        L_Dehmf_c3_1,
+        L_Dehmf_c3_2,
+        L_Dehmf_c3_3,
+        L_Dehmf_c3_High,
+        L_Dhe,
+        L_Dhhtp_c4_1,
+        L_Dhhtp_c4_2,
+        L_Dhhtp_c4_3,
+        L_Dhhtp_c4_4,
+        L_Dhhtp_c4_CoupleNoChildren,
+        L_Les_c4_1,
+        L_Les_c4_2,
+        L_Les_c4_3,
+        L_Les_c4_4,
+        L_Les_c4_Employed,
+        L_Les_c4_NotEmployed,
+        L_Les_c4_Retired,
+        L_Les_c4_Student,
+        L_Need_socare,
+        L_Ydses_c5,
+        Les_c3_1,
+        Les_c3_2,
+        Les_c3_3,
+        Les_c3_Employed,
+        Les_c3_NotEmployed,
+        Les_c3_Student,
+        Les_c4_1,
+        Les_c4_2,
+        Les_c4_3,
+        Les_c4_4,
+        Les_c4_Employed,
+        Les_c4_NotEmployed,
+        Les_c4_NotEmployed_Dgn,
+        Les_c4_Retired,
+        Les_c4_Retired_Dgn,
+        Les_c4_Student,
+        Les_c4_Student_Dgn,
+        Lesdf_c4_1,
+        Lesdf_c4_2,
+        Lesdf_c4_3,
+        Lesdf_c4_4,
+        Lesdf_c4_BothEmployed,
+        Lesdf_c4_BothNotEmployed,
+        Lesdf_c4_EmpSpouseNotEmp,
+        Lesdf_c4_NotEmpSpouseEmp,
+        Lessp_c3_1,
+        Lessp_c3_2,
+        Lessp_c3_3,
+        Lessp_c3_Employed,
+        Lessp_c3_Student,
+        New_rel,
+        ProvideCare,
+        UK1,
+        UK10,
+        UK11,
+        UK12,
+        UK2,
+        UK3,
+        UK4,
+        UK5,
+        UK6,
+        UK7,
+        UK8,
+        UK9,
+        Y,
+        Y2223,
+        Ydses_c5,
+        YearSquared,
+        Ynbcpdf_dv,
+        Yplgrs_dv,
+        Ypnbihs_dv,
+        Ypnbihs_dv_sq,
+        Ypncp,
+        Ypnoab,
+        Yptciihs_dv,
+        careHrsFormalIhs,
+        careHrsFormalIhsL1,
+        careHrsInformalIhs,
+        careHrsInformalIhsL1,
+        careHrsProvidedWeekIhs,
+        careHrsProvidedWeekIhsL1,
+        careMarket,
+        careMarketFormal,
+        careMarketFormalL1,
+        careMarketFormalPartner,
+        careMarketInformal,
+        careMarketInformalL1,
+        careMarketInformalPartner,
+        careMarketL1,
+        careMarketMixed,
+        careMarketMixedL1,
+        careMarketMixedPsrtner,
+        careNeedFlag,
+        careNeedFlagL1,
+        careNeedPartnerFlag,
+        careProvidedFlag,
+        careProvidedFlagL1,
+        careReceivedFlag,
+        careReceivedFlagL1,
+        careReceivedPartnerFlag,
+        dage10prime,
+        dage2old,
+        dage5,
+        demAge,
+        demAge20to24,
+        demAge25to29,
+        demAge30to34,
+        demAge35to39,
+        demAge40to44,
+        demAge45to49,
+        demAge50to54,
+        demAge55to59,
+        demAge60to64,
+        demAge65to69,
+        demAge67to68,
+        demAge69to70,
+        demAge70to74,
+        demAge71to72,
+        demAge73to74,
+        demAge75to76,
+        demAge75to79,
+        demAge77to78,
+        demAge79to80,
+        demAge80to84,
+        demAge81to82,
+        demAge83to84,
+        demAge85plus,
+        demAgePartnerDiff,
+        demAgePartnerDiffL1,
+        demAgeSq,
+        demCompHhC4,
+        demCompHhC4CoupleChL1,
+        demCompHhC4CoupleNoChL1,
+        demCompHhC4L1,
+        demCompHhC4L1SingleChL1,
+        demCompHhC4SingleNoChL1,
+        demCompHhC8,
+        demCompHhC81L1,
+        demCompHhC82L1,
+        demCompHhC83L1,
+        demCompHhC84L1,
+        demCompHhC85L1,
+        demCompHhC86L1,
+        demCompHhC87L1,
+        demCompHhC88L1,
+        demCompHhC8L1,
+        demEnterPartnerFlag,
+        demEnterPartnerFlagL1,
+        demEthnC4,
+        demEthnC4Asian,
+        demEthnC4Black,
+        demEthnC4Other,
+        demEthnC4White,
+        demEthnC4_1,
+        demEthnC4_2,
+        demEthnC4_3,
+        demEthnC4_4,
+        demMaleFlag,
+        demNChild,
+        demNChild0to2,
+        demNChild0to2L1,
+        demNChildL1,
+        demPartnerNYear,
+        demPartnerNYearL1,
+        demPartnerStatus,
+        demPartnerStatusL1,
+        demPartnerStatusPartnered,
+        demPartnerStatusPartneredL1,
+        demPartnerStatusSingle,
+        demPartnerStatusSingleL1,
+        demPensAgeFlag,
+        demPensAgeFlag_NotEmployedL1,
+        demPensPartnerAgeFlag,
+        demRgn,
+        demRgnUKC,
+        demRgnUKD,
+        demRgnUKE,
+        demRgnUKF,
+        demRgnUKG,
+        demRgnUKH,
+        demRgnUKI,
+        demRgnUKJ,
+        demRgnUKK,
+        demRgnUKL,
+        demRgnUKM,
+        demRgnUKN,
+        demRgn_1,
+        demRgn_10,
+        demRgn_11,
+        demRgn_12,
+        demRgn_2,
+        demRgn_3,
+        demRgn_4,
+        demRgn_5,
+        demRgn_6,
+        demRgn_7,
+        demRgn_8,
+        demRgn_9,
+        demYear,
+        demYear20,
+        dot_1,
+        dot_2,
+        dot_3,
+        dot_4,
+        econ_realequivinc,
+        eduHighestC4,
+        eduHighestC4High,
+        eduHighestC4HighL1,
+        eduHighestC4HighL1_demAge,
+        eduHighestC4High_demAge,
+        eduHighestC4L1,
+        eduHighestC4Low,
+        eduHighestC4LowL1,
+        eduHighestC4LowL1_demAge,
+        eduHighestC4Low_demAge,
+        eduHighestC4Medium,
+        eduHighestC4MediumL1,
+        eduHighestC4MediumL1_demAge,
+        eduHighestC4Medium_demAge,
+        eduHighestC4Na,
+        eduHighestC4NaL1,
+        eduHighestC4NaL1_demAge,
+        eduHighestC4Na_demAge,
+        eduHighestParentC3,
+        eduHighestParentC3High,
+        eduHighestParentC3HighL1,
+        eduHighestParentC3L1,
+        eduHighestParentC3L1_1,
+        eduHighestParentC3L1_2,
+        eduHighestParentC3L1_3,
+        eduHighestParentC3Low,
+        eduHighestParentC3LowL1,
+        eduHighestParentC3Medium,
+        eduHighestParentC3MediumL1,
+        eduHighestParentC3_1,
+        eduHighestParentC3_2,
+        eduHighestParentC3_3,
+        eduHighestPartnerC3,
+        eduHighestPartnerC3HighL1,
+        eduHighestPartnerC3L1,
+        eduHighestPartnerC3LowL1,
+        eduHighestPartnerC3MediumL1,
+        eduSampleFlag,
+        eduSampleFlagL1,
+        eduSampleFlag_Male,
+        eduSampleFlag_Mcs,
+        eduSampleFlag_McsL1,
+        eduSampleFlag_Pcs,
+        eduSampleFlag_PcsL1,
+        eduSampleFlag_Q2L1,
+        eduSampleFlag_Q3L1,
+        eduSampleFlag_Q4L1,
+        eduSampleFlag_Q5L1,
+        eduSampleFlag_Single,
+        eduSampleFlag_demMaleFlag,
+        eduSampleFlag_demNChild0to2L1,
+        eduSampleFlag_demNChildL1,
+        eduSampleFlag_yCapitalPers,
+        eduSampleFlag_yCapitalPersL1,
+        eduSampleFlag_yCapitalPersL2,
+        eduSampleFlag_yEmpPersGross,
+        eduSampleFlag_yEmpPersGrossL1,
+        eduSampleFlag_yEmpPersGrossL2,
+        exp_emp,
+        exp_incchange,
+        exp_poverty,
+        fertilityRate,
+        healthDsblLongtermFlag,
+        healthDsblLongtermFlagL1,
+        healthMentalMcs,
+        healthMentalMcsL1,
+        healthMentalPartnerMcs,
+        healthMentalPartnerMcsL1,
+        healthPartnerSelfRated,
+        healthPartnerSelfRatedExcellent,
+        healthPartnerSelfRatedFair,
+        healthPartnerSelfRatedGood,
+        healthPartnerSelfRatedPoor,
+        healthPartnerSelfRatedVeryGood,
+        healthPartnerSelfRated_1,
+        healthPartnerSelfRated_2,
+        healthPartnerSelfRated_3,
+        healthPartnerSelfRated_4,
+        healthPartnerSelfRated_5,
+        healthPhysicalPartnerPcs,
+        healthPhysicalPartnerPcsL1,
+        healthPhysicalPcs,
+        healthPhysicalPcsL1,
+        healthSelfRated,
+        healthSelfRatedExcellent,
+        healthSelfRatedFair,
+        healthSelfRatedGood,
+        healthSelfRatedPoor,
+        healthSelfRatedVeryGood,
+        healthSelfRated_1,
+        healthSelfRated_2,
+        healthSelfRated_3,
+        healthSelfRated_4,
+        healthSelfRated_5,
+        idpartner,
+        idperson,
+        informal_socare_hrs,
+        l_,
+        labPt,
+        labStatusC3,
+        labStatusC3EmployedL1,
+        labStatusC3L1,
+        labStatusC3NotEmployedL1,
+        labStatusC3StudentL1,
+        labStatusC4,
+        labStatusC4EmployedL1,
+        labStatusC4EmployedL1_Male,
+        labStatusC4L1,
+        labStatusC4NotEmployedL1,
+        labStatusC4NotEmployedL1_Male,
+        labStatusC4RetiredL1,
+        labStatusC4RetiredL1_Male,
+        labStatusC4StudentL1,
+        labStatusC4StudentL1_Male,
+        labStatusPartnerAndOwnC4,
+        labStatusPartnerAndOwnC41L1,
+        labStatusPartnerAndOwnC42L1,
+        labStatusPartnerAndOwnC43L1,
+        labStatusPartnerAndOwnC44L1,
+        labStatusPartnerAndOwnC4L1,
+        labStatusPartnerC3,
+        need_care,
+        receive_care,
+        // New-naming variables and interaction terms from refactored estimation files (PR #465)
+        // Social care multinomial - new demAge prefix for age-group dummies
+        demAge67to68_Formal,
+        demAge67to68_Mixed,
+        demAge69to70_Formal,
+        demAge69to70_Mixed,
+        demAge71to72_Formal,
+        demAge71to72_Mixed,
+        demAge73to74_Formal,
+        demAge73to74_Mixed,
+        demAge75to76_Formal,
+        demAge75to76_Mixed,
+        demAge77to78_Formal,
+        demAge77to78_Mixed,
+        demAge79to80_Formal,
+        demAge79to80_Mixed,
+        demAge81to82_Formal,
+        demAge81to82_Mixed,
+        demAge83to84_Formal,
+        demAge83to84_Mixed,
+        demAge85plus_Formal,
+        demAge85plus_Mixed,
+        // Social care multinomial - new careMarket naming
+        careMarketFormalL1_Formal,
+        careMarketFormalL1_Mixed,
+        careMarketInformalL1_Formal,
+        careMarketInformalL1_Mixed,
+        careMarketMixedL1_Formal,
+        careMarketMixedL1_Mixed,
+        // Health outcome interaction terms (ordered probit / multinomial health regression)
+        demAge_Fair,
+        demAge_Good,
+        demAge_Low,
+        demAge_Medium,
+        demAge_Poor,
+        demAge_VeryGood,
+        demAgeSq_Fair,
+        demAgeSq_Good,
+        demAgeSq_Low,
+        demAgeSq_Medium,
+        demAgeSq_Poor,
+        demAgeSq_VeryGood,
+        demMaleFlag_Fair,
+        demMaleFlag_Formal,
+        demMaleFlag_Good,
+        demMaleFlag_Low,
+        demMaleFlag_Medium,
+        demMaleFlag_Mixed,
+        demMaleFlag_Poor,
+        demMaleFlag_VeryGood,
+        demCompHhC4CoupleChL1_Fair,
+        demCompHhC4CoupleChL1_Good,
+        demCompHhC4CoupleChL1_Poor,
+        demCompHhC4CoupleChL1_VeryGood,
+        demCompHhC4SingleNoChL1_Fair,
+        demCompHhC4SingleNoChL1_Good,
+        demCompHhC4SingleNoChL1_Poor,
+        demCompHhC4SingleNoChL1_VeryGood,
+        demEthnC4Asian_Fair,
+        demEthnC4Asian_Formal,
+        demEthnC4Asian_Good,
+        demEthnC4Asian_Mixed,
+        demEthnC4Asian_Poor,
+        demEthnC4Asian_VeryGood,
+        demEthnC4Black_Formal,
+        demEthnC4Black_Mixed,
+        demEthnC4Other_Formal,
+        demEthnC4Other_Mixed,
+        demPartnerStatusPartnered_Formal,
+        demPartnerStatusPartnered_Mixed,
+        demRgnUKC_Formal,
+        demRgnUKC_Mixed,
+        demRgnUKD_Formal,
+        demRgnUKD_Mixed,
+        demRgnUKE_Fair,
+        demRgnUKE_Formal,
+        demRgnUKE_Good,
+        demRgnUKE_Low,
+        demRgnUKE_Medium,
+        demRgnUKE_Mixed,
+        demRgnUKE_Poor,
+        demRgnUKE_VeryGood,
+        demRgnUKF_Fair,
+        demRgnUKF_Formal,
+        demRgnUKF_Good,
+        demRgnUKF_Mixed,
+        demRgnUKF_Poor,
+        demRgnUKF_VeryGood,
+        demRgnUKG_Fair,
+        demRgnUKG_Formal,
+        demRgnUKG_Good,
+        demRgnUKG_Mixed,
+        demRgnUKG_Poor,
+        demRgnUKG_VeryGood,
+        demRgnUKH_Fair,
+        demRgnUKH_Formal,
+        demRgnUKH_Good,
+        demRgnUKH_Mixed,
+        demRgnUKH_Poor,
+        demRgnUKH_VeryGood,
+        demRgnUKJ_Fair,
+        demRgnUKJ_Formal,
+        demRgnUKJ_Good,
+        demRgnUKJ_Mixed,
+        demRgnUKJ_Poor,
+        demRgnUKJ_VeryGood,
+        demRgnUKK_Fair,
+        demRgnUKK_Formal,
+        demRgnUKK_Good,
+        demRgnUKK_Mixed,
+        demRgnUKK_Poor,
+        demRgnUKK_VeryGood,
+        demRgnUKL_Formal,
+        demRgnUKL_Mixed,
+        demRgnUKM_Formal,
+        demRgnUKM_Low,
+        demRgnUKM_Medium,
+        demRgnUKM_Mixed,
+        demRgnUKN_Fair,
+        demRgnUKN_Formal,
+        demRgnUKN_Good,
+        demRgnUKN_Low,
+        demRgnUKN_Medium,
+        demRgnUKN_Mixed,
+        demRgnUKN_Poor,
+        demRgnUKN_VeryGood,
+        demYear_Fair,
+        demYear_Good,
+        demYear_Low,
+        demYear_Medium,
+        demYear_Poor,
+        demYear_VeryGood,
+        demYear2020,
+        demYear2020_Formal,
+        demYear2020_Mixed,
+        demYear2021,
+        demYear2021_Fair,
+        demYear2021_Formal,
+        demYear2021_Good,
+        demYear2021_Mixed,
+        demYear2021_Poor,
+        demYear2021_VeryGood,
+        // Education interaction terms
+        eduHighestC4Low_Formal,
+        eduHighestC4Low_Mixed,
+        eduHighestC4Medium_Formal,
+        eduHighestC4Medium_Mixed,
+        eduHighestC4LowL1_Fair,
+        eduHighestC4LowL1_Good,
+        eduHighestC4LowL1_Poor,
+        eduHighestC4LowL1_VeryGood,
+        eduHighestC4MediumL1_Fair,
+        eduHighestC4MediumL1_Good,
+        eduHighestC4MediumL1_Poor,
+        eduHighestC4MediumL1_VeryGood,
+        eduHighestC4NaL1_Fair,
+        eduHighestC4NaL1_Good,
+        eduHighestC4NaL1_Poor,
+        eduHighestC4NaL1_VeryGood,
+        // Health interaction terms
+        healthDsblLongtermFlagL1_Fair,
+        healthDsblLongtermFlagL1_Good,
+        healthDsblLongtermFlagL1_Poor,
+        healthDsblLongtermFlagL1_VeryGood,
+        healthMentalMcsL1_Fair,
+        healthMentalMcsL1_Good,
+        healthMentalMcsL1_Poor,
+        healthMentalMcsL1_VeryGood,
+        healthPhysicalPcsL1_Fair,
+        healthPhysicalPcsL1_Good,
+        healthPhysicalPcsL1_Poor,
+        healthPhysicalPcsL1_VeryGood,
+        healthSelfRatedExcellent_Formal,
+        healthSelfRatedExcellent_Mixed,
+        healthSelfRatedFair_Formal,
+        healthSelfRatedFair_Mixed,
+        healthSelfRatedGood_Formal,
+        healthSelfRatedGood_Mixed,
+        healthSelfRatedVeryGood_Formal,
+        healthSelfRatedVeryGood_Mixed,
+        // Labour status interaction terms
+        labStatusC4EmployedL1_Fair,
+        labStatusC4EmployedL1_Good,
+        labStatusC4EmployedL1_Poor,
+        labStatusC4EmployedL1_VeryGood,
+        labStatusC4RetiredL1_Fair,
+        labStatusC4RetiredL1_Good,
+        labStatusC4RetiredL1_Poor,
+        labStatusC4RetiredL1_VeryGood,
+        // Income quintile new naming (current and lag, with interaction suffixes)
+        yHhQuintilesMonthC5Q2,
+        yHhQuintilesMonthC5Q2L1,
+        yHhQuintilesMonthC5Q2L1_Fair,
+        yHhQuintilesMonthC5Q2L1_Good,
+        yHhQuintilesMonthC5Q2L1_Poor,
+        yHhQuintilesMonthC5Q2L1_VeryGood,
+        yHhQuintilesMonthC5Q2_Formal,
+        yHhQuintilesMonthC5Q2_Mixed,
+        yHhQuintilesMonthC5Q3,
+        yHhQuintilesMonthC5Q3L1,
+        yHhQuintilesMonthC5Q3L1_Fair,
+        yHhQuintilesMonthC5Q3L1_Good,
+        yHhQuintilesMonthC5Q3L1_Poor,
+        yHhQuintilesMonthC5Q3L1_VeryGood,
+        yHhQuintilesMonthC5Q3_Formal,
+        yHhQuintilesMonthC5Q3_Mixed,
+        yHhQuintilesMonthC5Q4,
+        yHhQuintilesMonthC5Q4L1,
+        yHhQuintilesMonthC5Q4L1_Fair,
+        yHhQuintilesMonthC5Q4L1_Good,
+        yHhQuintilesMonthC5Q4L1_Poor,
+        yHhQuintilesMonthC5Q4L1_VeryGood,
+        yHhQuintilesMonthC5Q4_Formal,
+        yHhQuintilesMonthC5Q4_Mixed,
+        yHhQuintilesMonthC5Q5,
+        yHhQuintilesMonthC5Q5L1,
+        yHhQuintilesMonthC5Q5L1_Fair,
+        yHhQuintilesMonthC5Q5L1_Good,
+        yHhQuintilesMonthC5Q5L1_Poor,
+        yHhQuintilesMonthC5Q5L1_VeryGood,
+        yHhQuintilesMonthC5Q5_Formal,
+        yHhQuintilesMonthC5Q5_Mixed,
+        // Lowercase / legacy-naming aliases
+        dag_L1,
+        dagsq_L1,
+        dgn,
+        dhh_owned_L1,
+        dlltsd01_L1,
+        dnc_L1,
+        drgn1_L1,
+        econ_benefits_L1,
+        financial_distress_L1,
+        labWageHrlyL1,
+        labWageHrlyLogL1,
+        realWageGrowth,
+        stm,
+        wealthPrptyFlagL1,
+        yCapitalPersMonthL1,
+        yCapitalPersMonthL2,
+        yEmpPersGrossMonthL1,
+        yEmpPersGrossMonthL2,
+        yMiscPersGrossMonthL1,
+        yNonBenPersGrossMonthL1,
+        yPensPersGrossMonthL1,
+        yPensPersGrossMonthL2,
+        ypncp_L1,
+        ypnoab_L1,
+        yPersAndPartnerGrossDiffMonthL1,
     }
 
     public double getDoubleValue(Enum<?> variableID) {
@@ -3835,7 +4504,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case GrossLabourIncomeMonthly -> {
                 return getCovidModuleGrossLabourIncome_Baseline();
             }
-            case InverseMillsRatio -> {
+            case InverseMillsRatio, InvMillsRatio -> {
                 return getInverseMillsRatio();
             }
             case Ld_children_2under -> {
@@ -4739,6 +5408,894 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Cut12 -> {
                 return 0.;
             }
+
+            case Age_10 -> {
+                return (demAge == 10) ? 1.0 : 0.0;
+            }
+
+            case Age_11 -> {
+                return (demAge == 11) ? 1.0 : 0.0;
+            }
+
+            case Age_12 -> {
+                return (demAge == 12) ? 1.0 : 0.0;
+            }
+
+            case Age_13 -> {
+                return (demAge == 13) ? 1.0 : 0.0;
+            }
+
+            case Age_14 -> {
+                return (demAge == 14) ? 1.0 : 0.0;
+            }
+
+            case Age_15 -> {
+                return (demAge == 15) ? 1.0 : 0.0;
+            }
+
+            case Age_16 -> {
+                return (demAge == 16) ? 1.0 : 0.0;
+            }
+
+            case Age_2 -> {
+                return (demAge == 2) ? 1.0 : 0.0;
+            }
+
+            case Age_3 -> {
+                return (demAge == 3) ? 1.0 : 0.0;
+            }
+
+            case Age_4 -> {
+                return (demAge == 4) ? 1.0 : 0.0;
+            }
+
+            case Age_5 -> {
+                return (demAge == 5) ? 1.0 : 0.0;
+            }
+
+            case Age_6 -> {
+                return (demAge == 6) ? 1.0 : 0.0;
+            }
+
+            case Age_7 -> {
+                return (demAge == 7) ? 1.0 : 0.0;
+            }
+
+            case Age_8 -> {
+                return (demAge == 8) ? 1.0 : 0.0;
+            }
+
+            case Age_9 -> {
+                return (demAge == 9) ? 1.0 : 0.0;
+            }
+
+            case Dag_c -> {
+                return getDoubleValue(DoublesVariables.Dag);
+            }
+
+            case Ded_Dcpst_Single_L1 -> {
+                return getDoubleValue(DoublesVariables.Ded_Dcpst_Single);
+            }
+
+            case Dhe_1 -> {
+                return getDoubleValue(DoublesVariables.Dhe);
+            }
+
+            case careMarketFormalL1 -> {
+                return getDoubleValue(DoublesVariables.CareMarketFormal_L1);
+            }
+
+            case careMarketFormalPartner -> {
+                return getDoubleValue(DoublesVariables.CareMarketFormalPartner);
+            }
+
+            case careMarketInformalL1 -> {
+                return getDoubleValue(DoublesVariables.CareMarketInformal_L1);
+            }
+
+            case careMarketInformalPartner -> {
+                return getDoubleValue(DoublesVariables.CareMarketInformalPartner);
+            }
+
+            case careMarketMixed -> {
+                return getDoubleValue(DoublesVariables.CareMarketMixed);
+            }
+
+            case careMarketMixedL1 -> {
+                return getDoubleValue(DoublesVariables.CareMarketMixed_L1);
+            }
+
+            case demAge -> {
+                return getDoubleValue(DoublesVariables.Age);
+            }
+
+            case demAge20to24 -> {
+                return getDoubleValue(DoublesVariables.Age20to24);
+            }
+
+            case demAge25to29 -> {
+                return getDoubleValue(DoublesVariables.Age25to29);
+            }
+
+            case demAge30to34 -> {
+                return getDoubleValue(DoublesVariables.Age30to34);
+            }
+
+            case demAge35to39 -> {
+                return getDoubleValue(DoublesVariables.Age35to39);
+            }
+
+            case demAge40to44 -> {
+                return getDoubleValue(DoublesVariables.Age40to44);
+            }
+
+            case demAge45to49 -> {
+                return getDoubleValue(DoublesVariables.Age45to49);
+            }
+
+            case demAge50to54 -> {
+                return getDoubleValue(DoublesVariables.Age50to54);
+            }
+
+            case demAge55to59 -> {
+                return getDoubleValue(DoublesVariables.Age55to59);
+            }
+
+            case demAge60to64 -> {
+                return getDoubleValue(DoublesVariables.Age60to64);
+            }
+
+            case demAge65to69 -> {
+                return getDoubleValue(DoublesVariables.Age65to69);
+            }
+
+            case demAge67to68 -> {
+                return getDoubleValue(DoublesVariables.Age67to68);
+            }
+
+            case demAge69to70 -> {
+                return getDoubleValue(DoublesVariables.Age69to70);
+            }
+
+            case demAge70to74 -> {
+                return getDoubleValue(DoublesVariables.Age70to74);
+            }
+
+            case demAge71to72 -> {
+                return getDoubleValue(DoublesVariables.Age71to72);
+            }
+
+            case demAge73to74 -> {
+                return getDoubleValue(DoublesVariables.Age73to74);
+            }
+
+            case demAge75to76 -> {
+                return getDoubleValue(DoublesVariables.Age75to76);
+            }
+
+            case demAge75to79 -> {
+                return getDoubleValue(DoublesVariables.Age75to79);
+            }
+
+            case demAge77to78 -> {
+                return getDoubleValue(DoublesVariables.Age77to78);
+            }
+
+            case demAge79to80 -> {
+                return getDoubleValue(DoublesVariables.Age79to80);
+            }
+
+            case demAge80to84 -> {
+                return getDoubleValue(DoublesVariables.Age80to84);
+            }
+
+            case demAge81to82 -> {
+                return getDoubleValue(DoublesVariables.Age81to82);
+            }
+
+            case demAge83to84 -> {
+                return getDoubleValue(DoublesVariables.Age83to84);
+            }
+
+            case demAge85plus -> {
+                return getDoubleValue(DoublesVariables.Age85plus);
+            }
+
+            case fertilityRate -> {
+                return getDoubleValue(DoublesVariables.FertilityRate);
+            }
+
+            case need_care -> {
+                return getDoubleValue(DoublesVariables.NeedCare);
+            }
+
+            case receive_care -> {
+                return getDoubleValue(DoublesVariables.ReceiveCare);
+            }
+
+            // -----------------------------------------------------------------------
+            // social care age interaction variants
+            // -----------------------------------------------------------------------
+            case demAge67to68_Formal, demAge67to68_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge67to68);
+            }
+            case demAge69to70_Formal, demAge69to70_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge69to70);
+            }
+            case demAge71to72_Formal, demAge71to72_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge71to72);
+            }
+            case demAge73to74_Formal, demAge73to74_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge73to74);
+            }
+            case demAge75to76_Formal, demAge75to76_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge75to76);
+            }
+            case demAge77to78_Formal, demAge77to78_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge77to78);
+            }
+            case demAge79to80_Formal, demAge79to80_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge79to80);
+            }
+            case demAge81to82_Formal, demAge81to82_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge81to82);
+            }
+            case demAge83to84_Formal, demAge83to84_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge83to84);
+            }
+            case demAge85plus_Formal, demAge85plus_Mixed -> {
+                return getDoubleValue(DoublesVariables.demAge85plus);
+            }
+
+            // -----------------------------------------------------------------------
+            // careMarket new-naming interaction variants
+            // -----------------------------------------------------------------------
+            case careMarketFormalL1_Formal, careMarketFormalL1_Mixed -> {
+                return getDoubleValue(DoublesVariables.CareMarketFormal_L1);
+            }
+            case careMarketInformalL1_Formal, careMarketInformalL1_Mixed -> {
+                return getDoubleValue(DoublesVariables.CareMarketInformal_L1);
+            }
+            case careMarketMixedL1_Formal, careMarketMixedL1_Mixed -> {
+                return getDoubleValue(DoublesVariables.CareMarketMixed_L1);
+            }
+
+            // -----------------------------------------------------------------------
+            // demAge interaction terms
+            // -----------------------------------------------------------------------
+            case demAge_Fair, demAge_Good, demAge_Low, demAge_Medium, demAge_Poor, demAge_VeryGood -> {
+                return (double) demAge;
+            }
+            case demAgeSq_Fair, demAgeSq_Good, demAgeSq_Low, demAgeSq_Medium, demAgeSq_Poor, demAgeSq_VeryGood -> {
+                return (double) demAge * demAge;
+            }
+
+            // -----------------------------------------------------------------------
+            // demMaleFlag interaction terms
+            // -----------------------------------------------------------------------
+            case demMaleFlag_Fair, demMaleFlag_Formal, demMaleFlag_Good, demMaleFlag_Low,
+                    demMaleFlag_Medium, demMaleFlag_Mixed, demMaleFlag_Poor, demMaleFlag_VeryGood -> {
+                return (Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // demCompHhC4 interaction terms
+            // -----------------------------------------------------------------------
+            case demCompHhC4CoupleChL1_Fair, demCompHhC4CoupleChL1_Good,
+                    demCompHhC4CoupleChL1_Poor, demCompHhC4CoupleChL1_VeryGood -> {
+                return (Dhhtp_c4.CoupleChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
+            }
+            case demCompHhC4SingleNoChL1_Fair, demCompHhC4SingleNoChL1_Good,
+                    demCompHhC4SingleNoChL1_Poor, demCompHhC4SingleNoChL1_VeryGood -> {
+                return (Dhhtp_c4.SingleNoChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // demEthnC4 interaction terms
+            // -----------------------------------------------------------------------
+            case demEthnC4Asian_Fair, demEthnC4Asian_Formal, demEthnC4Asian_Good,
+                    demEthnC4Asian_Mixed, demEthnC4Asian_Poor, demEthnC4Asian_VeryGood -> {
+                return demEthnC6.equals(Ethnicity.Asian) ? 1. : 0.;
+            }
+            case demEthnC4Black_Formal, demEthnC4Black_Mixed -> {
+                return demEthnC6.equals(Ethnicity.Black) ? 1. : 0.;
+            }
+            case demEthnC4Other_Formal, demEthnC4Other_Mixed -> {
+                return (demEthnC6.equals(Ethnicity.Other) || demEthnC6.equals(Ethnicity.Missing)) ? 1. : 0.;
+            }
+
+            // -----------------------------------------------------------------------
+            // demPartnerStatus interaction terms
+            // -----------------------------------------------------------------------
+            case demPartnerStatusPartnered_Formal, demPartnerStatusPartnered_Mixed -> {
+                return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // region interaction terms
+            // -----------------------------------------------------------------------
+            case demRgnUKC_Formal, demRgnUKC_Mixed -> {
+                return Region.UKC.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKD_Formal, demRgnUKD_Mixed -> {
+                return Region.UKD.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKE_Fair, demRgnUKE_Formal, demRgnUKE_Good, demRgnUKE_Low,
+                    demRgnUKE_Medium, demRgnUKE_Mixed, demRgnUKE_Poor, demRgnUKE_VeryGood -> {
+                return Region.UKE.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKF_Fair, demRgnUKF_Formal, demRgnUKF_Good,
+                    demRgnUKF_Mixed, demRgnUKF_Poor, demRgnUKF_VeryGood -> {
+                return Region.UKF.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKG_Fair, demRgnUKG_Formal, demRgnUKG_Good,
+                    demRgnUKG_Mixed, demRgnUKG_Poor, demRgnUKG_VeryGood -> {
+                return Region.UKG.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKH_Fair, demRgnUKH_Formal, demRgnUKH_Good,
+                    demRgnUKH_Mixed, demRgnUKH_Poor, demRgnUKH_VeryGood -> {
+                return Region.UKH.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKJ_Fair, demRgnUKJ_Formal, demRgnUKJ_Good,
+                    demRgnUKJ_Mixed, demRgnUKJ_Poor, demRgnUKJ_VeryGood -> {
+                return Region.UKJ.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKK_Fair, demRgnUKK_Formal, demRgnUKK_Good,
+                    demRgnUKK_Mixed, demRgnUKK_Poor, demRgnUKK_VeryGood -> {
+                return Region.UKK.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKL_Formal, demRgnUKL_Mixed -> {
+                return Region.UKL.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKM_Formal, demRgnUKM_Low, demRgnUKM_Medium, demRgnUKM_Mixed -> {
+                return Region.UKM.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKN_Fair, demRgnUKN_Formal, demRgnUKN_Good, demRgnUKN_Low,
+                    demRgnUKN_Medium, demRgnUKN_Mixed, demRgnUKN_Poor, demRgnUKN_VeryGood -> {
+                return Region.UKN.equals(getRegion()) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // demYear interaction terms
+            // -----------------------------------------------------------------------
+            case demYear_Fair, demYear_Good, demYear_Low, demYear_Medium, demYear_Poor, demYear_VeryGood -> {
+                return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn : (double) getYear();
+            }
+            case demYear2020, demYear2020_Formal, demYear2020_Mixed -> {
+                return (getYear() == 2020) ? 1. : 0.;
+            }
+            case demYear2021, demYear2021_Fair, demYear2021_Formal, demYear2021_Good,
+                    demYear2021_Mixed, demYear2021_Poor, demYear2021_VeryGood -> {
+                return (getYear() == 2021) ? 1. : 0.;
+            }
+
+            // -----------------------------------------------------------------------
+            // education interaction terms
+            // -----------------------------------------------------------------------
+            case eduHighestC4Low_Formal, eduHighestC4Low_Mixed -> {
+                return (Education.Low.equals(eduHighestC4)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4Medium_Formal, eduHighestC4Medium_Mixed -> {
+                return (Education.Medium.equals(eduHighestC4)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4LowL1_Fair, eduHighestC4LowL1_Good, eduHighestC4LowL1_Poor, eduHighestC4LowL1_VeryGood -> {
+                return (Education.Low.equals(eduHighestC4L1)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4MediumL1_Fair, eduHighestC4MediumL1_Good, eduHighestC4MediumL1_Poor, eduHighestC4MediumL1_VeryGood -> {
+                return (Education.Medium.equals(eduHighestC4L1)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4NaL1_Fair, eduHighestC4NaL1_Good, eduHighestC4NaL1_Poor, eduHighestC4NaL1_VeryGood -> {
+                return (Education.InEducation.equals(eduHighestC4L1) || Indicator.True.equals(eduSpellFlagL1)) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // health interaction terms
+            // -----------------------------------------------------------------------
+            case healthDsblLongtermFlagL1_Fair, healthDsblLongtermFlagL1_Good,
+                    healthDsblLongtermFlagL1_Poor, healthDsblLongtermFlagL1_VeryGood -> {
+                return Indicator.True.equals(healthDsblLongtermFlagL1) ? 1. : 0.;
+            }
+            case healthMentalMcsL1_Fair, healthMentalMcsL1_Good, healthMentalMcsL1_Poor, healthMentalMcsL1_VeryGood -> {
+                return (healthMentalMcsL1 != null && healthMentalMcsL1 >= 0.) ? healthMentalMcsL1 : 0.;
+            }
+            case healthPhysicalPcsL1_Fair, healthPhysicalPcsL1_Good, healthPhysicalPcsL1_Poor, healthPhysicalPcsL1_VeryGood -> {
+                return (healthPhysicalPcsL1 != null && healthPhysicalPcsL1 >= 0.) ? healthPhysicalPcsL1 : 0.;
+            }
+            case healthSelfRatedExcellent_Formal, healthSelfRatedExcellent_Mixed -> {
+                return (Dhe.Excellent.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedFair_Formal, healthSelfRatedFair_Mixed -> {
+                return (Dhe.Fair.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedGood_Formal, healthSelfRatedGood_Mixed -> {
+                return (Dhe.Good.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedVeryGood_Formal, healthSelfRatedVeryGood_Mixed -> {
+                return (Dhe.VeryGood.equals(healthSelfRated)) ? 1. : 0.;
+            }
+
+            // -----------------------------------------------------------------------
+            // labour status interaction terms
+            // -----------------------------------------------------------------------
+            case labStatusC4EmployedL1_Fair, labStatusC4EmployedL1_Good,
+                    labStatusC4EmployedL1_Poor, labStatusC4EmployedL1_VeryGood -> {
+                return (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) ? 1.0 : 0.0;
+            }
+            case labStatusC4RetiredL1_Fair, labStatusC4RetiredL1_Good,
+                    labStatusC4RetiredL1_Poor, labStatusC4RetiredL1_VeryGood -> {
+                return (Les_c4.Retired.equals(labC4L1)) ? 1. : 0.;
+            }
+
+            // -----------------------------------------------------------------------
+            // income quintile new naming
+            // -----------------------------------------------------------------------
+            case yHhQuintilesMonthC5Q2, yHhQuintilesMonthC5Q2_Formal, yHhQuintilesMonthC5Q2_Mixed -> {
+                return (Ydses_c5.Q2.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q2L1, yHhQuintilesMonthC5Q2L1_Fair, yHhQuintilesMonthC5Q2L1_Good,
+                    yHhQuintilesMonthC5Q2L1_Poor, yHhQuintilesMonthC5Q2L1_VeryGood -> {
+                return (Ydses_c5.Q2.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q3, yHhQuintilesMonthC5Q3_Formal, yHhQuintilesMonthC5Q3_Mixed -> {
+                return (Ydses_c5.Q3.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q3L1, yHhQuintilesMonthC5Q3L1_Fair, yHhQuintilesMonthC5Q3L1_Good,
+                    yHhQuintilesMonthC5Q3L1_Poor, yHhQuintilesMonthC5Q3L1_VeryGood -> {
+                return (Ydses_c5.Q3.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q4, yHhQuintilesMonthC5Q4_Formal, yHhQuintilesMonthC5Q4_Mixed -> {
+                return (Ydses_c5.Q4.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q4L1, yHhQuintilesMonthC5Q4L1_Fair, yHhQuintilesMonthC5Q4L1_Good,
+                    yHhQuintilesMonthC5Q4L1_Poor, yHhQuintilesMonthC5Q4L1_VeryGood -> {
+                return (Ydses_c5.Q4.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q5, yHhQuintilesMonthC5Q5_Formal, yHhQuintilesMonthC5Q5_Mixed -> {
+                return (Ydses_c5.Q5.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+            }
+            case yHhQuintilesMonthC5Q5L1, yHhQuintilesMonthC5Q5L1_Fair, yHhQuintilesMonthC5Q5L1_Good,
+                    yHhQuintilesMonthC5Q5L1_Poor, yHhQuintilesMonthC5Q5L1_VeryGood -> {
+                return (Ydses_c5.Q5.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+            }
+
+            // -----------------------------------------------------------------------
+            // lowercase / legacy-naming aliases
+            // -----------------------------------------------------------------------
+            case dag_L1 -> {
+                return (double) demAge - 1;
+            }
+            case dagsq_L1 -> {
+                return (double) (demAge - 1) * (demAge - 1);
+            }
+            case dgn -> {
+                return (Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case dhh_owned_L1 -> {
+                return demPrptyFlagL1 ? 1. : 0.;
+            }
+            case dlltsd01_L1 -> {
+                return Indicator.True.equals(healthDsblLongtermFlagL1) ? 1. : 0.;
+            }
+            case dnc_L1 -> {
+                return (double) getNumberChildrenAll_lag1();
+            }
+            case drgn1_L1 -> {
+                return (double) getRegion().getValue();
+            }
+            case econ_benefits_L1 -> {
+                return isReceivesBenefitsFlag_L1() ? 1. : 0.;
+            }
+            case financial_distress_L1 -> {
+                return (yFinDstrssFlag != null && yFinDstrssFlag) ? 1. : 0.;
+            }
+            case labWageHrlyL1 -> {
+                return (labWageFullTimeHrlyL1 != null && labWageFullTimeHrlyL1 > 0) ? labWageFullTimeHrlyL1 : 0.;
+            }
+            case labWageHrlyLogL1 -> {
+                return (labWageFullTimeHrlyL1 != null && labWageFullTimeHrlyL1 > 0) ? Math.log(labWageFullTimeHrlyL1) : 0.;
+            }
+            case realWageGrowth -> {
+                return (labWageFullTimeHrly != null && labWageFullTimeHrlyL1 != null && labWageFullTimeHrly > 0 && labWageFullTimeHrlyL1 > 0) ? Math.log(labWageFullTimeHrly) - Math.log(labWageFullTimeHrlyL1) : 0.;
+            }
+            case stm -> {
+                return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn : (double) getYear();
+            }
+            case wealthPrptyFlagL1 -> {
+                return demPrptyFlagL1 ? 1. : 0.;
+            }
+            case yCapitalPersMonthL1 -> {
+                return yCapitalPersMonthL1 != null ? yCapitalPersMonthL1 : 0.;
+            }
+            case yCapitalPersMonthL2 -> {
+                return yCapitalPersMonthL2 != null ? yCapitalPersMonthL2 : 0.;
+            }
+            case yEmpPersGrossMonthL1 -> {
+                return yEmpPersGrossMonthL1 != null ? yEmpPersGrossMonthL1 : 0.;
+            }
+            case yEmpPersGrossMonthL2 -> {
+                return yEmpPersGrossMonthL2 != null ? yEmpPersGrossMonthL2 : 0.;
+            }
+            case yMiscPersGrossMonthL1 -> {
+                return yMiscPersGrossMonthL1 != null ? yMiscPersGrossMonthL1 : 0.;
+            }
+            case yNonBenPersGrossMonthL1 -> {
+                return yNonBenPersGrossMonthL1 != null ? yNonBenPersGrossMonthL1 : 0.;
+            }
+            case yPensPersGrossMonthL1 -> {
+                return yPensPersGrossMonthL1 != null ? yPensPersGrossMonthL1 : 0.;
+            }
+            case yPensPersGrossMonthL2 -> {
+                return yPensPersGrossMonthL2 != null ? yPensPersGrossMonthL2 : 0.;
+            }
+            case ypncp_L1 -> {
+                return yCapitalPersMonthL1 != null ? yCapitalPersMonthL1 : 0.;
+            }
+            case ypnoab_L1 -> {
+                return yPensPersGrossMonthL1 != null ? yPensPersGrossMonthL1 : 0.;
+            }
+            case yPersAndPartnerGrossDiffMonthL1 -> {
+                return yPersAndPartnerGrossDiffMonthL1 != null ? yPersAndPartnerGrossDiffMonthL1 : 0.;
+            }
+
+            // -----------------------------------------------------------------------
+            // Pre-existing enum values used in estimation files (missing cases)
+            // -----------------------------------------------------------------------
+            case careHrsFormalIhsL1 -> {
+                return Parameters.asinh(getHoursFormalSocialCare_L1());
+            }
+            case careHrsInformalIhsL1 -> {
+                return Parameters.asinh(getHoursInformalSocialCare_L1());
+            }
+            case careHrsProvidedWeekIhsL1 -> {
+                double hrs = (careHrsProvidedWeekL1 != null && careHrsProvidedWeekL1 > 0.0) ? careHrsProvidedWeekL1 : 0.0;
+                return Parameters.asinh(hrs);
+            }
+            case careMarketMixedPsrtner -> {
+                Person partner = getPartner();
+                if (partner == null) return 0.;
+                return (partner.getHoursFormalSocialCare() > 0.01 && partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+            }
+            case careNeedFlag -> {
+                return Indicator.True.equals(careNeedFlag) ? 1. : 0.;
+            }
+            case careNeedFlagL1 -> {
+                return Indicator.True.equals(careNeedFlagL1) ? 1. : 0.;
+            }
+            case careProvidedFlagL1 -> {
+                return Indicator.True.equals(careProvidedFlagL1) ? 1. : 0.;
+            }
+            case careReceivedFlag -> {
+                return (SocialCareReceipt.Formal.equals(careReceivedFlag) || SocialCareReceipt.Informal.equals(careReceivedFlag) || SocialCareReceipt.Mixed.equals(careReceivedFlag)) ? 1. : 0.;
+            }
+            case careReceivedFlagL1 -> {
+                return (getTotalHoursSocialCare_L1() > 0.01) ? 1. : 0.;
+            }
+            case careReceivedPartnerFlag -> {
+                Person partner = getPartner();
+                if (partner == null) return 0.;
+                return (partner.getHoursFormalSocialCare() + partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+            }
+            case demAgePartnerDiffL1 -> {
+                return (demAgePartnerDiffL1 != null) ? (double) demAgePartnerDiffL1 : 0.0;
+            }
+            case demAgeSq -> {
+                return (double) demAge * demAge;
+            }
+            case demCompHhC4CoupleChL1 -> {
+                return (Dhhtp_c4.CoupleChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
+            }
+            case demCompHhC4L1SingleChL1 -> {
+                return (Dhhtp_c4.SingleChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
+            }
+            case demCompHhC4SingleNoChL1 -> {
+                return (Dhhtp_c4.SingleNoChildren.equals(getDemCompHhC4L1())) ? 1.0 : 0.0;
+            }
+            case demCompHhC81L1 -> {
+                // Couple with no children, spouse employed (baseline category)
+                Person partner = getPartner();
+                if (partner != null && partner.labC4L1 != null)
+                    return (Les_c4.EmployedOrSelfEmployed.equals(partner.labC4L1) && Dhhtp_c4.CoupleNoChildren.equals(getDemCompHhC4L1())) ? 1. : 0.;
+                else
+                    return 0.;
+            }
+            case demCompHhC82L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_2_L1);
+            }
+            case demCompHhC83L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_3_L1);
+            }
+            case demCompHhC84L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_4_L1);
+            }
+            case demCompHhC85L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_5_L1);
+            }
+            case demCompHhC86L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_6_L1);
+            }
+            case demCompHhC87L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_7_L1);
+            }
+            case demCompHhC88L1 -> {
+                return getDoubleValue(DoublesVariables.Dhhtp_c8_8_L1);
+            }
+            case demEnterPartnerFlagL1 -> {
+                if (demPartnerStatusL1 != null && demPartnerStatusL2 != null)
+                    return (Dcpst.Partnered.equals(demPartnerStatusL1) && !Dcpst.Partnered.equals(demPartnerStatusL2)) ? 1. : 0.;
+                else
+                    return 0.;
+            }
+            case demEthnC4Asian -> {
+                return demEthnC6.equals(Ethnicity.Asian) ? 1. : 0.;
+            }
+            case demEthnC4Black -> {
+                return demEthnC6.equals(Ethnicity.Black) ? 1. : 0.;
+            }
+            case demEthnC4Other -> {
+                return (demEthnC6.equals(Ethnicity.Other) || demEthnC6.equals(Ethnicity.Missing)) ? 1. : 0.;
+            }
+            case demMaleFlag -> {
+                return (Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case demNChild -> {
+                return (double) getNumberChildrenAll();
+            }
+            case demNChild0to2L1 -> {
+                return (double) getNumberChildren02_lag1();
+            }
+            case demNChildL1 -> {
+                return (double) getNumberChildrenAll_lag1();
+            }
+            case demPartnerNYearL1 -> {
+                return (demPartnerNYearL1 != null) ? (double) demPartnerNYearL1 : 0.0;
+            }
+            case demPartnerStatusPartnered -> {
+                return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
+            }
+            case demPartnerStatusPartneredL1 -> {
+                return (demPartnerStatusL1 != null && demPartnerStatusL1.equals(Dcpst.Partnered)) ? 1. : 0.;
+            }
+            case demPartnerStatusSingle -> {
+                return (Dcpst.Single.equals(getDcpst())) ? 1.0 : 0.0;
+            }
+            case demPartnerStatusSingleL1 -> {
+                return (demPartnerStatusL1 != null && demPartnerStatusL1.equals(Dcpst.Single)) ? 1. : 0.;
+            }
+            case demPensAgeFlag -> {
+                return getDoubleValue(DoublesVariables.Reached_Retirement_Age);
+            }
+            case demPensAgeFlag_NotEmployedL1 -> {
+                return (getDoubleValue(DoublesVariables.Reached_Retirement_Age) > 0. && Les_c4.NotEmployed.equals(labC4L1)) ? 1. : 0.;
+            }
+            case demPensPartnerAgeFlag -> {
+                return getDoubleValue(DoublesVariables.Reached_Retirement_Age_Sp);
+            }
+            case demRgnUKC -> {
+                return Region.UKC.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKD -> {
+                return Region.UKD.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKE -> {
+                return Region.UKE.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKF -> {
+                return Region.UKF.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKG -> {
+                return Region.UKG.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKH -> {
+                return Region.UKH.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKI -> {
+                return Region.UKI.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKJ -> {
+                return Region.UKJ.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKK -> {
+                return Region.UKK.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKL -> {
+                return Region.UKL.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKM -> {
+                return Region.UKM.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demRgnUKN -> {
+                return Region.UKN.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case demYear -> {
+                return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn : (double) getYear();
+            }
+            case eduHighestC4High -> {
+                return (Education.High.equals(eduHighestC4)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4HighL1 -> {
+                return (Education.High.equals(eduHighestC4L1)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4HighL1_demAge -> {
+                return (Education.High.equals(eduHighestC4L1)) ? demAge : 0.0;
+            }
+            case eduHighestC4Low -> {
+                return (Education.Low.equals(eduHighestC4)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4LowL1 -> {
+                return (Education.Low.equals(eduHighestC4L1)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4LowL1_demAge -> {
+                return (Education.Low.equals(eduHighestC4L1)) ? demAge : 0.0;
+            }
+            case eduHighestC4Medium -> {
+                return (Education.Medium.equals(eduHighestC4)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4MediumL1 -> {
+                return (Education.Medium.equals(eduHighestC4L1)) ? 1.0 : 0.0;
+            }
+            case eduHighestC4MediumL1_demAge -> {
+                return (Education.Medium.equals(eduHighestC4L1)) ? demAge : 0.0;
+            }
+            case eduHighestC4NaL1 -> {
+                return (Education.InEducation.equals(eduHighestC4L1) || Indicator.True.equals(eduSpellFlagL1)) ? 1.0 : 0.0;
+            }
+            case eduHighestParentC3High -> {
+                return checkHighestParentalEducationEquals(Education.High) ? 1.0 : 0.0;
+            }
+            case eduHighestParentC3Medium -> {
+                return checkHighestParentalEducationEquals(Education.Medium) ? 1.0 : 0.0;
+            }
+            case eduHighestParentC3LowL1 -> {
+                return (checkHighestParentalEducationEquals(Education.Low) || checkHighestParentalEducationEquals(Education.InEducation)) ? 1.0 : 0.0;
+            }
+            case eduHighestParentC3MediumL1 -> {
+                return checkHighestParentalEducationEquals(Education.Medium) ? 1.0 : 0.0;
+            }
+            case eduHighestPartnerC3LowL1 -> {
+                return (Education.Low.equals(eduHighestPartnerC4L1) || Education.InEducation.equals(eduHighestPartnerC4L1)) ? 1. : 0.;
+            }
+            case eduHighestPartnerC3MediumL1 -> {
+                return Education.Medium.equals(eduHighestPartnerC4L1) ? 1. : 0.;
+            }
+            case eduSampleFlag -> {
+                return Indicator.True.equals(eduSpellFlag) ? 1.0 : 0.0;
+            }
+            case eduSampleFlagL1 -> {
+                return Indicator.True.equals(eduSpellFlagL1) ? 1.0 : 0.0;
+            }
+            case eduSampleFlag_Male -> {
+                return (Indicator.True.equals(eduSpellFlag) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case eduSampleFlag_McsL1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Dhe_mcs_L1) : 0.0;
+            }
+            case eduSampleFlag_PcsL1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Dhe_pcs_L1) : 0.0;
+            }
+            case eduSampleFlag_Q2L1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q2_L1) : 0.0;
+            }
+            case eduSampleFlag_Q3L1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q3_L1) : 0.0;
+            }
+            case eduSampleFlag_Q4L1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q4_L1) : 0.0;
+            }
+            case eduSampleFlag_Q5L1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q5_L1) : 0.0;
+            }
+            case eduSampleFlag_Single -> {
+                return (Indicator.True.equals(eduSpellFlag) && Dcpst.Single.equals(getDcpst())) ? 1.0 : 0.0;
+            }
+            case eduSampleFlag_demMaleFlag -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.demMaleFlag) : 0.0;
+            }
+            case eduSampleFlag_demNChild0to2L1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildren02_lag1() : 0.0;
+            }
+            case eduSampleFlag_demNChildL1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildrenAll_lag1() : 0.0;
+            }
+            case eduSampleFlag_yCapitalPersL1 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ypncp_L1) : 0.0;
+            }
+            case eduSampleFlag_yCapitalPersL2 -> {
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ypncp_L2) : 0.0;
+            }
+            case exp_incchange -> {
+                return 0.; // approximate - income change transition not directly stored
+            }
+            case exp_poverty -> {
+                return 0.; // approximate - poverty transition code not directly stored
+            }
+            case healthDsblLongtermFlag -> {
+                return Indicator.True.equals(healthDsblLongtermFlag) ? 1. : 0.;
+            }
+            case healthDsblLongtermFlagL1 -> {
+                return Indicator.True.equals(healthDsblLongtermFlagL1) ? 1. : 0.;
+            }
+            case healthMentalMcsL1 -> {
+                return (healthMentalMcsL1 != null && healthMentalMcsL1 >= 0.) ? healthMentalMcsL1 : 0.;
+            }
+            case healthMentalPartnerMcsL1 -> {
+                Person partner = getPartner();
+                return (partner != null && partner.getHealthMentalMcsL1() != null) ? partner.getHealthMentalMcsL1() : 0.;
+            }
+            case healthPartnerSelfRatedExcellent -> {
+                Person partner = getPartner();
+                return (partner != null && Dhe.Excellent.equals(partner.getDhe())) ? 1. : 0.;
+            }
+            case healthPartnerSelfRatedFair -> {
+                return getDoubleValue(DoublesVariables.Dhesp_Fair);
+            }
+            case healthPartnerSelfRatedGood -> {
+                return getDoubleValue(DoublesVariables.Dhesp_Good);
+            }
+            case healthPartnerSelfRatedVeryGood -> {
+                return getDoubleValue(DoublesVariables.Dhesp_VeryGood);
+            }
+            case healthPhysicalPartnerPcsL1 -> {
+                Person partner = getPartner();
+                return (partner != null && partner.getHealthPhysicalPcsL1() != null) ? partner.getHealthPhysicalPcsL1() : 0.;
+            }
+            case healthPhysicalPcsL1 -> {
+                return (healthPhysicalPcsL1 != null && healthPhysicalPcsL1 >= 0.) ? healthPhysicalPcsL1 : 0.;
+            }
+            case healthSelfRatedExcellent -> {
+                return (Dhe.Excellent.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedFair -> {
+                return (Dhe.Fair.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedGood -> {
+                return (Dhe.Good.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case healthSelfRatedVeryGood -> {
+                return (Dhe.VeryGood.equals(healthSelfRated)) ? 1. : 0.;
+            }
+            case labPt -> {
+                return (getLabourSupplyHoursWeekly() > 0 && getLabourSupplyHoursWeekly() < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED) ? 1. : 0.;
+            }
+            case labStatusC3NotEmployedL1 -> {
+                return (Les_c4.NotEmployed.equals(labC4L1) || Les_c4.Retired.equals(labC4L1)) ? 1. : 0.;
+            }
+            case labStatusC3StudentL1 -> {
+                return Les_c4.Student.equals(labC4L1) ? 1. : 0.;
+            }
+            case labStatusC4EmployedL1 -> {
+                return (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) ? 1.0 : 0.0;
+            }
+            case labStatusC4EmployedL1_Male -> {
+                return (Les_c4.EmployedOrSelfEmployed.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case labStatusC4NotEmployedL1 -> {
+                return (Les_c4.NotEmployed.equals(labC4L1)) ? 1.0 : 0.0;
+            }
+            case labStatusC4NotEmployedL1_Male -> {
+                return (Les_c4.NotEmployed.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case labStatusC4RetiredL1 -> {
+                return (Les_c4.Retired.equals(labC4L1)) ? 1.0 : 0.0;
+            }
+            case labStatusC4RetiredL1_Male -> {
+                return (Les_c4.Retired.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case labStatusC4StudentL1 -> {
+                return (Les_c4.Student.equals(labC4L1)) ? 1.0 : 0.0;
+            }
+            case labStatusC4StudentL1_Male -> {
+                return (Les_c4.Student.equals(labC4L1) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
+            }
+            case labStatusPartnerAndOwnC42L1 -> {
+                return (labStatusPartnerAndOwnC4L1 != null && Lesdf_c4.EmployedSpouseNotEmployed.equals(labStatusPartnerAndOwnC4L1)) ? 1. : 0.;
+            }
+            case labStatusPartnerAndOwnC43L1 -> {
+                return (labStatusPartnerAndOwnC4L1 != null && Lesdf_c4.NotEmployedSpouseEmployed.equals(labStatusPartnerAndOwnC4L1)) ? 1. : 0.;
+            }
+            case labStatusPartnerAndOwnC44L1 -> {
+                return (labStatusPartnerAndOwnC4L1 != null && Lesdf_c4.BothNotEmployed.equals(labStatusPartnerAndOwnC4L1)) ? 1. : 0.;
+            }
+
             default -> {
                 throw new IllegalArgumentException("Unsupported regressor " + variableID.name() + " in Person#getDoubleValue");
             }
@@ -5976,15 +7533,15 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             double ptPremium;
             if (labC4L1.equals(Les_c4.EmployedOrSelfEmployed)) {
                 if (Gender.Male.equals(demMaleFlag)) {
-                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesE, "Pt");
+                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesE, "labPt");
                 } else {
-                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesE, "Pt");
+                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesE, "labPt");
                 }
             } else {
                 if (Gender.Male.equals(demMaleFlag)) {
-                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesNE, "Pt");
+                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesNE, "labPt");
                 } else {
-                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesNE, "Pt");
+                    ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesNE, "labPt");
                 }
             }
             return Math.exp( Math.log(labWageFullTimeHrly) + ptPremium);
