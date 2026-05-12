@@ -90,7 +90,7 @@ Run:
 codex --version
 ```
 
-If this prints a version number, Codex CLI is available from PowerShell.If PowerShell says `codex` is not recognized, install or repair Codex CLI before using AI review automation. Candidate detection can still run without Codex CLI, but fully automatic or on-demand AI review cannot.
+If this prints a version number, Codex CLI is available from PowerShell. If PowerShell says `codex` is not recognized, install or repair Codex CLI before using AI review automation. Candidate detection can still run without Codex CLI, but fully automatic or on-demand AI review cannot.
 
 ### 2.4 Log in to Codex CLI
 
@@ -110,6 +110,8 @@ This guide assumes the repository is here:
 D:\CeMPA\SimPaths
 ```
 
+If your clone is elsewhere, replace `D:\CeMPA\SimPaths` in the commands with your clone path.
+
 ### 2.6 Choose a Git Review Tool
 
 GitHub Desktop is not required, but it is a beginner-friendly way to review and commit the documentation changes produced by the automation.
@@ -120,7 +122,6 @@ You can use any of these:
 - IntelliJ IDEA Git tools;
 - VS Code Source Control;
 - PowerShell with `git status` and `git diff`.
-
 
 ### 2.7 Commit the Automation Scripts First
 
@@ -136,6 +137,8 @@ Install the fully automatic hook once per clone.
 D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -Mode Agent -BypassCodexSandbox -Quiet -Force
 ```
 
+This recommended command includes `-Quiet`, so routine commits show only short status messages during the automatic AI review. The detailed Codex transcript is saved to `documentation/flowcharts/flowchart_review_agent.log`.
+
 The installer writes:
 
 ```text
@@ -150,7 +153,7 @@ The hook is local to the current clone. If you clone the repository elsewhere, r
 D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -Uninstall
 ```
 
-The uninstall step removes only a hook created by this workflow. It refuses to remove an unrelated existing `post-commit` hook.
+The uninstall command removes the flowchart automation hook only if it recognizes that the hook was created by this installer. It will not delete an unrelated custom `post-commit` hook.
 
 ## 4. After a Commit
 
@@ -181,7 +184,7 @@ git diff documentation/flowcharts
 
 Review the changed documentation files. If they are correct, commit the documentation review output separately from the original code commit.
 
-## 5. Generated Prompt And Log
+## 5. Generated Prompt and Log
 
 The prompt and log are generated handoff/debugging artifacts, not source documents.
 
@@ -199,9 +202,9 @@ This file is ignored by Git. It is normal for a fresh checkout or branch not to 
 documentation/flowcharts/flowchart_review_agent.log
 ```
 
-The full Codex transcript is written to this log when `-Quiet` is used. The log file is ignored by Git. `-Quiet` keeps terminal output short, but it does not reduce the token cost of AI review.
+This log stores the detailed Codex output for the latest AI review run. It is ignored by Git.
 
-The log is overwritten on each Codex review run. It contains the latest AI review transcript only, not a permanent history.
+The log is overwritten on each Codex review run. It contains the latest AI review transcript only.
 
 ### 5.3 Prompt Contents
 
@@ -218,20 +221,26 @@ Priority modules should be reviewed first. File-level matches are candidates onl
 
 ## 6. Advanced Cost-Control Workflow: On-Demand Codex Review
 
-On-demand review is the controlled alternative to fully automatic review. The hook detects candidates after each commit, but Codex runs only when you explicitly ask it to.
+On-demand review is the controlled alternative to fully automatic review. In this workflow, commits still trigger candidate detection, but Codex runs only when you explicitly ask it to.
 
-### 6.1 Install Detection Hook
+### 6.1 Enable On-Demand Review
 
-Preview:
+If you currently have the fully automatic hook installed, uninstall it first:
 
 ```powershell
-D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -DryRun
+D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -Uninstall
 ```
 
-Install:
+Then install the detection hook:
 
 ```powershell
 D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -Force
+```
+
+If you are setting up on-demand review from a fresh clone, run only the install command above. To preview the hook before installing it, run:
+
+```powershell
+D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -DryRun
 ```
 
 This hook runs:
@@ -240,7 +249,7 @@ This hook runs:
 Prepare-FlowchartReview.ps1 -UpdateManifest
 ```
 
-It detects candidates and writes a prompt, but it does not call Codex or update flowchart module Markdown files.
+After this setup, future commits detect candidates and write a prompt, but they do not call Codex or update flowchart module Markdown files.
 
 ### 6.2 Run Codex Review When Wanted
 
@@ -314,8 +323,16 @@ Use the same pattern for other `.ps1` scripts by replacing the path and argument
 
 If you want to check what hook would be installed before changing `.git/hooks/post-commit`, run:
 
+For fully automatic AI review:
+
 ```powershell
 D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -Mode Agent -BypassCodexSandbox -Quiet -DryRun
+```
+
+For on-demand review:
+
+```powershell
+D:\CeMPA\SimPaths\.codex\skills\flowchart-update\scripts\Install-FlowchartReviewHook.ps1 -DryRun
 ```
 
 This prints the hook path and command that would be installed, but does not change the hook file.
