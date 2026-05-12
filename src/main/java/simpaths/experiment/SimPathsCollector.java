@@ -387,7 +387,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             stats.setYLabP80(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80));
 
             for (Person person : model.getPersons()) {
-                double covidModuleGrossLabourIncomeBaseline = person.getCovidModuleGrossLabourIncome_Baseline();
+                double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
                 if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
                 } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabP40()) {

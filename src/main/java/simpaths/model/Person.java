@@ -3833,7 +3833,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return getGrossEarningsYearly();
             }
             case GrossLabourIncomeMonthly -> {
-                return getCovidModuleGrossLabourIncome_Baseline();
+                return getCovidYLabGross();
             }
             case InverseMillsRatio -> {
                 return getInverseMillsRatio();
@@ -5650,12 +5650,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         this.covidSEISSReceivedFlag = covidSEISSReceivedFlag;
     }
 
-    public double getCovidModuleGrossLabourIncome_Baseline() {
+    public double getCovidYLabGross() {
         return (covidYLabGross !=null) ? covidYLabGross : 0.0;
     }
 
-    public void setCovidModuleGrossLabourIncome_Baseline(double val) {
-        covidYLabGross = val;
+    public void setCovidYLabGross(double covidYLabGross) {
+        this.covidYLabGross = covidYLabGross;
     }
 
     public Quintiles getCovidYLabGrossXt5() {

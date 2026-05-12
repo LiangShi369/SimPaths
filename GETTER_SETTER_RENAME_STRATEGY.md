@@ -572,8 +572,6 @@ Agreed exception:
 
 | Current method | Reason to defer |
 | --- | --- |
-| `getCovidModuleGrossLabourIncome_Baseline()` | returns `covidYLabGross` with defaulting; no `covidYLabGrossBaseline` backing field |
-| `setCovidModuleGrossLabourIncome_Baseline(...)` | sets `covidYLabGross`, but the "Baseline" method name is domain-specific |
 | `getHoursFormalSocialCare_L1()` | returns `careHrsFormalWeekL1` with zero floor/defaulting |
 | `getHoursInformalSocialCare_L1()` | returns `careHrsInformalWeekL1` with zero floor/defaulting |
 | `getTotalHoursSocialCare_L1()` | computed formal + informal lag hours |
@@ -584,18 +582,20 @@ Agreed exception:
 | `getCareHoursFromOther_L1()` | computed from partner status and informal lag hours |
 | `getYnbcpdf_dv()` | computed current difference between own and partner non-benefit gross personal income; used as a `@Lag` source |
 
-Completed computed indicator helper renames:
+Completed computed/direct helper renames:
 
 | Old method | New method | Reason |
 | --- | --- | --- |
 | `getEmployed_Lag1()` | `getEmployedFlagL1()` | computed `0/1` indicator from `labC4L1` |
 | `getNonwork_Lag1()` | `getNonworkFlagL1()` | computed `0/1` indicator from `labC4L1` |
+| `getCovidModuleGrossLabourIncome_Baseline()` | `getCovidYLabGross()` | returns `covidYLabGross` with existing null-to-zero default |
+| `setCovidModuleGrossLabourIncome_Baseline(...)` | `setCovidYLabGross(...)` | directly sets `covidYLabGross` |
 
 Validation:
 
 - Compile command: `mvn test -DskipTests`
-- Result: passed on 2026-05-08
-- Remaining old computed indicator helper references in Java source/tests/XML/properties: none
+- Result: passed on 2026-05-08 and 2026-05-12
+- Remaining old completed helper references in Java source/tests/XML/properties: none
 
 
 

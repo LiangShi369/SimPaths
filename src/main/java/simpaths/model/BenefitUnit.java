@@ -789,7 +789,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
         if (person.getLabC7CovidL1() == null) {
             person.initialise_les_c6_from_c4();
-            person.setCovidYLabGrossL1(person.getCovidModuleGrossLabourIncome_Baseline());
+            person.setCovidYLabGrossL1(person.getCovidYLabGross());
         }
 
 
@@ -1875,14 +1875,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             male.setYEmpPersGrossMonth(asinh(labourEarningsMaleMonthly));
             double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getYMiscPersGrossMonth()); //personal non-benefit income per month
             male.setYNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly));
-            male.setCovidModuleGrossLabourIncome_Baseline(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
+            male.setCovidYLabGross(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
 
             // female
             double labourEarningsFemaleMonthly = female.getEarningsWeekly(female.getLabourSupplyHoursWeekly()) * Parameters.WEEKS_PER_MONTH; //Level of monthly labour earnings
             female.setYEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
             double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getYMiscPersGrossMonth()); //In levels
             female.setYNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
-            female.setCovidModuleGrossLabourIncome_Baseline(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
+            female.setCovidYLabGross(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
 
             // benefit unit income is the sum of male and female non-benefit income
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
@@ -1910,7 +1910,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 male.setYEmpPersGrossMonth(asinh(labourEarningsMaleMonthly)); //This follows asinh transform of labourEarnings
                 double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getYMiscPersGrossMonth()); //In levels
                 male.setYNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly)); //Set asinh transformed
-                male.setCovidModuleGrossLabourIncome_Baseline(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
+                male.setCovidYLabGross(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
 
                 //BenefitUnit income is the male non-benefit income
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
@@ -1940,7 +1940,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 female.setYEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
                 double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getYMiscPersGrossMonth()); //In levels
                 female.setYNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
-                female.setCovidModuleGrossLabourIncome_Baseline(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
+                female.setCovidYLabGross(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
 
                 //BenefitUnit income is the female non-benefit income
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised

@@ -317,7 +317,7 @@ public class LabourMarket {
     public void updateGrossLabourIncomeBaseline_Xt5(LinkedHashSet<Person> personsInBenefitUnit) {
         for (Person person : personsInBenefitUnit) {
             if (person != null && person.getCovidYLabGrossXt5() == null) {
-                double covidModuleGrossLabourIncomeBaseline = person.getCovidModuleGrossLabourIncome_Baseline();
+                double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
                 Statistics stats = ((SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName())).getStats();
                 if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
