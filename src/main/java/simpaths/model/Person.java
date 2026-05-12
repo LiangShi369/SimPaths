@@ -115,7 +115,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(getter="getIdPartner") @Transient private Long idPartnerL1;
     @Lag(getter="getHouseholdStatus") @Transient private HouseholdStatus demStatusHhL1;		//Lag(1) of household_status
     @Lag(getter="getAgeDifferencePartner") @Transient private Integer demAgePartnerDiffL1;        //Lag(1) of difference between ages of partners in union
-    @Lag(getter="getYnbcpdf_dv") @Transient private Double yPersAndPartnerGrossDiffMonthL1;      //Lag(1) of difference between own and partner's gross personal non-benefit income
+    @Lag(getter="getYPersAndPartnerGrossDiffMonth") @Transient private Double yPersAndPartnerGrossDiffMonthL1;      //Lag(1) of difference between own and partner's gross personal non-benefit income
 
     @Enumerated(EnumType.STRING) private Indicator eduExitSampleFlag;    // year left education
     @NullInitialised @Transient private Boolean demGiveBirthFlag;
@@ -724,7 +724,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             idPartnerL1 = null;
         }
         demPartnerStatusL1 = getDemPartnerStatus();
-        yPersAndPartnerGrossDiffMonthL1 = getYnbcpdf_dv(); //Lag(1) of difference between own and partner's gross personal non-benefit income
+        yPersAndPartnerGrossDiffMonthL1 = getYPersAndPartnerGrossDiffMonth(); //Lag(1) of difference between own and partner's gross personal non-benefit income
         labStatusPartnerAndOwnC4L1 = getLabStatusPartnerAndOwnC4(); //Lag(1) of own and partner's activity status
     }
 
@@ -3246,7 +3246,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Indicator.True.equals(careProvidedFlagL1)) ? 1. : 0.;
             }
             case ReceiveCare_L1 -> {
-                return (getTotalHoursSocialCare_L1() > 0.01) ? 1. : 0.;
+                return (getCareHrsTotalWeekL1() > 0.01) ? 1. : 0.;
             }
             case ReceiveCare -> {
                 return (getHoursFormalSocialCare() + getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
@@ -3259,10 +3259,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (partner.getHoursFormalSocialCare() + partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
             }
             case HrsReceivedInformalIHS_L1 -> {
-                return Parameters.asinh(getHoursInformalSocialCare_L1());
+                return Parameters.asinh(getCareHrsInformalWeekL1());
             }
             case HrsReceivedFormalIHS_L1 -> {
-                return Parameters.asinh(getHoursFormalSocialCare_L1());
+                return Parameters.asinh(getCareHrsFormalWeekL1());
             }
             case HrsProvidedInformalIHS_L1 -> {
                 double hours = (careHrsProvidedWeekL1 != null && careHrsProvidedWeekL1 > 0.0) ? careHrsProvidedWeekL1 : 0.0;
@@ -3272,10 +3272,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (getHoursFormalSocialCare() > 0.01 && getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
             }
             case CareMarketMixed_L1, CareMarketMixed_L1_Mixed, CareMarketMixed_L1_Formal -> {
-                return (getHoursFormalSocialCare_L1() > 0.01 && getHoursInformalSocialCare_L1() > 0.01) ? 1. : 0.;
+                return (getCareHrsFormalWeekL1() > 0.01 && getCareHrsInformalWeekL1() > 0.01) ? 1. : 0.;
             }
             case CareMarketInformal_L1, CareMarketInformal_L1_Mixed, CareMarketInformal_L1_Formal -> {
-                return (getHoursFormalSocialCare_L1() < 0.01 && getHoursInformalSocialCare_L1() > 0.01) ? 1. : 0.;
+                return (getCareHrsFormalWeekL1() < 0.01 && getCareHrsInformalWeekL1() > 0.01) ? 1. : 0.;
             }
             case CareMarketInformalPartner -> {
                 Person partner = getPartner();
@@ -3285,7 +3285,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (partner.getHoursFormalSocialCare() < 0.01 && partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
             }
             case CareMarketFormal_L1, CareMarketFormal_L1_Mixed, CareMarketFormal_L1_Formal -> {
-                return (getHoursFormalSocialCare_L1() > 0.01 && getHoursInformalSocialCare_L1() < 0.01) ? 1. : 0.;
+                return (getCareHrsFormalWeekL1() > 0.01 && getCareHrsInformalWeekL1() < 0.01) ? 1. : 0.;
             }
             case CareMarketFormalPartner -> {
                 Person partner = getPartner();
@@ -3307,7 +3307,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (getCareHoursFromOther_L1() > 0.01) ? 1. : 0.;
             }
             case CareFromDaughterOnly_L1 -> {
-                return (getCareHoursFromDaughter_L1() > 0.01 && Math.abs(getHoursInformalSocialCare_L1() - getCareHoursFromDaughter_L1()) < 0.01) ? 1. : 0.;
+                return (getCareHoursFromDaughter_L1() > 0.01 && Math.abs(getCareHrsInformalWeekL1() - getCareHoursFromDaughter_L1()) < 0.01) ? 1. : 0.;
             }
             case CareFromDaughterSon_L1 -> {
                 return (getCareHoursFromDaughter_L1() > 0.01 && getCareHoursFromSon_L1() > 0.01) ? 1. : 0.;
@@ -3316,13 +3316,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (getCareHoursFromDaughter_L1() > 0.01 && getCareHoursFromOther_L1() > 0.01) ? 1. : 0.;
             }
             case CareFromSonOnly_L1 -> {
-                return (getCareHoursFromSon_L1() > 0.01 && Math.abs(getHoursInformalSocialCare_L1() - getCareHoursFromSon_L1()) < 0.01) ? 1. : 0.;
+                return (getCareHoursFromSon_L1() > 0.01 && Math.abs(getCareHrsInformalWeekL1() - getCareHoursFromSon_L1()) < 0.01) ? 1. : 0.;
             }
             case CareFromSonOther_L1 -> {
                 return (getCareHoursFromSon_L1() > 0.01 && getCareHoursFromOther_L1() > 0.01) ? 1. : 0.;
             }
             case CareFromOtherOnly_L1 -> {
-                return (getCareHoursFromOther_L1() > 0.01 && Math.abs(getHoursInformalSocialCare_L1() - getCareHoursFromOther_L1()) < 0.01) ? 1. : 0.;
+                return (getCareHoursFromOther_L1() > 0.01 && Math.abs(getCareHrsInformalWeekL1() - getCareHoursFromOther_L1()) < 0.01) ? 1. : 0.;
             }
             case CareFromFormal -> {
                 return (careFormalFlag) ? 1. : 0.;
@@ -6021,7 +6021,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
     public double getBenefitUnitRandomUniform() {return statInnovations.getDoubleDraw(31);}
 
-    public double getHoursFormalSocialCare_L1() {
+    public double getCareHrsFormalWeekL1() {
         return (careHrsFormalWeekL1 > 0.0) ? careHrsFormalWeekL1 : 0.0;
     }
 
@@ -6073,12 +6073,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return hours;
     }
 
-    public double getHoursInformalSocialCare_L1() {
+    public double getCareHrsInformalWeekL1() {
         return (careHrsInformalWeekL1 > 0.0) ? careHrsInformalWeekL1 : 0.0;
     }
 
-    public double getTotalHoursSocialCare_L1() {
-        return getHoursFormalSocialCare_L1() + getHoursInformalSocialCare_L1();
+    public double getCareHrsTotalWeekL1() {
+        return getCareHrsFormalWeekL1() + getCareHrsInformalWeekL1();
     }
 
     public double getCareHoursFromParent_L1() {
@@ -6225,7 +6225,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return healthPsyDstrss0to12L1;
     }
 
-    public Double getYnbcpdf_dv() {
+    public Double getYPersAndPartnerGrossDiffMonth() {
         Person partner = getPartner();
         if (partner != null) {
             if (partner.getYNonBenPersGrossMonth() != null && getYNonBenPersGrossMonth() != null)

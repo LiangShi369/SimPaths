@@ -572,15 +572,11 @@ Agreed exception:
 
 | Current method | Reason to defer |
 | --- | --- |
-| `getHoursFormalSocialCare_L1()` | returns `careHrsFormalWeekL1` with zero floor/defaulting |
-| `getHoursInformalSocialCare_L1()` | returns `careHrsInformalWeekL1` with zero floor/defaulting |
-| `getTotalHoursSocialCare_L1()` | computed formal + informal lag hours |
 | `getCareHoursFromParent_L1()` | computed helper, currently zero |
 | `getCareHoursFromPartner_L1()` | computed from partner status and informal lag hours |
 | `getCareHoursFromDaughter_L1()` | computed helper, currently zero |
 | `getCareHoursFromSon_L1()` | computed helper, currently zero |
 | `getCareHoursFromOther_L1()` | computed from partner status and informal lag hours |
-| `getYnbcpdf_dv()` | computed current difference between own and partner non-benefit gross personal income; used as a `@Lag` source |
 
 Completed computed/direct helper renames:
 
@@ -588,6 +584,10 @@ Completed computed/direct helper renames:
 | --- | --- | --- |
 | `getEmployed_Lag1()` | `getEmployedFlagL1()` | computed `0/1` indicator from `labC4L1` |
 | `getNonwork_Lag1()` | `getNonworkFlagL1()` | computed `0/1` indicator from `labC4L1` |
+| `getHoursFormalSocialCare_L1()` | `getCareHrsFormalWeekL1()` | returns `careHrsFormalWeekL1` with existing zero-floor/default behavior |
+| `getHoursInformalSocialCare_L1()` | `getCareHrsInformalWeekL1()` | returns `careHrsInformalWeekL1` with existing zero-floor/default behavior |
+| `getTotalHoursSocialCare_L1()` | `getCareHrsTotalWeekL1()` | computed total of formal and informal lag care hours |
+| `getYnbcpdf_dv()` | `getYPersAndPartnerGrossDiffMonth()` | computed current own-partner non-benefit gross personal income difference; `@Lag(getter=...)` updated |
 | `getCovidModuleGrossLabourIncome_Baseline()` | `getCovidYLabGross()` | returns `covidYLabGross` with existing null-to-zero default |
 | `setCovidModuleGrossLabourIncome_Baseline(...)` | `setCovidYLabGross(...)` | directly sets `covidYLabGross` |
 
