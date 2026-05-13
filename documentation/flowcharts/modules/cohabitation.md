@@ -34,7 +34,9 @@ The `cohabitation()` process determines:
   - `PartnershipAlignment.evaluate(double[] args)`
 - `src/main/java/simpaths/data/Parameters.java`
   - `MIN_AGE_COHABITATION`
+  - `getRegPartnershipU1A()`
   - `getRegPartnershipU1()`
+  - `getRegPartnershipU2A()`
   - `getRegPartnershipU2()`
 
 ## Schedule Context
@@ -56,7 +58,7 @@ In the household composition block, the relevant order is:
 - `demMaleFlag`: gender flag. Dissolution is evaluated for partnered females only.
 - `probitAdjustment`: partnership alignment adjustment used in the UK branch.
 - `statInnovations.getDoubleDraw(25)`: stochastic draw for formation or dissolution.
-- partnership regressions: UK `U1` and `U2`.
+- partnership regressions: UK `U1A`/`U1` and `U2A`/`U2`.
 - `model.getPersonsToMatch()`: gender/region candidate pools for later union matching.
 
 ## State Changes
@@ -89,10 +91,10 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 | `demLeavePartnerFlag` | Transient flag indicating that a partnered female was selected for partnership dissolution. It is consumed by `partnershipDissolution()`. |
 | `demAlignPartnerProcess` | Alignment/test-partner flag reset here. Test matching can set related alignment state later. |
 | `personsToMatch` | Gender/region candidate pools populated here and consumed by union matching. |
-| `probitAdjustment` | Partnership alignment adjustment. In the UK branch it is added to U1 formation scores and subtracted from U2 dissolution scores. |
+| `probitAdjustment` | Partnership alignment adjustment. In the UK branch it is added to U1A formation scores before U1 probability conversion and subtracted from U2A dissolution scores before U2 probability conversion. |
 | `cohabitInnov` | Stochastic draw from `statInnovations.getDoubleDraw(25)`. A positive outcome occurs when the draw is below the relevant probability. |
-| `U1` | UK regression for partnership formation among unpartnered persons. |
-| `U2` | UK regression for partnership dissolution among partnered females. |
+| `U1A`/`U1` | UK partnership-formation score/probability pair for unpartnered persons. |
+| `U2A`/`U2` | UK partnership-dissolution score/probability pair for partnered females. |
 
 ## Key Branches
 
@@ -115,14 +117,14 @@ flowchart TD
     E --> F{"Age >= minimum<br/>cohabitation age?"}
     F -- No --> Z["Not eligible for<br/>cohabitation decision"]
     F -- Yes --> H{"Has current partner?"}
-    H -- No --> I["Apply UK U1:<br/>probability of partnership formation"]
-    I --> J{"Innovation below<br/>U1 probability?"}
+    H -- No --> I["Apply UK U1A/U1:<br/>probability of partnership formation"]
+    I --> J{"Innovation below<br/>formation probability?"}
     J -- Yes --> K["Formation flag:<br/>set demBePartnerFlag = true; <br/>add person to personsToMatch"]
     J -- No --> L["Remain unpartnered;<br/>not added to personsToMatch"]
     H -- Yes --> M{"Female?"}
     M -- No --> N["Skip dissolution evaluation;<br/>female partner carries<br/>couple-level decision"]
-    M -- Yes --> O["Apply UK U2:<br/>probability of partnership dissolution"]
-    O --> P{"Innovation below<br/>U2 probability?"}
+    M -- Yes --> O["Apply UK U2A/U2:<br/>probability of partnership dissolution"]
+    O --> P{"Innovation below<br/>dissolution probability?"}
     P -- Yes --> Q["Dissolution flag:<br/>set demLeavePartnerFlag = true"]
     P -- No --> R["Remain partnered"]
 
@@ -149,7 +151,7 @@ The ordinary scheduled `cohabitation()` call uses `model.getPartnershipAdjustmen
 
 - `cohabitation()` does not create couples. It only marks candidates and writes `personsToMatch`.
 - `cohabitation()` does not separate couples. It only sets `demLeavePartnerFlag`; `partnershipDissolution()` applies the separation later in the schedule.
-- UK formation uses `Parameters.getRegPartnershipU1()` with `score + probitAdjustment`; UK dissolution uses `Parameters.getRegPartnershipU2()` with `score - probitAdjustment`.
+- UK formation now scores with `Parameters.getRegPartnershipU1A()` and converts `score + probitAdjustment` with `Parameters.getRegPartnershipU1()`; UK dissolution scores with `Parameters.getRegPartnershipU2A()` and converts `score - probitAdjustment` with `Parameters.getRegPartnershipU2()`.
 - Partnered males are not evaluated for dissolution in this method. The female partner carries the dissolution decision.
 - The Italy branch exists in `Person.cohabitation(double)`, but is intentionally not documented in this UK-focused flowchart.
 - If union matching has unexpected candidate counts, check both `CohabitationAlignment` clearing of `personsToMatch` and the ordinary cohabitation pass.
@@ -160,7 +162,7 @@ Update this flowchart when any of the following change:
 
 - the UK branch structure in `Person.cohabitation(double)` changes;
 - `MIN_AGE_COHABITATION` changes;
-- UK partnership regression calls change;
+- UK partnership score or probability regression calls change;
 - the partnership adjustment is applied differently;
 - `demBePartnerFlag`, `demLeavePartnerFlag`, or `demAlignPartnerProcess` handling changes;
 - `personsToMatch` construction changes;
