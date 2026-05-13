@@ -1573,7 +1573,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 if (partner == null) {
                     // partnership formation
 
-                    double score = Parameters.getRegPartnershipU1().getScore(this, Person.DoublesVariables.class);
+                    double score = Parameters.getRegPartnershipU1A().getScore(this, Person.DoublesVariables.class);
                     prob = Parameters.getRegPartnershipU1().getProbability(score + probitAdjustment);
                     demBePartnerFlag = (cohabitInnov < prob);
                     if (demBePartnerFlag)
@@ -1581,7 +1581,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 } else if (demMaleFlag == Gender.Female) {
                     // partnership dissolution
 
-                    double score = Parameters.getRegPartnershipU2().getScore(this, Person.DoublesVariables.class);
+                    double score = Parameters.getRegPartnershipU2A().getScore(this, Person.DoublesVariables.class);
                     prob = Parameters.getRegPartnershipU2().getProbability(score - probitAdjustment);
                     if (cohabitInnov < prob) {
                         demLeavePartnerFlag = true;
