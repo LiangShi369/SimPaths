@@ -5708,7 +5708,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // demPartnerStatus interaction terms
             // -----------------------------------------------------------------------
             case demPartnerStatusPartnered_Formal, demPartnerStatusPartnered_Mixed -> {
-                return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
+                return (Dcpst.Partnered.equals(getDemPartnerStatus())) ? 1.0 : 0.0;
             }
 
             // -----------------------------------------------------------------------
@@ -5830,32 +5830,32 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // income quintile new naming
             // -----------------------------------------------------------------------
             case yHhQuintilesMonthC5Q2, yHhQuintilesMonthC5Q2_Formal, yHhQuintilesMonthC5Q2_Mixed -> {
-                return (Ydses_c5.Q2.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q2.equals(getYHhQuintilesMonthC5Current())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q2L1, yHhQuintilesMonthC5Q2L1_Fair, yHhQuintilesMonthC5Q2L1_Good,
                     yHhQuintilesMonthC5Q2L1_Poor, yHhQuintilesMonthC5Q2L1_VeryGood -> {
-                return (Ydses_c5.Q2.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q2.equals(getYHhQuintilesMonthC5L1())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q3, yHhQuintilesMonthC5Q3_Formal, yHhQuintilesMonthC5Q3_Mixed -> {
-                return (Ydses_c5.Q3.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q3.equals(getYHhQuintilesMonthC5Current())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q3L1, yHhQuintilesMonthC5Q3L1_Fair, yHhQuintilesMonthC5Q3L1_Good,
                     yHhQuintilesMonthC5Q3L1_Poor, yHhQuintilesMonthC5Q3L1_VeryGood -> {
-                return (Ydses_c5.Q3.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q3.equals(getYHhQuintilesMonthC5L1())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q4, yHhQuintilesMonthC5Q4_Formal, yHhQuintilesMonthC5Q4_Mixed -> {
-                return (Ydses_c5.Q4.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q4.equals(getYHhQuintilesMonthC5Current())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q4L1, yHhQuintilesMonthC5Q4L1_Fair, yHhQuintilesMonthC5Q4L1_Good,
                     yHhQuintilesMonthC5Q4L1_Poor, yHhQuintilesMonthC5Q4L1_VeryGood -> {
-                return (Ydses_c5.Q4.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q4.equals(getYHhQuintilesMonthC5L1())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q5, yHhQuintilesMonthC5Q5_Formal, yHhQuintilesMonthC5Q5_Mixed -> {
-                return (Ydses_c5.Q5.equals(getYdses_c5_current())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q5.equals(getYHhQuintilesMonthC5Current())) ? 1.0 : 0.0;
             }
             case yHhQuintilesMonthC5Q5L1, yHhQuintilesMonthC5Q5L1_Fair, yHhQuintilesMonthC5Q5L1_Good,
                     yHhQuintilesMonthC5Q5L1_Poor, yHhQuintilesMonthC5Q5L1_VeryGood -> {
-                return (Ydses_c5.Q5.equals(getYdses_c5_lag1())) ? 1.0 : 0.0;
+                return (Ydses_c5.Q5.equals(getYHhQuintilesMonthC5L1())) ? 1.0 : 0.0;
             }
 
             // -----------------------------------------------------------------------
@@ -5877,7 +5877,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return Indicator.True.equals(healthDsblLongtermFlagL1) ? 1. : 0.;
             }
             case dnc_L1 -> {
-                return (double) getNumberChildrenAll_lag1();
+                return (double) getNumberChildrenAllL1();
             }
             case drgn1_L1 -> {
                 return (double) getRegion().getValue();
@@ -5941,10 +5941,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // Pre-existing enum values used in estimation files (missing cases)
             // -----------------------------------------------------------------------
             case careHrsFormalIhsL1 -> {
-                return Parameters.asinh(getHoursFormalSocialCare_L1());
+                return Parameters.asinh(getCareHrsFormalWeekL1());
             }
             case careHrsInformalIhsL1 -> {
-                return Parameters.asinh(getHoursInformalSocialCare_L1());
+                return Parameters.asinh(getCareHrsInformalWeekL1());
             }
             case careHrsProvidedWeekIhsL1 -> {
                 double hrs = (careHrsProvidedWeekL1 != null && careHrsProvidedWeekL1 > 0.0) ? careHrsProvidedWeekL1 : 0.0;
@@ -5968,7 +5968,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (SocialCareReceipt.Formal.equals(careReceivedFlag) || SocialCareReceipt.Informal.equals(careReceivedFlag) || SocialCareReceipt.Mixed.equals(careReceivedFlag)) ? 1. : 0.;
             }
             case careReceivedFlagL1 -> {
-                return (getTotalHoursSocialCare_L1() > 0.01) ? 1. : 0.;
+                return (getCareHrsTotalWeekL1() > 0.01) ? 1. : 0.;
             }
             case careReceivedPartnerFlag -> {
                 Person partner = getPartner();
@@ -6041,22 +6041,22 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (double) getNumberChildrenAll();
             }
             case demNChild0to2L1 -> {
-                return (double) getNumberChildren02_lag1();
+                return (double) getNumberChildren02L1();
             }
             case demNChildL1 -> {
-                return (double) getNumberChildrenAll_lag1();
+                return (double) getNumberChildrenAllL1();
             }
             case demPartnerNYearL1 -> {
                 return (demPartnerNYearL1 != null) ? (double) demPartnerNYearL1 : 0.0;
             }
             case demPartnerStatusPartnered -> {
-                return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
+                return (Dcpst.Partnered.equals(getDemPartnerStatus())) ? 1.0 : 0.0;
             }
             case demPartnerStatusPartneredL1 -> {
                 return (demPartnerStatusL1 != null && demPartnerStatusL1.equals(Dcpst.Partnered)) ? 1. : 0.;
             }
             case demPartnerStatusSingle -> {
-                return (Dcpst.Single.equals(getDcpst())) ? 1.0 : 0.0;
+                return (Dcpst.Single.equals(getDemPartnerStatus())) ? 1.0 : 0.0;
             }
             case demPartnerStatusSingleL1 -> {
                 return (demPartnerStatusL1 != null && demPartnerStatusL1.equals(Dcpst.Single)) ? 1. : 0.;
@@ -6185,16 +6185,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q5_L1) : 0.0;
             }
             case eduSampleFlag_Single -> {
-                return (Indicator.True.equals(eduSpellFlag) && Dcpst.Single.equals(getDcpst())) ? 1.0 : 0.0;
+                return (Indicator.True.equals(eduSpellFlag) && Dcpst.Single.equals(getDemPartnerStatus())) ? 1.0 : 0.0;
             }
             case eduSampleFlag_demMaleFlag -> {
                 return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.demMaleFlag) : 0.0;
             }
             case eduSampleFlag_demNChild0to2L1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildren02_lag1() : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildren02L1() : 0.0;
             }
             case eduSampleFlag_demNChildL1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildrenAll_lag1() : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildrenAllL1() : 0.0;
             }
             case eduSampleFlag_yCapitalPersL1 -> {
                 return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ypncp_L1) : 0.0;
@@ -6223,7 +6223,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case healthPartnerSelfRatedExcellent -> {
                 Person partner = getPartner();
-                return (partner != null && Dhe.Excellent.equals(partner.getDhe())) ? 1. : 0.;
+                return (partner != null && Dhe.Excellent.equals(partner.getHealthSelfRated())) ? 1. : 0.;
             }
             case healthPartnerSelfRatedFair -> {
                 return getDoubleValue(DoublesVariables.Dhesp_Fair);
