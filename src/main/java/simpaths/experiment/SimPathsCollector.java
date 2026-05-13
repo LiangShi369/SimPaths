@@ -459,7 +459,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         public void update() {
 
             //Ydses_c5
-            householdsGrossIncomesCS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getTmpHHYpnbihs_dv_asinhNoNull", true); //Populate CS
+            householdsGrossIncomesCS = new CrossSection.Double(model.getBenefitUnits(), BenefitUnit.class, "getI_yNonBenHhGrossAsinhNoNull", true); //Populate CS
 
             percentileFunctionHouseholdsGrossIncomes = new PercentileArrayFunction(householdsGrossIncomesCS); //Get p50
             percentileFunctionHouseholdsGrossIncomes.updateSource();
@@ -471,10 +471,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 //			System.out.println("P50 value from the percentile function: " + p50HouseholdsGrossIncome + " P20: " + p20HouseholdsGrossIncome + " P40: " + p40HouseholdsGrossIncome +
 //								" P60: " + p60HouseholdsGrossIncome + " P80: " + p80HouseholdsGrossIncome);
 
-            stats.setYdses_p20(p20HouseholdsGrossIncome);
-            stats.setYdses_p40(p40HouseholdsGrossIncome);
-            stats.setYdses_p60(p60HouseholdsGrossIncome);
-            stats.setYdses_p80(p80HouseholdsGrossIncome);
+            stats.setYHhQuintilesC5P20(p20HouseholdsGrossIncome);
+            stats.setYHhQuintilesC5P40(p40HouseholdsGrossIncome);
+            stats.setYHhQuintilesC5P60(p60HouseholdsGrossIncome);
+            stats.setYHhQuintilesC5P80(p80HouseholdsGrossIncome);
 
 
         }
@@ -731,7 +731,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
                 totalWeight += house.getWeight();
             }
             else {		//Cannot include house in statistics as unable to calculate eq disp income
-                house.setAtRiskOfPoverty(1);		//If benefit unit has equivalised disposable income < 0, it should be classified as at risk of poverty
+                house.setYPvrtyFlag(1);		//If benefit unit has equivalised disposable income < 0, it should be classified as at risk of poverty
             }
         }
 
@@ -774,10 +774,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         for(Pair<BenefitUnit, Double> pairHouse_Income: arrHouse_eqHouseholdDispIncome) {
             BenefitUnit house = pairHouse_Income.getFirst();
             if(house.getEquivalisedDisposableIncomeYearly() < atRiskOfPovertyThreshold) {
-                house.setAtRiskOfPoverty(1);
+                house.setYPvrtyFlag(1);
             }
             else {
-                house.setAtRiskOfPoverty(0);
+                house.setYPvrtyFlag(0);
             }
         }
 

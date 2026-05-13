@@ -82,7 +82,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @Lag(getter = "getEquivalisedDisposableIncomeYearly") @Transient private Double yDispEquivYearL1;
     @NullInitialised @Transient private Double yDiffDispEquivPrevYear;
     private Integer yPvrtyFlag;        //1 if at risk of poverty, defined by an equivalisedDisposableIncomeYearly < 60% of median household's
-    @Lag(getter = "getAtRiskOfPoverty") @Transient private Integer yPvrtyFlagL1;
+    @Lag(getter = "getYPvrtyFlag") @Transient private Integer yPvrtyFlagL1;
     @Lag(getter = "getIndicatorChildren0to3") @Transient private Indicator dem0to3L1;
     @Lag(getter = "getIndicatorChildren4to12") @Transient private Indicator dem4to12L1;                //Lag(1) of d_children_4_12;
     @Lag(getter = "getNumberChildren0to2") @Transient private Integer numberChildren02_lag1; //Lag(1) of the number of children aged 0-2 in the household
@@ -94,7 +94,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @NullInitialised @Transient private Match demDbMatchTax;
     @Enumerated(EnumType.STRING) private Region region;        //Region of household.  Also used in findDonorHouseholdsByLabour method
     @Enumerated(EnumType.STRING) private Ydses_c5 yHhQuintilesMonthC5;
-    @Lag(getter = "getYdses_c5") @Transient private Ydses_c5 yHhQuintilesMonthC5L1;
+    @Lag(getter = "getYHhQuintilesMonthC5") @Transient private Ydses_c5 yHhQuintilesMonthC5L1;
     @NullInitialised @Transient private Double i_yNonBenHhGrossAsinh;
     @NullInitialised private Dhhtp_c4 demCompHhC4;
     @Lag(getter = "getDemCompHhC4") @Transient private Dhhtp_c4 demCompHhC4L1;
@@ -271,8 +271,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         switch (sampleEntry) {
             case ProcessedInputData -> {
                 key.setId(originalBenefitUnit.getId());
-                idBuOriginal = originalBenefitUnit.getIdOriginalBU();
-                idHhOriginal = originalBenefitUnit.getIdOriginalHH();
+                idBuOriginal = originalBenefitUnit.getIdBuOriginal();
+                idHhOriginal = originalBenefitUnit.getIdHhOriginal();
             }
             default -> {
                 idBuOriginal = originalBenefitUnit.getId();
@@ -290,14 +290,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         yPvrtyFlag = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlag,0);
         yPvrtyFlagL1 = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlagL1, yPvrtyFlag);
         yDiffDispEquivPrevYear = Objects.requireNonNullElse(originalBenefitUnit.yDiffDispEquivPrevYear,0.0);
-
         wealthTotValue = Objects.requireNonNullElse(originalBenefitUnit.wealthTotValue,0.0);
         wealthPensValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPensValue,0.0);
         wealthPrptyValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPrptyValue,0.0);
         wealthMortgageDebtValue = Objects.requireNonNullElse(originalBenefitUnit.wealthMortgageDebtValue,0.0);
         wealthOPMembers = Objects.requireNonNullElse(originalBenefitUnit.wealthOPMembers,0.0);
         wealthPPMembers = Objects.requireNonNullElse(originalBenefitUnit.wealthPPMembers,0.0);
-
         this.numberChildrenAll_lag1 = originalBenefitUnit.numberChildrenAll_lag1;
         this.numberChildren02_lag1 = originalBenefitUnit.numberChildren02_lag1;
         this.dem0to3L1 = originalBenefitUnit.dem0to3L1;
@@ -306,7 +304,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         this.xCareWeek = originalBenefitUnit.xCareWeek;
         this.careProvidedFlag = originalBenefitUnit.careProvidedFlag;
         this.region = originalBenefitUnit.region;
-        this.yHhQuintilesMonthC5 = originalBenefitUnit.getYdses_c5();
+        this.yHhQuintilesMonthC5 = originalBenefitUnit.getYHhQuintilesMonthC5();
         this.yHhQuintilesMonthC5L1 = originalBenefitUnit.yHhQuintilesMonthC5L1;
         this.demCompHhC4L1 = originalBenefitUnit.demCompHhC4L1;
         this.wealthPrptyFlag = originalBenefitUnit.wealthPrptyFlag;
@@ -384,7 +382,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         demCompHhC4L1 = getDemCompHhC4();
 
         // clean-up odd ends
-        if (getYdses_c5() == null) {
+        if (getYHhQuintilesMonthC5() == null) {
             yHhQuintilesMonthC5 = Ydses_c5.Q3;
         }
         if (region == null)
@@ -575,8 +573,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                 male.setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekM));
                 getFemale().setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekF));
-                double maleIncome = Math.sinh(male.getyMiscPersGrossMonth());
-                double femaleIncome = Math.sinh(getFemale().getyMiscPersGrossMonth());
+                double maleIncome = Math.sinh(male.getYMiscPersGrossMonth());
+                double femaleIncome = Math.sinh(getFemale().getYMiscPersGrossMonth());
                 if (maleIncome>0.01 && femaleIncome>0.01)
                     secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
                 originalIncomePerMonth = maleIncome + femaleIncome;
@@ -585,12 +583,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             } else if (male!=null) {
 
                 male.setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekM));
-                originalIncomePerMonth = Math.sinh(male.getyMiscPersGrossMonth());
+                originalIncomePerMonth = Math.sinh(male.getYMiscPersGrossMonth());
                 dlltsdM = male.getDisability();
             } else if (female!=null){
 
                 getFemale().setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekF));
-                originalIncomePerMonth = Math.sinh(getFemale().getyMiscPersGrossMonth());
+                originalIncomePerMonth = Math.sinh(getFemale().getYMiscPersGrossMonth());
                 dlltsdF = getFemale().getDisability();
             } else
                 throw new RuntimeException("Benefit Unit with the following ID has no recognised occupancy: " + getKey().getId());
@@ -638,7 +636,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         evaluatedTransfers = new TaxEvaluation(model.getYear(), getRefPersonForDecisions().getDemAge(), getIntValue(Regressors.NumberMembersOver17),
                 getIntValue(Regressors.NumberChildren04), getIntValue(Regressors.NumberChildren59), getIntValue(Regressors.NumberChildren1017),
                 hoursWorkedPerWeekM, hoursWorkedPerWeekF, dlltsdM, dlltsdF, careProvidedFlag, originalIncomePerMonth, secondIncomePerMonth,
-                childcareCostPerMonth, socialCareCostPerMonth, getLiquidWealth(Parameters.enableIntertemporalOptimisations), taxInnov);
+                childcareCostPerMonth, socialCareCostPerMonth, getWealthTotValue(Parameters.enableIntertemporalOptimisations), taxInnov);
 
         return evaluatedTransfers;
     }
@@ -691,10 +689,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         Triple<Les_c7_covid, Double, Integer> selectedValueMale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.get(randomIndex);
                         Triple<Les_c7_covid, Double, Integer> selectedValueFemale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.get(randomIndex);
 
-                        male.setLes_c7_covid(selectedValueMale.getLeft()); // Set labour force status for male
-                        male.setLes_c4(Les_c4.convertLes_c7_To_Les_c4(selectedValueMale.getLeft()));
-                        female.setLes_c7_covid(selectedValueFemale.getLeft()); // Set labour force status for female
-                        female.setLes_c4(Les_c4.convertLes_c7_To_Les_c4(selectedValueFemale.getLeft()));
+                        male.setLabC7Covid(selectedValueMale.getLeft()); // Set labour force status for male
+                        male.setLabC4(Les_c4.convertLes_c7_To_Les_c4(selectedValueMale.getLeft()));
+                        female.setLabC7Covid(selectedValueFemale.getLeft()); // Set labour force status for female
+                        female.setLabC4(Les_c4.convertLes_c7_To_Les_c4(selectedValueFemale.getLeft()));
 
                         // Predicted hours need to be converted back into labour so a donor benefit unit can be found. Then, gross income can be converted to disposable.
                         male.setLabourSupplyWeekly(Labour.convertHoursToLabour(selectedValueMale.getRight())); // Convert predicted work hours to labour enum and update male's value
@@ -720,8 +718,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         int randomIndex = intFromUniform(0, covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.size(), labourInnov);
                         Triple<Les_c7_covid, Double, Integer> selectedValueMale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.get(randomIndex);
 
-                        male.setLes_c7_covid(selectedValueMale.getLeft()); // Set labour force status for male
-                        male.setLes_c4(Les_c4.convertLes_c7_To_Les_c4(selectedValueMale.getLeft()));
+                        male.setLabC7Covid(selectedValueMale.getLeft()); // Set labour force status for male
+                        male.setLabC4(Les_c4.convertLes_c7_To_Les_c4(selectedValueMale.getLeft()));
 
                         // Predicted hours need to be converted back into labour so a donor benefit unit can be found. Then, gross income can be converted to disposable.
                         male.setLabourSupplyWeekly(Labour.convertHoursToLabour(selectedValueMale.getRight())); // Convert predicted work hours to labour enum and update male's value
@@ -745,8 +743,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     int randomIndex = intFromUniform(0, covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.size(), labourInnov);
                     Triple<Les_c7_covid, Double, Integer> selectedValueFemale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.get(randomIndex);
 
-                    female.setLes_c7_covid(selectedValueFemale.getLeft()); // Set labour force status for female
-                    female.setLes_c4(Les_c4.convertLes_c7_To_Les_c4(selectedValueFemale.getLeft()));
+                    female.setLabC7Covid(selectedValueFemale.getLeft()); // Set labour force status for female
+                    female.setLabC4(Les_c4.convertLes_c7_To_Les_c4(selectedValueFemale.getLeft()));
 
                     // Predicted hours need to be converted back into labour so a donor benefit unit can be found. Then, gross income can be converted to disposable.
                     female.setLabourSupplyWeekly(Labour.convertHoursToLabour(selectedValueFemale.getRight())); // Convert predicted work hours to labour enum and update female's value
@@ -771,7 +769,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             if (covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.size() > 0) {
                 int randomIndex = intFromUniform(0, covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.size(), labourInnov);
                 Triple<Les_c7_covid, Double, Integer> selectedValueMale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale.get(randomIndex);
-                male.setLes_c7_covid(selectedValueMale.getLeft()); // Set labour force status for male
+                male.setLabC7Covid(selectedValueMale.getLeft()); // Set labour force status for male
                 male.setLabourSupplyWeekly(Labour.convertHoursToLabour(selectedValueMale.getRight()));
                 double simulatedIncomeToConvertPerMonth = selectedValueMale.getMiddle();
 
@@ -791,7 +789,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             if (covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.size() > 0) {
                 int randomIndex = intFromUniform(0, covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.size(), labourInnov);
                 Triple<Les_c7_covid, Double, Integer> selectedValueFemale = covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale.get(randomIndex);
-                female.setLes_c7_covid(selectedValueFemale.getLeft()); // Set labour force status for female
+                female.setLabC7Covid(selectedValueFemale.getLeft()); // Set labour force status for female
                 female.setLabourSupplyWeekly(Labour.convertHoursToLabour(selectedValueFemale.getRight()));
                 double simulatedIncomeToConvertPerMonth = selectedValueFemale.getMiddle();
 
@@ -819,21 +817,21 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     private Triple<Les_c7_covid, Double, Integer> predictCovidTransition(Person person) {
 
-        if (person.getLes_c7_covid_lag1() == null) {
+        if (person.getLabC7CovidL1() == null) {
             person.initialise_les_c6_from_c4();
-            person.setCovidYLabGrossL1(person.getCovidModuleGrossLabourIncome_Baseline());
+            person.setCovidYLabGrossL1(person.getCovidYLabGross());
         }
 
 
         // Define variables:
-        Les_c7_covid stateFrom = person.getLes_c7_covid_lag1();
+        Les_c7_covid stateFrom = person.getLabC7CovidL1();
         Les_c7_covid stateTo = stateFrom; // Labour market state to which individual transitions. Initialise to stateFrom value if the outcome is "no changes"
         int newWorkHours; // Predicted work hours. Initialise to previous value if available, or hours from labour enum.
         if (person.getLabHrsWorkNewL1() != null) {
             newWorkHours = person.getLabHrsWorkNewL1();
         } else {
             newWorkHours = person.getLabourSupplyHoursWeekly(); // Note: prediction for hours is in logs, needs to be transformed to levels
-            person.setNewWorkHours_lag1(newWorkHours);
+            person.setLabHrsWorkNewL1(newWorkHours);
         }
         double grossMonthlyIncomeToReturn = 0; // Gross income to return to updateLabourSupplyCovid19() method
 
@@ -844,23 +842,23 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             MultiValEvent event = new MultiValEvent(probs, labourInnov2);
             Les_transitions_E1 transitionTo = (Les_transitions_E1) event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
-            person.setLes_c7_covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
+            person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
             if (Les_transitions_E1.SelfEmployed.equals(transitionTo) || Les_transitions_E1.SomeChanges.equals(transitionTo)) {
 
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_E2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_E1.NotEmployed)) {
                 newWorkHours = 0;
                 grossMonthlyIncomeToReturn = 0;
             } else if (transitionTo.equals(Les_transitions_E1.FurloughedFull)) {
                 // If furloughed, don't change hours of work initialised at the beginning
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_E1.FurloughedFlex)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_E2b().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else { // Else "no changes" = employee. Use initialisation value for stateTo and newWorkHours and fill gross monthly income
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             }
 
             // Transitions from furlough full
@@ -870,22 +868,22 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             Les_transitions_FF1 transitionTo = (Les_transitions_FF1) event.eval();
 
             stateTo = transitionTo.convertToLes_c7_covid();
-            person.setLes_c7_covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
+            person.setLabC7Covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
 
             if (transitionTo.equals(Les_transitions_FF1.Employee)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2b().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_FF1.SelfEmployed)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_FF1.FurloughedFlex)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2c().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_FF1.NotEmployed)) {
                 newWorkHours = 0;
                 grossMonthlyIncomeToReturn = 0;
             } else { // Else remains furloughed. Use 80% of initialisation value for stateTo and newWorkHours and fill gross monthly income
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             }
 
             // Transitions from furlough flex
@@ -894,22 +892,22 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             MultiValEvent event = new MultiValEvent(probs, labourInnov2);
             Les_transitions_FX1 transitionTo = (Les_transitions_FX1) event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
-            person.setLes_c7_covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
+            person.setLabC7Covid(stateTo); // Use convert to les c7 covid method from the enum to convert the outcome to the les c7 scale and update the variable
 
             if (transitionTo.equals(Les_transitions_FX1.Employee)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2b().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_FX1.SelfEmployed)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_FX1.FurloughedFull)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_F2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth()); // 80% of earnings they would have had working normal hours, hence hours predicted as for employed in the line above
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth()); // 80% of earnings they would have had working normal hours, hence hours predicted as for employed in the line above
             } else if (transitionTo.equals(Les_transitions_FX1.NotEmployed)) {
                 newWorkHours = 0;
                 grossMonthlyIncomeToReturn = 0;
             } else { // Else remains furloughed. Use 80% of initialisation value for stateTo and newWorkHours and fill gross monthly income
-                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = 0.8 * Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             }
 
             // Transitions from self-employment
@@ -918,11 +916,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             MultiValEvent event = new MultiValEvent(probs, labourInnov2);
             Les_transitions_S1 transitionTo = (Les_transitions_S1) event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
-            person.setLes_c7_covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
+            person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
             if (transitionTo.equals(Les_transitions_S1.Employee) || transitionTo.equals(Les_transitions_S1.SelfEmployed)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_S2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
 
                 // If transition to is self-employed (i.e. continues in self-employment), and earnings have decreased (gross monthly income lower than lag1 of gross monthly income, obtained from person.getCovidModuleGrossLabourIncome_lag1), predict probabiltiy of SEISS
                 if (transitionTo.equals(Les_transitions_S1.SelfEmployed) && grossMonthlyIncomeToReturn < person.getCovidYLabGrossL1()) {
@@ -946,11 +944,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             MultiValEvent event = new MultiValEvent(probs, labourInnov2);
             Les_transitions_U1 transitionTo = (Les_transitions_U1) event.eval();
             stateTo = transitionTo.convertToLes_c7_covid();
-            person.setLes_c7_covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
+            person.setLabC7Covid(stateTo); // Use convert to les c6 covid method from the enum to convert the outcome to the les c6 scale and update the variable
 
             if (transitionTo.equals(Les_transitions_U1.Employee) || transitionTo.equals(Les_transitions_U1.SelfEmployed)) {
                 newWorkHours = (Labour.convertHoursToLabour(exponentiateAndConstrainWorkHoursPrediction(Parameters.getRegC19LS_U2a().getScore(person, Person.DoublesVariables.class)))).getHours(person);
-                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getyMiscPersGrossMonth());
+                grossMonthlyIncomeToReturn = Parameters.WEEKS_PER_MONTH * person.getEarningsWeekly(newWorkHours) + Math.sinh(person.getYMiscPersGrossMonth());
             } else if (transitionTo.equals(Les_transitions_U1.NotEmployed)) {
                 newWorkHours = 0;
                 grossMonthlyIncomeToReturn = 0;
@@ -962,8 +960,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
         Triple<Les_c7_covid, Double, Integer> stateGrossIncomeWorkHoursTriple = Triple.of(stateTo, grossMonthlyIncomeToReturn, newWorkHours); // Triple contains outcome labour market state after transition, gross income, and work hours
         person.setCovidYLabGrossL1(grossMonthlyIncomeToReturn); // used as a regressor in the Covid-19 regressions
-        person.setNewWorkHours_lag1(newWorkHours); // newWorkHours is not a state variable of a person and is only used from month to month in the covid module, so set lag here
-        person.setLes_c7_covid_lag1(stateTo); // Update lagged value of monthly labour market state
+        person.setLabHrsWorkNewL1(newWorkHours); // newWorkHours is not a state variable of a person and is only used from month to month in the covid module, so set lag here
+        person.setLabC7CovidL1(stateTo); // Update lagged value of monthly labour market state
         return stateGrossIncomeWorkHoursTriple;
     }
 
@@ -1740,13 +1738,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             // -> then persist employment innovation with probability Parameters.labour_innovation_employment_persistence_probability
             // Otherwise
             // -> persist employment innovation with probability Parameters.labour_innovation_notinemployment_persistence_probability
-            if (occupancy.Single_Male.equals(occupancy) && male.atRiskOfWork() && male.getEmployed_Lag1() == 1) {
+            if (occupancy.Single_Male.equals(occupancy) && male.atRiskOfWork() && male.getEmployedFlagL1() == 1) {
                     labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
-            } else if (occupancy.Single_Female.equals(occupancy) && female.atRiskOfWork() && female.getEmployed_Lag1() == 1) {
+            } else if (occupancy.Single_Female.equals(occupancy) && female.atRiskOfWork() && female.getEmployedFlagL1() == 1) {
                     labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
             } else if (occupancy.equals(Occupancy.Couple) &&
-                    ((male.atRiskOfWork() && male.getEmployed_Lag1() == 1) ||
-                            (!male.atRiskOfWork() && female.atRiskOfWork() && female.getEmployed_Lag1() == 1))) {
+                    ((male.atRiskOfWork() && male.getEmployedFlagL1() == 1) ||
+                            (!male.atRiskOfWork() && female.atRiskOfWork() && female.getEmployedFlagL1() == 1))) {
                 labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
             } else {
                 labourInnov = getLabourInnovation(Parameters.labour_innovation_notinemployment_persistence_probability);
@@ -1868,31 +1866,31 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
             // male
             double labourEarningsMaleMonthly = male.getEarningsWeekly(male.getLabourSupplyHoursWeekly()) * Parameters.WEEKS_PER_MONTH; //Level of monthly labour earnings
-            male.setyEmpPersGrossMonth(asinh(labourEarningsMaleMonthly));
-            double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getyMiscPersGrossMonth()); //personal non-benefit income per month
-            male.setyNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly));
-            male.setCovidModuleGrossLabourIncome_Baseline(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
+            male.setYEmpPersGrossMonth(asinh(labourEarningsMaleMonthly));
+            double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getYMiscPersGrossMonth()); //personal non-benefit income per month
+            male.setYNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly));
+            male.setCovidYLabGross(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
 
             // female
             double labourEarningsFemaleMonthly = female.getEarningsWeekly(female.getLabourSupplyHoursWeekly()) * Parameters.WEEKS_PER_MONTH; //Level of monthly labour earnings
-            female.setyEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
-            double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getyMiscPersGrossMonth()); //In levels
-            female.setyNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
-            female.setCovidModuleGrossLabourIncome_Baseline(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
+            female.setYEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
+            double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getYMiscPersGrossMonth()); //In levels
+            female.setYNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
+            female.setCovidYLabGross(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
 
             // benefit unit income is the sum of male and female non-benefit income
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
-            setTmpHHYpnbihs_dv_asinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
+            setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
             //Based on the percentiles calculated by the collector, assign household to one of the quintiles of (equivalised) income distribution
             if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p20()) {
+                if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
                     yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p40()) {
+                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
                     yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p60()) {
+                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
                     yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p80()) {
+                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
                     yHhQuintilesMonthC5 = Ydses_c5.Q4;
                 } else {
                     yHhQuintilesMonthC5 = Ydses_c5.Q5;
@@ -1903,23 +1901,23 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             if (male != null) {
 
                 double labourEarningsMaleMonthly = male.getEarningsWeekly(male.getLabourSupplyHoursWeekly()) * Parameters.WEEKS_PER_MONTH; //Level of monthly labour earnings
-                male.setyEmpPersGrossMonth(asinh(labourEarningsMaleMonthly)); //This follows asinh transform of labourEarnings
-                double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getyMiscPersGrossMonth()); //In levels
-                male.setyNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly)); //Set asinh transformed
-                male.setCovidModuleGrossLabourIncome_Baseline(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
+                male.setYEmpPersGrossMonth(asinh(labourEarningsMaleMonthly)); //This follows asinh transform of labourEarnings
+                double ypnbihsMaleMonthly = labourEarningsMaleMonthly + Math.sinh(male.getYMiscPersGrossMonth()); //In levels
+                male.setYNonBenPersGrossMonth(asinh(ypnbihsMaleMonthly)); //Set asinh transformed
+                male.setCovidYLabGross(ypnbihsMaleMonthly); // Used in the Covid-19 labour supply module
 
                 //BenefitUnit income is the male non-benefit income
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
-                setTmpHHYpnbihs_dv_asinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
+                setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
                 if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                    if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p20()) {
+                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p40()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p60()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p80()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q4;
                     } else {
                         yHhQuintilesMonthC5 = Ydses_c5.Q5;
@@ -1933,24 +1931,24 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                 //If not a couple nor a single male, occupancy must be single female
                 double labourEarningsFemaleMonthly = female.getEarningsWeekly(female.getLabourSupplyHoursWeekly()) * Parameters.WEEKS_PER_MONTH; //Level of monthly labour earnings
-                female.setyEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
-                double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getyMiscPersGrossMonth()); //In levels
-                female.setyNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
-                female.setCovidModuleGrossLabourIncome_Baseline(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
+                female.setYEmpPersGrossMonth(asinh(labourEarningsFemaleMonthly)); //This follows asinh transform of labourEarnings
+                double ypnbihsFemaleMonthly = labourEarningsFemaleMonthly + Math.sinh(female.getYMiscPersGrossMonth()); //In levels
+                female.setYNonBenPersGrossMonth(asinh(ypnbihsFemaleMonthly)); //Set asinh transformed
+                female.setCovidYLabGross(ypnbihsFemaleMonthly); // Used in the Covid-19 labour supply module
 
                 //BenefitUnit income is the female non-benefit income
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised
-                setTmpHHYpnbihs_dv_asinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
+                setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
                 if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
 
-                    if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p20()) {
+                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p40()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p60()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getTmpHHYpnbihs_dv_asinh() <= collector.getStats().getYdses_p80()) {
+                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
                         yHhQuintilesMonthC5 = Ydses_c5.Q4;
                     } else {
                         yHhQuintilesMonthC5 = Ydses_c5.Q5;
@@ -1972,11 +1970,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     private void updateActivity(Person person) {
 
-        if (person!=null && !Les_c4.Student.equals(person.getLes_c4()) && !Les_c4.Retired.equals(person.getLes_c4())) {
+        if (person!=null && !Les_c4.Student.equals(person.getLabC4()) && !Les_c4.Retired.equals(person.getLabC4())) {
             if (person.getLabourSupplyHoursWeekly() > 0) {
-                person.setLes_c4(Les_c4.EmployedOrSelfEmployed);
+                person.setLabC4(Les_c4.EmployedOrSelfEmployed);
             } else  {
-                person.setLes_c4(Les_c4.NotEmployed);
+                person.setLabC4(Les_c4.NotEmployed);
             }
         }
     }
@@ -2539,12 +2537,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 return (getMaleLeisureHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case MaleLeisure_MaleDeh_c3_Low -> {
-                if(getMale().getDeh_c4().equals(Education.Low)) {
+                if(getMale().getEduHighestC4().equals(Education.Low)) {
                     return (getMaleLeisureHoursWeekly());
                 } else return 0.;
             }
             case MaleLeisure_MaleDeh_c3_Medium -> {
-                if(getMale().getDeh_c4().equals(Education.Medium)) {
+                if(getMale().getEduHighestC4().equals(Education.Medium)) {
                     return (getMaleLeisureHoursWeekly());
                 } else return 0.;
             }
@@ -2676,12 +2674,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 return (getFemaleLeisureHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case FemaleLeisure_FemaleDeh_c3_Low -> {
-                if(getFemale().getDeh_c4().equals(Education.Low)) {
+                if(getFemale().getEduHighestC4().equals(Education.Low)) {
                     return (getFemaleLeisureHoursWeekly());
                 } else return 0.;
             }
             case FemaleLeisure_FemaleDeh_c3_Medium -> {
-                if(getFemale().getDeh_c4().equals(Education.Medium)) {
+                if(getFemale().getEduHighestC4().equals(Education.Medium)) {
                     return (getFemaleLeisureHoursWeekly());
                 } else return 0.;
             }
@@ -2780,9 +2778,9 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             case FixedCost_Disabled -> {
                 if (getMale() != null && getFemale() == null) {
-                    return (getMale().getLabourSupplyHoursWeekly() > 0) ? getMale().getDlltsd().ordinal() : 0.;
+                    return (getMale().getLabourSupplyHoursWeekly() > 0) ? getMale().getHealthDsblLongtermFlag().ordinal() : 0.;
                 } else if (getFemale() != null && getMale() == null) {
-                    return (getFemale().getLabourSupplyHoursWeekly() > 0) ? getFemale().getDlltsd().ordinal() : 0.;
+                    return (getFemale().getLabourSupplyHoursWeekly() > 0) ? getFemale().getHealthDsblLongtermFlag().ordinal() : 0.;
                 } else return 0.;
             }
             case FixedCost_RetirementAge -> {
@@ -2794,12 +2792,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             case FixedCost_Disabled_Male -> {
                 if (getMale() != null && getMale().getLabourSupplyHoursWeekly() > 0) {
-                    return getMale().getDlltsd().ordinal();
+                    return getMale().getHealthDsblLongtermFlag().ordinal();
                 } else return 0.;
             }
             case FixedCost_Disabled_Female -> {
                 if (getFemale() != null && getFemale().getLabourSupplyHoursWeekly() > 0) {
-                    return getFemale().getDlltsd().ordinal();
+                    return getFemale().getHealthDsblLongtermFlag().ordinal();
                 } else return 0.;
             }
             case FixedCost_RetirementAge_Male -> {
@@ -2879,13 +2877,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case FixedCostMale_Dlltsdsp -> {    //Fixed cost interacted with dummy for partner being long-term sick or disabled
                 if(getMale().getLabourSupplyHoursWeekly() > 0) {
                     if(getFemale() != null) {
-                        return getFemale().getDlltsd().ordinal(); //==1 if partner is long-term sick or disabled
+                        return getFemale().getHealthDsblLongtermFlag().ordinal(); //==1 if partner is long-term sick or disabled
                     } else return 0.;
                 } else return 0.;
             }
             case FixedCostMale_Lesspc3_Student -> { //Fixed cost interacted with dummy for partner being a student
                 if(getMale().getLabourSupplyHoursWeekly() > 0) {
-                    if(getFemale() != null && getFemale().getLes_c4().equals(Les_c4.Student)) {
+                    if(getFemale() != null && getFemale().getLabC4().equals(Les_c4.Student)) {
                         return 1.; //Partner must be female - if a student, return 1
                     } else return 0.;
                 } else return 0.;
@@ -2908,13 +2906,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case FixedCostFemale_Dlltsdsp -> {    //Fixed cost interacted with dummy for partner being long-term sick or disabled
                 if(getFemale().getLabourSupplyHoursWeekly() > 0) {
                     if(getMale() != null) {
-                        return getMale().getDlltsd().ordinal(); //==1 if partner is long-term sick or disabled
+                        return getMale().getHealthDsblLongtermFlag().ordinal(); //==1 if partner is long-term sick or disabled
                     } else return 0.;
                 } else return 0.;
             }
             case FixedCostFemale_Lesspc3_Student -> {
                 if(getFemale().getLabourSupplyHoursWeekly() > 0) {
-                    if(getMale() != null && getMale().getLes_c4().equals(Les_c4.Student)) {
+                    if(getMale() != null && getMale().getLabC4().equals(Les_c4.Student)) {
                         return 1.; //Partner must be male - if a student, return 1
                     } else return 0.;
                 } else return 0.;
@@ -2947,9 +2945,9 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             case Hrs_below36_Disabled -> {
                 if (getMale() != null && getFemale() == null) {
-                    return (getMale().getLabourSupplyHoursWeekly() > 0 && getMale().getLabourSupplyHoursWeekly() < 36) ? getMale().getDlltsd().ordinal() : 0.;
+                    return (getMale().getLabourSupplyHoursWeekly() > 0 && getMale().getLabourSupplyHoursWeekly() < 36) ? getMale().getHealthDsblLongtermFlag().ordinal() : 0.;
                 } else if (getFemale() != null && getMale() == null) {
-                    return (getFemale().getLabourSupplyHoursWeekly() > 0 && getFemale().getLabourSupplyHoursWeekly() < 36) ? getFemale().getDlltsd().ordinal() : 0.;
+                    return (getFemale().getLabourSupplyHoursWeekly() > 0 && getFemale().getLabourSupplyHoursWeekly() < 36) ? getFemale().getHealthDsblLongtermFlag().ordinal() : 0.;
                 } else return 0.;
             }
             case Hrs_below36_RetirementAge -> {
@@ -2961,12 +2959,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             case Hrs_below36_Disabled_Male -> {
                 if (getMale() != null && getMale().getLabourSupplyHoursWeekly() > 0 && getMale().getLabourSupplyHoursWeekly() < 36) {
-                    return getMale().getDlltsd().ordinal();
+                    return getMale().getHealthDsblLongtermFlag().ordinal();
                 } else return 0.;
             }
             case Hrs_below36_Disabled_Female -> {
                 if (getFemale() != null && getFemale().getLabourSupplyHoursWeekly() > 0 && getFemale().getLabourSupplyHoursWeekly() < 36) {
-                    return getFemale().getDlltsd().ordinal();
+                    return getFemale().getHealthDsblLongtermFlag().ordinal();
                 } else return 0.;
             }
             case Hrs_below36_RetirementAge_Male -> {
@@ -3097,11 +3095,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case FixedCostByHighEducation -> {
                 if(getFemale() == null) {        //For single males
                     if(getMale().getLabourSupplyHoursWeekly() > 0) {
-                        return getMale().getDeh_c4().equals(Education.High) ? -1. : 0.;
+                        return getMale().getEduHighestC4().equals(Education.High) ? -1. : 0.;
                     } else return 0.;
                 } else if (getMale() == null) {    //For single females
                     if(getFemale().getLabourSupplyHoursWeekly() > 0) {
-                        return getFemale().getDeh_c4().equals(Education.High) ? -1. : 0.;
+                        return getFemale().getEduHighestC4().equals(Education.High) ? -1. : 0.;
                     } else return 0.;
                 } else throw new IllegalArgumentException("Error - FixedCostByHighEducation regressor should only be called for Households containing single people (with or without children), however household " + key.getId() + " has a couple, with male " + getMale().getKey().getId() + " and female " + getFemale().getKey().getId());
 
@@ -3564,100 +3562,100 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 }
             }
             case MaleEduM_10 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_10 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_20 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_20 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_30 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_30 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_40 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_40 -> {
-                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_1 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_1 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_2 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_2 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_3 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_3 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleEduM_4 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case MaleEduH_4 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getMale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_10 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_10 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_20 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_20 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_30 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_30 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_40 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_40 -> {
-                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_1 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_1 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TEN) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_2 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_2 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.TWENTY) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_3 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_3 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case FemaleEduM_4 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getDeh_c4().equals(Education.Medium)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
             case FemaleEduH_4 -> {
-                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getDeh_c4().equals(Education.High)) ? 1. : 0.;
+                return (getMale() != null  && getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.THIRTY_EIGHT) && getFemale().getEduHighestC4().equals(Education.High)) ? 1. : 0.;
             }
             case MaleLeisure_dnc02 -> {
                 return (getMaleLeisureHoursWeekly()) * getIndicatorChildren(0,1).ordinal();
@@ -3907,11 +3905,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         Person female = getFemale();
         if(female != null) {
             femaleQuantity = 1;
-            if (Les_c4.EmployedOrSelfEmployed.equals(female.getLes_c4())) {femaleEmployed = 1;};
+            if (Les_c4.EmployedOrSelfEmployed.equals(female.getLabC4())) {femaleEmployed = 1;};
         }
         if( male != null) {
             maleQuantity = 1;
-            if (Les_c4.EmployedOrSelfEmployed.equals(male.getLes_c4())) {maleEmployed = 1;}
+            if (Les_c4.EmployedOrSelfEmployed.equals(male.getLabC4())) {maleEmployed = 1;}
         }
 
         fracEmployed = (femaleEmployed + maleEmployed) /  (double) (femaleQuantity + maleQuantity);
@@ -3923,10 +3921,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         Person male = getMale();
         Person female = getFemale();
         if(female != null) {
-            isEmployed = Les_c4.EmployedOrSelfEmployed.equals(female.getLes_c4());
+            isEmployed = Les_c4.EmployedOrSelfEmployed.equals(female.getLabC4());
         }
         if(!isEmployed  && male != null) {        //Can skip checking if atRiskOfWork is true already
-            isEmployed = Les_c4.EmployedOrSelfEmployed.equals(male.getLes_c4());
+            isEmployed = Les_c4.EmployedOrSelfEmployed.equals(male.getLabC4());
         }
         return isEmployed;
     }
@@ -3988,11 +3986,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthTotValue() {
-        return getLiquidWealth(true);
+        return getWealthTotValue(true);
     }
 
-    public double getLiquidWealth(boolean throwError) {
-        if (!Parameters.isFinite(wealthTotValue)) {
+    public double getWealthTotValue(boolean throwError) {
+        if (!Parameters.checkFinite(wealthTotValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit liquid wealth before it is initialised.");
             else
@@ -4001,16 +3999,16 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return wealthTotValue;
     }
 
-    public void setWealthTotValue(Double liquidWealth) {
-        this.wealthTotValue = liquidWealth;
+    public void setWealthTotValue(Double wealthTotValue) {
+        this.wealthTotValue = wealthTotValue;
     }
 
-    public double getPensionWealth() {
-        return getPensionWealth(true);
+    public double getWealthPensValue() {
+        return getWealthPensValue(true);
     }
 
-    public double getPensionWealth(boolean throwError) {
-        if (!Parameters.isFinite(wealthPensValue)) {
+    public double getWealthPensValue(boolean throwError) {
+        if (!Parameters.checkFinite(wealthPensValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit pension wealth before it is initialised.");
             else
@@ -4019,16 +4017,16 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return wealthPensValue;
     }
 
-    public void setPensionWealth(Double wealthPensValue) {
+    public void setWealthPensValue(Double wealthPensValue) {
         this.wealthPensValue = wealthPensValue;
     }
 
-    public double getHousingWealth() {
-        return getHousingWealth(true);
+    public double getWealthPrptyValue() {
+        return getWealthPrptyValue(true);
     }
 
-    public double getHousingWealth(boolean throwError) {
-        if (!Parameters.isFinite(wealthPrptyValue)) {
+    public double getWealthPrptyValue(boolean throwError) {
+        if (!Parameters.checkFinite(wealthPrptyValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit housing wealth before it is initialised.");
             else
@@ -4037,15 +4035,15 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return wealthPrptyValue;
     }
 
-    public void setHousingWealth(Double wealth) {
-        wealthPrptyValue = wealth;
+    public void setWealthPrptyValue(Double wealthPrptyValue) {
+        this.wealthPrptyValue = wealthPrptyValue;
     }
 
-    public double getChildcareCostPerWeek() {
-        return getChildcareCostPerWeek(true);
+    public double getXChildCareWeek() {
+        return getXChildCareWeek(true);
     }
-    public double getChildcareCostPerWeek(boolean throwError) {
-        if (!Parameters.isFinite(xChildCareWeek)) {
+    public double getXChildCareWeek(boolean throwError) {
+        if (!Parameters.checkFinite(xChildCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit childcare cost before it is initialised.");
             } else {
@@ -4055,11 +4053,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return xChildCareWeek;
     }
 
-    public double getSocialCareCostPerWeek() {
-        return getSocialCareCostPerWeek(true);
+    public double getXCareWeek() {
+        return getXCareWeek(true);
     }
-    public double getSocialCareCostPerWeek(boolean throwError) {
-        if (!Parameters.isFinite(xCareWeek)) {
+    public double getXCareWeek(boolean throwError) {
+        if (!Parameters.checkFinite(xCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit social care cost before it is initialised.");
             } else {
@@ -4159,12 +4157,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     public Indicator getIndicatorChildren4to12() {
         return getIndicatorChildren(4,12);
     }
-    public Integer getNumberChildrenAll_lag1() {
+    public Integer getNumberChildrenAllL1() {
         return numberChildrenAll_lag1;
     }
-    public Integer getNumberChildren02_lag1() { return numberChildren02_lag1; }
-    public Indicator getIndicatorChildren03_lag1() { return dem0to3L1; }
-    public Indicator getIndicatorChildren412_lag1() {
+    public Integer getNumberChildren02L1() { return numberChildren02_lag1; }
+    public Indicator getDem0to3L1() { return dem0to3L1; }
+    public Indicator getDem4to12L1() {
         return dem4to12L1;
     }
 
@@ -4172,15 +4170,15 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return Objects.requireNonNullElse(yDispEquivYear, -9999.99);
     }
 
-    public int getAtRiskOfPoverty() {
+    public int getYPvrtyFlag() {
         return Objects.requireNonNullElse(yPvrtyFlag, 0);
     }
 
-    public Integer getAtRiskOfPoverty_lag1() {
+    public Integer getYPvrtyFlagL1() {
         return yPvrtyFlagL1;
     }
 
-    public void setAtRiskOfPoverty(Integer yPvrtyFlag) {
+    public void setYPvrtyFlag(Integer yPvrtyFlag) {
         this.yPvrtyFlag = yPvrtyFlag;
     }
 
@@ -4216,7 +4214,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
 
-    public void setOccupancyLocal(Occupancy occupancy) {
+    public void setI_demOccupancy(Occupancy occupancy) {
         i_demOccupancy = occupancy;
     }
 
@@ -4250,25 +4248,25 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return key.getId();
     }
 
-    public Ydses_c5 getYdses_c5() {
+    public Ydses_c5 getYHhQuintilesMonthC5() {
         return yHhQuintilesMonthC5;
     }
 
-    public Ydses_c5 getYdses_c5_lag1() {
+    public Ydses_c5 getYHhQuintilesMonthC5L1() {
         return yHhQuintilesMonthC5L1;
     }
 
-    public double getTmpHHYpnbihs_dv_asinhNoNull() {
+    public double getI_yNonBenHhGrossAsinhNoNull() {
         return Objects.requireNonNullElse(i_yNonBenHhGrossAsinh, 0.0);
     }
 
-    public double getTmpHHYpnbihs_dv_asinh() {
+    public double getI_yNonBenHhGrossAsinh() {
         if (i_yNonBenHhGrossAsinh ==null)
             throw new RuntimeException("tmpHHYpnbihs_dv_asinh accessed before initialised");
         return i_yNonBenHhGrossAsinh;
     }
 
-    public void setTmpHHYpnbihs_dv_asinh(double val) {
+    public void setI_yNonBenHhGrossAsinh(double val) {
         i_yNonBenHhGrossAsinh = val;
     }
 
@@ -4372,27 +4370,27 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 throw new IllegalStateException("ERROR - benefit unit identified as couple, but missing male adult");
             } else if (female==null) {
                 throw new IllegalStateException("ERROR - benefit unit identified as couple, but missing female adult");
-            } else if (male.getDlltsd() == Indicator.True) {
+            } else if (male.getHealthDsblLongtermFlag() == Indicator.True) {
                 ref = male;
-            } else if (female.getDlltsd() == Indicator.True) {
+            } else if (female.getHealthDsblLongtermFlag() == Indicator.True) {
                 ref = female;
-            } else if (Indicator.True.equals(male.getNeedSocialCare())) {
+            } else if (Indicator.True.equals(male.getCareNeedFlag())) {
                 ref = male;
-            } else if (Indicator.True.equals(female.getNeedSocialCare())) {
+            } else if (Indicator.True.equals(female.getCareNeedFlag())) {
                 ref = female;
-            } else if (male.getLes_c4()==Les_c4.Retired && female.getLes_c4()==Les_c4.Retired) {
+            } else if (male.getLabC4()==Les_c4.Retired && female.getLabC4()==Les_c4.Retired) {
                 if (male.getDemAge() >= female.getDemAge()) {
                     ref = male;
                 } else {
                     ref = female;
                 }
-            } else if (male.getLes_c4()==Les_c4.Retired) {
+            } else if (male.getLabC4()==Les_c4.Retired) {
                 ref = male;
-            } else if (female.getLes_c4()==Les_c4.Retired) {
+            } else if (female.getLabC4()==Les_c4.Retired) {
                 ref = female;
-            } else if (male.getLes_c4()==Les_c4.Student && male.getDemAge()<=Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION && female.getLes_c4()!=Les_c4.Student) {
+            } else if (male.getLabC4()==Les_c4.Student && male.getDemAge()<=Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION && female.getLabC4()!=Les_c4.Student) {
                 ref = male;
-            } else if (female.getLes_c4()==Les_c4.Student && female.getDemAge()<=Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION && male.getLes_c4()!=Les_c4.Student) {
+            } else if (female.getLabC4()==Les_c4.Student && female.getDemAge()<=Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION && male.getLabC4()!=Les_c4.Student) {
                 ref = female;
             } else {
                 if (male.getLabWageFullTimeHrly() >= female.getLabWageFullTimeHrly()) {
@@ -4422,13 +4420,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         Person male = getMale();
         Person female = getFemale();
         if (male != null) {
-            if (male.getDhe() != null) {
-                health = male.getDhe().getValue();
+            if (male.getHealthSelfRated() != null) {
+                health = male.getHealthSelfRated().getValue();
             }
         }
         if (female != null) {
-            if ( female.getDhe() != null ) {
-                if (female.getDhe().getValue() < health) health = female.getDhe().getValue();
+            if ( female.getHealthSelfRated() != null ) {
+                if (female.getHealthSelfRated().getValue() < health) health = female.getHealthSelfRated().getValue();
             }
         }
         return (double)health;
@@ -4540,18 +4538,18 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 male.setyCapitalPersMonth(val);
                 female.setyCapitalPersMonth(val);
                 val = asinh((yInvestYear + yPensYear)/12.0/2.0);
-                male.setYptciihs_dv(val);
-                female.setYptciihs_dv(val);
+                male.setYMiscPersGrossMonth(val);
+                female.setYMiscPersGrossMonth(val);
             } else if (Occupancy.Single_Male.equals(occupancy)) {
                 val = asinh(yInvestYear /12.0);
                 male.setyCapitalPersMonth(val);
                 val = asinh((yInvestYear + yPensYear)/12.0);
-                male.setYptciihs_dv(val);
+                male.setYMiscPersGrossMonth(val);
             } else {
                 val = asinh(yInvestYear /12.0);
                 female.setyCapitalPersMonth(val);
                 val = asinh((yInvestYear + yPensYear)/12.0);
-                female.setYptciihs_dv(val);
+                female.setYMiscPersGrossMonth(val);
             }
         } else {
             throw new RuntimeException("Unrecognised call to update investment income");
@@ -4593,10 +4591,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     private double getNonDiscretionaryConsumptionPerYear() {
         double nonDiscretionaryConsumptionPerYear = 0.0;
         if (Parameters.flagFormalChildcare) {
-            nonDiscretionaryConsumptionPerYear += getChildcareCostPerWeek() * Parameters.WEEKS_PER_YEAR;
+            nonDiscretionaryConsumptionPerYear += getXChildCareWeek() * Parameters.WEEKS_PER_YEAR;
         }
         if (Parameters.flagSocialCare) {
-            nonDiscretionaryConsumptionPerYear += getSocialCareCostPerWeek() * Parameters.WEEKS_PER_YEAR;
+            nonDiscretionaryConsumptionPerYear += getXCareWeek() * Parameters.WEEKS_PER_YEAR;
         }
         return nonDiscretionaryConsumptionPerYear;
     }
@@ -4652,7 +4650,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 double score = Parameters.getRegChildcareC1b().getScore(this, Regressors.class);
                 xChildCareWeek = Math.exp(score);
                 double costCap = childCareCostCapWeekly();
-                if (costCap > 0.0 && costCap < getChildcareCostPerWeek()) {
+                if (costCap > 0.0 && costCap < getXChildCareWeek()) {
                     xChildCareWeek = costCap;
                 }
             }
@@ -4676,7 +4674,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         }
     }
 
-    public void setDeh_c4Local(Education edu) {
+    public void setI_eduHighestC4(Education edu) {
         i_eduHighestC4 = edu;
     }
 
@@ -4694,11 +4692,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             Person female = getFemale();
             if(male != null || female != null) {
 
-                if (male != null && male.getDeh_c4() != null) {
-                    max = male.getDeh_c4();
+                if (male != null && male.getEduHighestC4() != null) {
+                    max = male.getEduHighestC4();
                 }
-                if (female != null && female.getDeh_c4() != null) {
-                    Education femaleEdu = female.getDeh_c4();
+                if (female != null && female.getEduHighestC4() != null) {
+                    Education femaleEdu = female.getEduHighestC4();
                     if (max == null || femaleEdu.getRank() > max.getRank()) {
                         max = femaleEdu;
                     }
@@ -4709,11 +4707,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return max;
     }
 
-    public void setLabourHoursWeekly1Local(Integer hours) {
+    public void setI_labHrsWork1Week(Integer hours) {
         i_labHrsWork1Week = hours;
     }
 
-    public void setLabourHoursWeekly2Local(Integer hours) {
+    public void setI_labHrsWork2Week(Integer hours) {
         i_labHrsWork2Week = hours;
     }
 
@@ -4812,7 +4810,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return cap;
     }
 
-    public void setYearLocal(Integer year) {
+    public void setI_demYear(Integer year) {
         i_demYear = year;
     }
 
@@ -4839,9 +4837,9 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     public long getSeed(){return (statSeed !=null) ? statSeed : 0L;}
 
-    public long getIdOriginalBU() {return idBuOriginal;}
+    public long getIdBuOriginal() {return idBuOriginal;}
 
-    public long getIdOriginalHH() {return idHhOriginal;}
+    public long getIdHhOriginal() {return idHhOriginal;}
 
     public Person getFemale() {
         for (Person member : members) {
