@@ -52,8 +52,6 @@ log using "${dir_log}/07_was_wealth_data.log", replace
 /**************************************************************/
 cd "${dir_data}"
 disp "analysing WAS wealth data"
-clear all
-set maxvar 10000
 
 
 /**************************************************************/
@@ -142,28 +140,40 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 			keep caser`ww' personw`ww' partnow`ww' dvage17r`ww' hasdepw`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
 				dvoigfrannualr`ww'_i dvoigmaannualr`ww'_i dvoigroannualr`ww'_i dvoigopannualr`ww'_i dvmrdfr`ww' isdepw`ww' p_flag4w`ww' r`ww'xshhwgt ///
 				btype1w`ww' qhealth1w`ww' lsillw`ww' dvisavalr`ww'_sum edlevelr`ww' enrollw`ww' coursew`ww' dvgiempr`ww' dvgiser`ww' statr`ww' ftptwkw`ww' dvecactr`ww' ///
+				pprgam1w`ww' pprgam2w`ww' pprgam3w`ww' pprgpe1w`ww' pprgpe2w`ww' pprgpe3w`ww' pplsta1w`ww' pplsta2w`ww' pplsta3w`ww' pplstp1w`ww' pplstp2w`ww' pplstp3w`ww' ///
+				pocnfr1w`ww' pocnfr2w`ww' ///
 				pemoffw`ww' pemelgw`ww' pemmemw`ww' poctyp1w`ww' poctyp2w`ww' dvbenefitannualr`ww'_i dvgippenr`ww' dvgiinvr`ww' bval* dvhsevalr`ww' dvhsedebtr`ww' ///
-				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww' dvfinfvalr`ww' ///
-				dvvaldcosr`ww' dvpavcuvr`ww' dvpfcurvalr`ww' dvppvalr`ww' dvpfddvr`ww' dvspenr`ww' dvpinpvalr`ww' pincinpr`ww' totccr`ww'_sum dvffassetsr`ww' dvfinfvalr`ww' tothpr`ww' ///
+				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww'_sum dvfinfvalr`ww' ///
+				dvvaldcosr`ww' dvpavcuvr`ww' dvpfcurvalr`ww' dvppvalr`ww' dvpfddvr`ww' dvspenr`ww' dvpinpvalr`ww' pincinpr`ww' totccr`ww'_sum dvffassetsr`ww'_sum dvfinfvalr`ww' tothpr`ww' ///
 				tot_losr`ww' totmor`ww' dvvaldbtr`ww' dvdbrwealthvalr`ww' gorr`ww' sexr`ww'
 			rename totccr`ww'_sum totcscr`ww'_sum
+			rename dvffassetsr`ww'_sum dvffassetsr`ww'
 			recode partnow`ww' (missing=17)
 			recode partnow`ww' (-7=17)
+			gen dvcontocc_emee_dc1r = .
+			gen dvcontocc_emee_dc2r = .
+			gen dvcontocc_emer_dc1r = .
+			gen dvcontocc_emer_dc2r = .
 		}
 		else if (`ww' == 6) {
-			keep caser`ww' personw`ww' partnow`ww' dvage17r`ww' hasdepw`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
+			keep caser`ww' personw`ww' caser5 personw5 partnow`ww' dvage17r`ww' hasdepw`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
 				dvoigfrannualr`ww'_i dvoigmaannualr`ww'_i dvoigroannualr`ww'_i dvoigopannualr`ww'_i dvmrdfr`ww' isdepw`ww' p_flag4w`ww' r`ww'xshhwgt ///
 				btype1w`ww' qhealth1w`ww' lsillw`ww' dvisavalr`ww'_sum edlevelr`ww' enrollw`ww' coursew`ww' dvgiempr`ww' dvgiser`ww' statr`ww' ftptwkw`ww' dvecactr`ww' ///
+				pprgam1w`ww' pprgam2w`ww' pprgam3w`ww' pprgpe1w`ww' pprgpe2w`ww' pprgpe3w`ww' pplsta1w`ww' pplsta2w`ww' pplsta3w`ww' pplstp1w`ww' pplstp2w`ww' pplstp3w`ww' ///
+				pcontppw`ww' dvemeeamt1w`ww' dvemeeamt2w`ww' pocnfr1w`ww' pocnfr2w`ww' dvcontocc_emee_dc1r`ww' dvcontocc_emee_dc2r`ww' dvcontocc_emer_dc1r`ww' dvcontocc_emer_dc2r`ww' ///
 				pemoffw`ww' pemelgw`ww' pemmemw`ww' poctyp1w`ww' poctyp2w`ww' dvbenefitannualr`ww'_i dvgippenr`ww' dvgiinvr`ww' bval* dvhsevalr`ww' dvhsedebtr`ww' ///
-				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww' dvfinfvalr`ww' ///
-				dvvaldcosr`ww' dvpavcuvr`ww' dvpfcurvalr`ww' dvppvalr`ww' dvpfddvr`ww' dvspenr`ww' dvpinpvalr`ww' pincinpr`ww' totcscr`ww'_sum dvffassetsr`ww' dvfinfvalr`ww' tothpr`ww' ///
+				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww'_sum dvfinfvalr`ww' ///
+				dvvaldcosr`ww' dvpavcuvr`ww' dvpfcurvalr`ww' dvppvalr`ww' dvpfddvr`ww' dvspenr`ww' dvpinpvalr`ww' pincinpr`ww' totcscr`ww'_sum dvffassetsr`ww'_sum dvfinfvalr`ww' tothpr`ww' ///
 				tot_losr`ww' totmor`ww' dvvaldbtr`ww' dvdbrwealthvalr`ww' gorr`ww' sexr`ww'
+			rename dvffassetsr`ww'_sum dvffassetsr`ww'
 			recode partnow`ww' (missing=17)
 		}
-		else {
-			keep caser`ww' personr`ww' partnor`ww' dvage17r`ww' hasdepr`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
+		else if (`ww' == 7) {
+			keep caser`ww' personr`ww' caser6 personw6 caser5 personw5 partnor`ww' dvage17r`ww' hasdepr`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
 				dvoigfrannualr`ww'_i dvoigmaannualr`ww'_i dvoigroannualr`ww'_i dvoigopannualr`ww'_i dvmrdfr`ww' isdepr`ww' p_flag4r`ww' r`ww'xshhwgt ///
 				btype1r`ww' qhealth1r`ww' lsillr`ww' dvisavalr`ww'_sum edlevelr`ww' enrollr`ww' courser`ww' dvgiempr`ww' dvgiser`ww' statr`ww' ftptwkr`ww' dvecactr`ww' ///
+				pcontppr`ww' pprgam1r`ww' pprgam2r`ww' pprgam3r`ww' pprgpe1r`ww' pprgpe2r`ww' pprgpe3r`ww' pplsta1r`ww' pplsta2r`ww' pplsta3r`ww' pplstp1r`ww' pplstp2r`ww' pplstp3r`ww' ///
+				dvemeeamt1r`ww' dvemeeamt2r`ww' pocnfr1r`ww'_i pocnfr2r`ww'_i dvcontocc_emee_dc1r`ww' dvcontocc_emee_dc2r`ww' dvcontocc_emer_dc1r`ww' dvcontocc_emer_dc2r`ww' ///
 				pemoffr`ww' pemelgr`ww' pemmemr`ww' poctyp1r`ww' poctyp2r`ww' dvbenefitannualr`ww'_i dvgippenr`ww' dvgiinvr`ww' bval* dvhsevalr`ww' dvhsedebtr`ww' ///
 				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww'_sum dvfinfvalr`ww' ///
 				dvvaldcosr`ww' dvpavcuvr`ww' dvppvalr`ww' dvspenr`ww' dvpinpvalr`ww' pincinpr`ww' totcscr`ww'_sum dvfinfvalr`ww' tothpr`ww' tot_losr`ww' ///
@@ -174,11 +184,38 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 			gen dvpfddvr`ww' = 0
 			recode partnor`ww' (missing=17)
 		}
+		else { // for round/wave 8 and above
+			keep caser`ww' personr`ww' caser7 personr7 caser6 personw6 caser5 personw5 partnor`ww' dvage17r`ww' hasdepr`ww' dvgiser`ww' dvgippenr`ww' dvgiinvr`ww' dvoigrrannualr`ww'_i dvoiggtannualr`ww'_i dvoigegannualr`ww'_i ///
+				dvoigfrannualr`ww'_i dvoigmaannualr`ww'_i dvoigroannualr`ww'_i dvoigopannualr`ww'_i dvmrdfr`ww' isdepr`ww' p_flag4r`ww' r`ww'xshhwgt ///
+				btype1r`ww' dvisavalr`ww'_sum edlevelr`ww' enrollr`ww' courser`ww' dvgiempr`ww' dvgiser`ww' statr`ww' ftptwkr`ww' dvecactr`ww' ///
+				pcontppr`ww' pprgam1r`ww' pprgam2r`ww' pprgam3r`ww' pprgpe1r`ww' pprgpe2r`ww' pprgpe3r`ww' pplsta1r`ww' pplsta2r`ww' pplsta3r`ww' pplstp1r`ww' pplstp2r`ww' pplstp3r`ww' ///
+				dvemeeamt1r`ww' dvemeeamt2r`ww' pocnfr1r`ww'_i pocnfr2r`ww'_i dvcontocc_emee_dc1r`ww' dvcontocc_emee_dc2r`ww' dvcontocc_emer_dc1r`ww' dvcontocc_emer_dc2r`ww' ///
+				pemoffr`ww' pemelgr`ww' pemmemr`ww' poctyp1r`ww' poctyp2r`ww' dvbenefitannualr`ww'_i dvgippenr`ww' dvgiinvr`ww' bval* dvhsevalr`ww' dvhsedebtr`ww' ///
+				dvbldvalr`ww' dvblddebtr`ww' dvlukvalr`ww' dvlukdebtr`ww' dvlosvalr`ww' dvlosdebtr`ww' dvoprvalr`ww' dvoprdebtr`ww' dvffassetsr`ww'_sum dvfinfvalr`ww'_sum ///
+				dvvaldcosr`ww' dvpavcuvr`ww' dvppvalr`ww' dvspen_oldr`ww' dvpinpval_oldr`ww' pincinp_oldr`ww' totcscr`ww'_sum tothpr`ww' tot_losr`ww' ///
+				totmor`ww' dvvaldbt_oldr`ww' dvdbincallr`ww' gorr`ww' sexr`ww' dvretdc_noaccessr`ww' dvretdc_accessr`ww'
+			rename dvffassetsr`ww'_sum dvffassetsr`ww'   // similar rename as round 7
+			rename dvfinfvalr`ww'_sum dvfinfvalr`ww'     
+			rename dvvaldbt_oldr`ww' dvvaldbtr`ww'       // Total value of defined benefit occupational scheme - Previous pension methodology
+			rename dvspen_oldr`ww' dvspenr`ww'           // Value of pensions expected from former spouse/partner - Previous pension methodology
+			rename dvpinpval_oldr`ww' dvpinpvalr`ww'
+			rename pincinp_oldr`ww' pincinpr`ww'
+			rename dvdbincallr`ww' dvdbrwealthvalr`ww'   // similar remane as round 7 
+			gen dvpfcurvalr`ww' = dvretdc_accessr`ww' + dvretdc_noaccessr`ww'
+			gen dvpfddvr`ww' = 0
+			// Round 8 person file has no direct counterpart to qhealth1r`ww' / lsillr`ww'.
+			gen qhealth1r`ww' = .        // removed 
+			gen lsillr`ww' = .           // 
+			recode partnor`ww' (missing=17)
+		}
 		if (`ww' < 7) {
 			rename *w`ww'* **
 		}
 		rename *r`ww'* **
 		keep if (!missing(case) & !missing(person))
+
+		gen was_round = `ww'
+		label var was_round "WAS round number"
 			
 		// merge with household level data
 		sort case person
@@ -276,6 +313,61 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 		replace earnings = earnings + dvgise if ((dvgise<.) & (dvgise>0))
 		label var earnings "gross earnings"
 
+		// private pension contributions: core (regular) and fallback (last contribution)
+		foreach vv in pprgam1 pprgam2 pprgam3 pprgpe1 pprgpe2 pprgpe3 pplsta1 pplsta2 pplsta3 pplstp1 pplstp2 pplstp3 pcontpp dvcontocc_emee_dc1 dvcontocc_emee_dc2 pocnfr1 pocnfr2 dvemeeamt1 dvemeeamt2 {
+			capture confirm variable `vv'
+			if _rc gen `vv' = .
+			capture replace `vv' = . if `vv' < 0
+		}
+
+		foreach jj in 1 2 3 {
+			gen pp_core_ann_`jj' = .
+			replace pp_core_ann_`jj' = pprgam`jj' * (52.0 / pprgpe`jj') if pprgam`jj'>=0 & inlist(pprgpe`jj',1,2,3,4,13,26,52)
+			replace pp_core_ann_`jj' = pprgam`jj' * 12 if pprgam`jj'>=0 & pprgpe`jj'==5
+			replace pp_core_ann_`jj' = pprgam`jj' * pprgpe`jj' if pprgam`jj'>=0 & inlist(pprgpe`jj',8,9,10)
+
+			gen pp_fallback_ann_`jj' = .
+			replace pp_fallback_ann_`jj' = pplsta`jj' * (52.0 / pplstp`jj') if pplsta`jj'>=0 & inlist(pplstp`jj',1,2,3,4,13,26,52)
+			replace pp_fallback_ann_`jj' = pplsta`jj' * 12 if pplsta`jj'>=0 & pplstp`jj'==5
+			replace pp_fallback_ann_`jj' = pplsta`jj' * pplstp`jj' if pplsta`jj'>=0 & inlist(pplstp`jj',8,9,10)
+		}
+
+		egen pp_core_annual = rowtotal(pp_core_ann_1 pp_core_ann_2 pp_core_ann_3)
+		egen pp_fallback_annual = rowtotal(pp_fallback_ann_1 pp_fallback_ann_2 pp_fallback_ann_3)
+		gen pp_contrib_annual = pp_core_annual
+		replace pp_contrib_annual = pp_fallback_annual if (missing(pp_contrib_annual) | pp_contrib_annual<=0) & pp_fallback_annual>0
+		replace pp_contrib_annual = 0 if missing(pp_contrib_annual)
+		gen chk = pp_contrib_annual * (earnings < 0.01)
+		gsort was_round bu
+		by was_round bu: egen chk2 = sum(chk)
+		by was_round bu: egen earn_max = max(earnings)
+		gen pp_reallocate = 0
+		replace pp_reallocate = chk2 if (earnings == earn_max & earnings > 0.01)
+		gen pp_contrib_annual2 = pp_contrib_annual + pp_reallocate
+		replace pp_contrib_annual2 = 0 if (chk==1)
+		gen pp_contrate = 0
+		replace pp_contrate = pp_contrib_annual2 / (earnings) * 100 if (pp_contrib_annual2>=0 & pp_contrib_annual2<. & earnings>0 & earnings<.)
+		gen pp_membi = (pp_contrate>0.01) * (pp_contrate<.) * (adlt)
+		egen pp_membu = sum(pp_membi), by (case bu)
+
+		gen ocdc_contrate_emee = dvcontocc_emee_dc1 * (dvcontocc_emee_dc1<.) + dvcontocc_emee_dc2 * (dvcontocc_emee_dc2 <.)
+		gen ocdc_contrate_emer = dvcontocc_emer_dc1 * (dvcontocc_emer_dc1<.) + dvcontocc_emer_dc2 * (dvcontocc_emer_dc2 <.)
+
+		gen byte pp_contrib_source_core = (pp_core_annual>0)
+		gen byte pp_contrib_source_fallback = (pp_core_annual<=0 & pp_fallback_annual>0)
+		label var pp_core_annual "Personal pension annual contribution (core regular amount-period)"
+		label var pp_fallback_annual "Personal pension annual contribution (fallback last contribution amount-period)"
+		label var pp_contrib_annual "Personal pension annual contribution (core with fallback)"
+		label var pp_contrib_annual2 "Personal pension annual contribution (core with fallback and reallocation)"
+		label var pp_contrib_source_core "1 if pp_contrib_annual sourced from core regular contribution"
+		label var pp_contrib_source_fallback "1 if pp_contrib_annual sourced from fallback last contribution"
+		label var pp_contrate "Personal pension contribution rate (% of gross employment income)"
+		label var ocdc_contrate_emee "DC occupational employee pension contribution rate (% of gross employment income)"
+		label var ocdc_contrate_emer "DC occupational employer pension contribution rate (% of gross employment income)"
+		label var pp_membu "number of personal pension members in benefit unit"
+
+		drop pp_core_ann_1 pp_core_ann_2 pp_core_ann_3 pp_fallback_ann_1 pp_fallback_ann_2 pp_fallback_ann_3
+		
 		// individual labour force status
 		gen sempi=(stat==2)
 		gen fti= (stat==1 & ftptwk==1)
@@ -306,6 +398,9 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 
 		gen op_memb = (pemmem==1)
 		label var op_memb "whether member of occupational pension"
+		gen op_membui = op_memb * adlt
+		egen op_membu = sum(op_membui), by (case bu)
+		label var op_membu "number of occupational pension members in benefit unit"
 
 		gen op_db = (((poctyp1==2) + (poctyp2==2))>0) * op_memb
 		label var op_db "whether has current defined benefit scheme"
@@ -516,7 +611,8 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 		// Variables below: total value of ISAs, net value of own-business assets, net value of financial and non-financial (non-property) assets, aggregate occupational pension rights, ww, private/personal pension rights (non‑occupational)
 		keep case person_id bu bu_rp year sex grad gradsp dvage17 na nk* single_man ///
 			single_woman couple couple_ref gor2 dhe2 healths p_healths dlltsd dlltsdsp ///
-			idnk04 pct emp empsp tot_pen dvhvalue main_mort wealth inc was dwt
+			idnk04 pct emp empsp tot_pen dvhvalue main_mort wealth inc pp_membu op_membu ///
+			was dwt
 		if (`ww' > `ww0') {
 			append using "$dir_data\was_wealthdata.dta"
 		}

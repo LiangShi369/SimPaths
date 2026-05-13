@@ -136,6 +136,18 @@ public class ManagerRegressions {
             throw new RuntimeException("requested Binomial regression is not recognised: " + regression.name());
 
         switch (regression) {
+            case WealthPensionPW1a -> {
+                return Parameters.getRegPW1a();
+            }
+            case WealthPensionPW1b -> {
+                return Parameters.getRegPW1b();
+            }
+            case WealthPensionPW2a -> {
+                return Parameters.getRegPW2a();
+            }
+            case WealthPensionPW2b -> {
+                return Parameters.getRegPW2b();
+            }
             case EducationE1a -> {
                 return Parameters.getRegEducationE1a();
             }
@@ -372,6 +384,28 @@ public class ManagerRegressions {
             throw new InvalidParameterException("Failed to retrieve probability for unrecognised regression: " + regression.name());
 
         return getBinomialRegression(regression).getProbability(obj, Person.DoublesVariables.class);
+    }
+
+    public static boolean getAnnualEventFromBiennial(IDoubleSource obj, boolean lagIncidence, double rand, RegressionName entryRegression, RegressionName persistRegression) {
+
+        if (!RegressionType.Logit.equals(entryRegression.getType()) && !RegressionType.Probit.equals(entryRegression.getType()))
+            throw new InvalidParameterException("Failed to retrieve probability for unrecognised regression: " + entryRegression.name());
+        if (!RegressionType.Logit.equals(persistRegression.getType()) && !RegressionType.Probit.equals(persistRegression.getType()))
+            throw new InvalidParameterException("Failed to retrieve probability for unrecognised regression: " + persistRegression.name());
+
+        double pent2 = getProbability(obj, entryRegression);
+        double pper2 = getProbability(obj, persistRegression);
+        if (pent2 >= pper2)
+            throw new ArithmeticException("Entry probability of biennial system must be less than persistence probability");
+        double pent = pent2 / (1.0 + Math.sqrt(pper2 - pent2));
+        double pper = pent + Math.sqrt(pper2 - pent2);
+        if (lagIncidence) {
+
+            return (rand < pent);
+        } else {
+
+            return (rand < pper);
+        }
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> double getProbability(E event, IDoubleSource obj, RegressionName regression) {

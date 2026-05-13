@@ -3,7 +3,6 @@ package simpaths.model.lifetime_incomes;
 import jakarta.persistence.*;
 import microsim.statistics.IDoubleSource;
 import simpaths.data.Parameters;
-import simpaths.model.Person;
 import simpaths.model.enums.Gender;
 
 @Entity
@@ -41,7 +40,7 @@ public class AnnualIncome implements IDoubleSource {
     }
 
     public double getValue() {
-        if (Parameters.checkFinite(value)) {
+        if (Parameters.isFinite(value)) {
             return value;
         }
         else {
@@ -112,7 +111,7 @@ public class AnnualIncome implements IDoubleSource {
         int age = individual.getAge();
         Gender gender = individual.getGender();
         Double val = Parameters.getEquivalisedIncome(gender, age, year);
-        if (!Parameters.checkFinite(val)) {
+        if (!Parameters.isFinite(val)) {
             // outside observed range, use regression model
 
             if (Gender.Male.equals(gender)) {

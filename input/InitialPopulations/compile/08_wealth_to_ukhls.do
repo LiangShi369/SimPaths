@@ -295,6 +295,8 @@ gen wealthi = -9
 gen tot_peni = -9
 gen housingi = -9
 gen mortgagei = -9
+gen op_membui = -9
+gen pp_membui = -9
 qui {
 	sum treat, mean
 	local nn = r(mean) * r(N)
@@ -370,12 +372,16 @@ forval kk = 1/`nn' {
 			local pw = tot_pen[1]
 			local hw = dvhvalue[1]
 			local mm = main_mort[1]
+			local op = op_membu[1]
+			local pp = pp_membu[1]
 			restore
 			replace mtc=`mtc' if (_n==`kk')
 			replace wealthi = `ww' if (_n==`kk')
 			replace tot_peni = `pw' if (_n==`kk')
 			replace housingi = `hw' if (_n==`kk')
 			replace mortgagei = `mm' if (_n==`kk')
+			replace op_membui = `op' if (_n==`kk')
+			replace pp_membui = `op' if (_n==`kk')
 		}
 		replace rnk=`rnk' if (_n==`kk')
 		drop chk
@@ -394,18 +400,26 @@ recode wealthi (mis=0)
 recode tot_peni (mis=0)
 recode housingi (mis=0)
 recode mortgagei (mis=0)
+recode op_membui (mis=0)
+recode pp_membui (mis=0)
 by bu: egen total_wealth = sum(wealthi)
 by bu: egen total_pensions = sum(tot_peni)
 by bu: egen housing_wealth = sum(housingi)
 by bu: egen mortgage_debt = sum(mortgagei)
+by bu: egen op_membu = sum(op_membui)
+by bu: egen pp_membu = sum(pp_membui)
 recode total_wealth (-9=0)
 recode total_pensions (-9=0)
 recode housing_wealth (-9=0)
 recode mortgage_debt (-9=0)
+recode op_membu (-9=0)
+recode pp_membu (-9=0)
 label var total_wealth "total wealth net of liabilities of benefit unit including housing, business and private (personal and occupational) pensions"
 label var total_pensions "value of all private (personal and occupational) pensions of benefit unit"
 label var housing_wealth "value of main home gross of mortgage debt of benefit unit"
 label var mortgage_debt "total mortgage debt owed on main home of benefit unit"
+label var op_membu "number of occupational pension members in benefit unit"
+label var pp_membu "number of personal pension members in benefit unit"
 save ukhls_wealthtemp3, replace
 
 /*

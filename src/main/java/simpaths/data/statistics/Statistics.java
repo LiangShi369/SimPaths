@@ -35,17 +35,29 @@ public class Statistics {
 	private double yHhQuintilesC5P80;
 
 	//Percentiles of gross labour income:
-	@Column(name = "Gross_Labour_Income_p20")
-	private double yLabP20;
+	@Column(name = "Gross_Labour_Force_Earnings_p20")
+	private double yLabFceEarningsP20;
 
-	@Column(name = "Gross_Labour_Income_p40")
-	private double yLabP40;
+	@Column(name = "Gross_Labour_Force_Earnings_p40")
+	private double yLabFceEarningsP40;
 
-	@Column(name = "Gross_Labour_Income_p60")
-	private double yLabP60;
+	@Column(name = "Gross_Labour_Force_Earnings_p60")
+	private double yLabFceEarningsP60;
 
-	@Column(name = "Gross_Labour_Income_p80")
-	private double yLabP80;
+	@Column(name = "Gross_Labour_Force_Earnings_p80")
+	private double yLabFceEarningsP80;
+
+	@Column(name = "Gross_Employed_Earnings_p20")
+	private double yEmployedEarningsP20;
+
+	@Column(name = "Gross_Employed_Earnings_p40")
+	private double yEmployedEarningsP40;
+
+	@Column(name = "Gross_Employed_Earnings_p60")
+	private double yEmployedEarningsP60;
+
+	@Column(name = "Gross_Employed_Earnings_p80")
+	private double yEmployedEarningsP80;
 
 	//Equivalised disposable income
 	@Column(name = "EDI_p50")
@@ -115,36 +127,54 @@ public class Statistics {
 		this.sIndex_p50 = sIndex_p50;
 	}
 
-	public double getGrossLabourIncome_p20() {
-		return yLabP20;
+	public double getGrossLabourForceEarnings_p20() {
+		return yLabFceEarningsP20;
 	}
 
-	public void setGrossLabourIncome_p20(double yLabP20) {
-		this.yLabP20 = yLabP20;
+	public void setGrossLabourForceEarnings_p20(double yLabP20) { this.yLabFceEarningsP20 = yLabP20; }
+
+	public double getGrossLabourForceEarnings_p40() {
+		return yLabFceEarningsP40;
 	}
 
-	public double getGrossLabourIncome_p40() {
-		return yLabP40;
+	public void setGrossLabourForceEarnings_p40(double yLabP40) {
+		this.yLabFceEarningsP40 = yLabP40;
 	}
 
-	public void setGrossLabourIncome_p40(double yLabP40) {
-		this.yLabP40 = yLabP40;
+	public double getGrossLabourForceEarnings_p60() {
+		return yLabFceEarningsP60;
 	}
 
-	public double getGrossLabourIncome_p60() {
-		return yLabP60;
+	public void setGrossLabourForceEarnings_p60(double yLabP60) {
+		this.yLabFceEarningsP60 = yLabP60;
 	}
 
-	public void setGrossLabourIncome_p60(double yLabP60) {
-		this.yLabP60 = yLabP60;
+	public double getGrossLabourForceEarnings_p80() { return yLabFceEarningsP80; }
+
+	public void setGrossLabourForceEarnings_p80(double yLabP80) { this.yLabFceEarningsP80 = yLabP80; }
+
+	public double getEmployedEarningsP20() { return yEmployedEarningsP20; }
+
+	public void setEmployedEarningsP20(double yEmployedEarningsP20) { this.yEmployedEarningsP20 = yEmployedEarningsP20; }
+
+	public double getEmployedEarningsP40() { return yEmployedEarningsP40; }
+
+	public void setEmployedEarningsP40(double yEmployedEarningsP40) { this.yEmployedEarningsP40 = yEmployedEarningsP40; }
+
+	public double getEmployedEarningsP60() {
+		return yEmployedEarningsP60;
 	}
 
-	public double getGrossLabourIncome_p80() {
-		return yLabP80;
+	public void setEmployedEarningsP60(double yEmployedEarningsP60) {
+		this.yEmployedEarningsP60 = yEmployedEarningsP60;
 	}
 
-	public void setGrossLabourIncome_p80(double yLabP80) {
-		this.yLabP80 = yLabP80;
+	public double getEmployedEarningsP80() {
+		return yEmployedEarningsP80;
+	}
+
+	public void setEmployedEarningsP80(double yEmployedEarningsP80) {
+		this.yEmployedEarningsP80 = yEmployedEarningsP80;
 	}
 
 	public double getEdi_p50() {

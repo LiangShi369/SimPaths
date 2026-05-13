@@ -195,21 +195,21 @@ forvalues yy = $firstSimYear/$lastSimYear {
 	keep idhh idbenefitunit idperson idpartner idmother idfather swv dgn dag dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd01 dhe ydses_c5 ///
 	yplgrs_dv ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der dehm_c3 dehf_c3 stm dhm scghq2_dv dhh_owned lhw ///
 	l1_lhw drgn1 les_c4 dhm_ghq adultchildflag dwt obs_earnings_hourly l1_obs_earnings_hourly total_wealth ///
-	total_pensions housing_wealth mortgage_debt need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
+	total_pensions housing_wealth mortgage_debt op_membu pp_membu need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
 	carehoursprovidedweekly econ_benefits econ_benefits_nonuc econ_benefits_uc disp_inc ypncp ypnoab dhe_mcs dhe_pcs dhe_mcssp ///
 	dhe_pcssp dls dot dot01 unemp financial_distress liwwh
 	
 	order idhh idbenefitunit idperson idpartner idmother idfather swv dgn dag dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd01 dhe ydses_c5 ///
 	yplgrs_dv ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der dehm_c3 dehf_c3 stm dhm scghq2_dv dhh_owned lhw ///
 	l1_lhw drgn1 les_c4 dhm_ghq adultchildflag dwt obs_earnings_hourly l1_obs_earnings_hourly total_wealth ///
-	total_pensions housing_wealth mortgage_debt need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
+	total_pensions housing_wealth mortgage_debt op_membu pp_membu need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
 	carehoursprovidedweekly econ_benefits econ_benefits_nonuc econ_benefits_uc disp_inc ypncp ypnoab dhe_mcs dhe_pcs dhe_mcssp ///
 	dhe_pcssp dls dot dot01 unemp financial_distress liwwh
 	
 	recode idhh idbenefitunit idperson idpartner idmother idfather swv dgn dag dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd01 dhe ydses_c5 ///
 	yplgrs_dv ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der dehm_c3 dehf_c3 stm dhm scghq2_dv dhh_owned lhw ///
 	l1_lhw drgn1 les_c4 dhm_ghq adultchildflag dwt obs_earnings_hourly l1_obs_earnings_hourly total_wealth ///
-	total_pensions housing_wealth mortgage_debt need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
+	total_pensions housing_wealth mortgage_debt op_membu pp_membu need_socare formal_socare_hrs informal_socare_hrs formal_socare_cost ///
 	carehoursprovidedweekly econ_benefits econ_benefits_nonuc econ_benefits_uc disp_inc ypncp ypnoab dhe_mcs dhe_pcs dhe_mcssp ///
 	dhe_pcssp dls dot dot01 unemp financial_distress liwwh (missing = -9)
 	
@@ -283,6 +283,8 @@ rename total_wealth wealthTotValue   //total wealth net of liabilities of benefi
 rename mortgage_debt wealthMortgageDebtValue  //total mortgage debt owed on main home of benefit unit
 rename housing_wealth wealthPrptyValue //value of main home gross of mortgage debt of benefit unit
 rename total_pensions wealthPensValue //value of all private (personal and occupational) pensions of benefit unit
+rename op_membu wealthOPMembers // number of occupational pension scheme members in benefit unit
+rename pp_membu wealthPPMembers // number of personal pension scheme members in benefit unit
 
 rename econ_benefits yBenReceivedFlag
 rename econ_benefits_nonuc yBenNonUCReceivedFlag

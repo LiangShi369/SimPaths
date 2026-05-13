@@ -7,13 +7,13 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import simpaths.data.filters.FlexibleInLabourSupplyFilter;
+import simpaths.data.filters.FlexibleInLabourForceFilter;
+import simpaths.data.filters.IsEmployedFilter;
 import simpaths.data.statistics.EmploymentStatistics;
 import simpaths.data.statistics.HealthStatistics;
 import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Quintiles;
-import microsim.statistics.Series;
 import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
@@ -37,6 +37,7 @@ import simpaths.data.statistics.Statistics2;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
 
+import static simpaths.model.Person.DoublesVariables.GrossEarningsYearly;
 import static simpaths.model.Person.DoublesVariables.GrossLabourIncomeMonthly;
 
 
@@ -110,7 +111,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private EDI edi; //Equivalised disposable income statistics
 
-    private GrossLabourIncome grossLabourIncome;
+    private GrossLabourForceEarnings grossLabourForceEarnings;
+    
+    private GrossEmploymentEarnings grossEmploymentEarnings;
 
     private DataExport exportPersons;
 
@@ -308,9 +311,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         yHhQuintilesMonthC5 = new Ydses_c5();
         edi = new EDI();
-        grossLabourIncome = new GrossLabourIncome();
-
-
+        grossLabourForceEarnings = new GrossLabourForceEarnings();
+        grossEmploymentEarnings = new GrossEmploymentEarnings();
     }
 
     @Override
@@ -367,47 +369,74 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     //	Inner classes for data collection
     // ---------------------------------------------------------------------
 
-    private class GrossLabourIncome {
+
+    /*
+     * This method calculates quintiles of gross earnings of persons in labour force
+     */
+    private class GrossLabourForceEarnings {
 
         final SimPathsModel model = (SimPathsModel) getManager();
-        private CrossSection.Double personsGrossLabourIncomesCS;
-        private PercentileArrayFunction percentileFunctionGrossLabourIncomes;
+        private CrossSection.Double grossEarnings;
+        private PercentileArrayFunction percentileFunction;
 
         public void update() {
-            personsGrossLabourIncomesCS = new CrossSection.Double(model.getPersons(), GrossLabourIncomeMonthly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
-            FlexibleInLabourSupplyFilter flexibleInLabourSupplyFilter = new FlexibleInLabourSupplyFilter();
-            personsGrossLabourIncomesCS.setFilter(flexibleInLabourSupplyFilter); // Filter only those who could work for calculation of quintiles of gross labour income
+            grossEarnings = new CrossSection.Double(model.getPersons(), GrossLabourIncomeMonthly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
+            FlexibleInLabourForceFilter flexibleInLabourForceFilter = new FlexibleInLabourForceFilter();
+            grossEarnings.setFilter(flexibleInLabourForceFilter); // Filter only those who could work for calculation of quintiles of gross labour income
 
-            percentileFunctionGrossLabourIncomes = new PercentileArrayFunction(personsGrossLabourIncomesCS);
-            percentileFunctionGrossLabourIncomes.updateSource();
+            percentileFunction = new PercentileArrayFunction(grossEarnings);
+            percentileFunction.updateSource();
 
-            stats.setGrossLabourIncome_p20(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P20));
-            stats.setGrossLabourIncome_p40(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P40));
-            stats.setGrossLabourIncome_p60(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P60));
-            stats.setGrossLabourIncome_p80(percentileFunctionGrossLabourIncomes.getDoubleValue(PercentileArrayFunction.Variables.P80));
+            stats.setGrossLabourForceEarnings_p20(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P20));
+            stats.setGrossLabourForceEarnings_p40(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P40));
+            stats.setGrossLabourForceEarnings_p60(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P60));
+            stats.setGrossLabourForceEarnings_p80(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P80));
 
             for (Person person : model.getPersons()) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidModuleGrossLabourIncome_Baseline();
-                if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourIncome_p20()) {
+                if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourIncome_p40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourIncome_p60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourIncome_p80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);
                 }
             }
+        }
+    }
 
+
+    /*
+     * This method calculates quintiles of gross earnings of persons in employment
+     */
+    private class GrossEmploymentEarnings {
+
+        final SimPathsModel model = (SimPathsModel) getManager();
+        private CrossSection.Double grossEarnings;
+        private PercentileArrayFunction percentileFunction;
+
+        public void update() {
+            grossEarnings = new CrossSection.Double(model.getPersons(), GrossEarningsYearly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
+            IsEmployedFilter isEmployedFilter = new IsEmployedFilter();
+            grossEarnings.setFilter(isEmployedFilter); // Filter only those who are employed or self-employed
+
+            percentileFunction = new PercentileArrayFunction(grossEarnings);
+            percentileFunction.updateSource();
+
+            stats.setEmployedEarningsP20(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P20));
+            stats.setEmployedEarningsP40(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P40));
+            stats.setEmployedEarningsP60(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P60));
+            stats.setEmployedEarningsP80(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P80));
         }
     }
 
 
     /*
      *This method calculates quintiles of household gross income
-     *
      */
     private class Ydses_c5 implements IDoubleSource {
 
@@ -512,8 +541,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             //Filter out people with non-finite or negative gross earnings
             Map<Person, Double> validPersonalGrossEarningsMap = new LinkedHashMap<Person, Double>();
             for(Person person: model.getPersons()) {
-                Double grossEarnings = person.getGrossEarningsWeekly();
-                if(grossEarnings != null && Double.isFinite(grossEarnings) && grossEarnings >= 0.) {
+                double grossEarnings = person.getEarningsWeekly();
+                if (grossEarnings >= 0.) {
                     validPersonalGrossEarningsMap.put(person, grossEarnings);
                 }
             }
@@ -767,7 +796,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private void calculateGrossIncome() {
         yHhQuintilesMonthC5.update();
-        grossLabourIncome.update();
+        grossLabourForceEarnings.update();
+        grossEmploymentEarnings.update();
     }
 
     // ---------------------------------------------------------------------

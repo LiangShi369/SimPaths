@@ -16,6 +16,7 @@ import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
 import simpaths.data.filters.FertileFilter;
+import simpaths.experiment.SimPathsCollector;
 import simpaths.model.annotations.Lag;
 import simpaths.model.annotations.NullInitialised;
 import simpaths.model.annotations.UpdateManager;
@@ -24,7 +25,7 @@ import simpaths.model.decisions.DecisionParams;
 import simpaths.model.enums.*;
 import simpaths.model.lifetime_incomes.AnnualIncome;
 import simpaths.model.lifetime_incomes.Individual;
-import simpaths.model.wealth.PensionWealth;
+import simpaths.model.person.PrivatePension;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -184,9 +185,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(getter="getyEmpPersGrossMonth") @Transient private Double yEmpPersGrossMonthL1; //Lag(1) of gross personal employment income
 
     // pension wealth (stock, real 2015 prices)
+    @NullInitialised @Transient private PrivatePension privatePension;
+    @Lag(getter="getPrivatePension") @Transient private PrivatePension privatePensionL1;
     @NullInitialised @Column(name = "wealthPensValue") private Double wealthPensValue;
-    @Lag(field="wealthPensValue") @Transient private Double wealthPensValueL1;
-    @NullInitialised @Transient private Boolean pensionContributor; // set each year by UpdatePensionContributionStatus
+    @NullInitialised private Double contRateOPEe;                         //employee contribution rate to occupation pension
+    @NullInitialised private Double contRateOPEr;                         //employer contribution rate to occupation pension
+    @NullInitialised private Double contRatePP;                           //employer contribution rate to occupation pension
 
     //For matching process
     @Transient private Double demAgeDiffDesired;
@@ -218,6 +222,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @NullInitialised @Transient private Integer i_demNchild0to17;
     @NullInitialised @Transient private Indicator i_demNChild0to2;
     @NullInitialised @Transient private Dcpst i_demPartnerStatus;
+    @NullInitialised @Transient private Quintiles i_yEarningsQuintileC5;
 
     // innovations
     @Transient Innovations statInnovations;
@@ -426,8 +431,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yPensPersGrossMonthL2 = originalPerson.yPensPersGrossMonthL2;
 
         wealthPensValue = originalPerson.wealthPensValue;
-        wealthPensValueL1 = originalPerson.wealthPensValueL1;
-        pensionContributor = originalPerson.pensionContributor;
+        contRateOPEe = originalPerson.contRateOPEe;
+        contRateOPEr = originalPerson.contRateOPEr;
+        contRatePP = originalPerson.contRatePP;
+        privatePension = new PrivatePension(originalPerson.privatePension);
+        privatePensionL1 = new PrivatePension(originalPerson.privatePensionL1);
 
         labEmpNyear = Objects.requireNonNullElseGet(originalPerson.labEmpNyear, () -> ((Les_c4.EmployedOrSelfEmployed.equals(labC4)) ? 12 : 0));
         healthDsblLongtermFlag = originalPerson.healthDsblLongtermFlag;
@@ -577,7 +585,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         // initialise random draws
         this.statSeed = statSeed;
-        statInnovations = new Innovations(38, 1, 1, statSeed);
+        statInnovations = new Innovations(43, 1, 1, statSeed);
 
         //Draw desired age and wage differential for parametric partnership formation for people above age to get married:
         double[] sampleDifferentials = setMarriageTargets();
@@ -659,7 +667,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         // eduSpellFlag = (Les_c4.Student.equals(labC4)) ? Indicator.True : Indicator.False;
         // no need to update eduSpellFlag as its value is persisted from the previous year
 
-        if (!Parameters.checkFinite(careHrsInformalWeek))
+        if (!Parameters.isFinite(careHrsInformalWeek))
             careHrsInformalWeek = 0.0;
         if (careHrsProvidedWeek < 0.01) {
             careProvidedFlag = Indicator.False;
@@ -733,19 +741,39 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demPartnerStatusL2 = demPartnerStatusL1; // Updating of this lag must occur before parnters variables are updated
 
         // partner variables
+        privatePension = getPrivatePension();
         Person partner = getPartner();
         if (partner!=null) {
             eduHighestPartnerC4L1 = partner.eduHighestC4;
             healthPartnerSelfRatedL1 = partner.healthSelfRated;
             demAgePartnerDiffL1 = demAge - partner.demAge;
             idPartnerL1 = partner.getId();
-            wealthPensValue = getBenefitUnit().getPensionWealth() / 2.0;
+            privatePension.setWealth(getBenefitUnit().getPensionWealth() / 2.0);
+            if (getBenefitUnit().getWealthOPMembers() > 1.1) {
+                privatePension.setContRateOPEe(0.05);
+                privatePension.setContRateOPEr(0.05);
+            } else if (getBenefitUnit().getWealthOPMembers() > 0.1 && labWageFullTimeHrly > partner.getLabWageFullTimeHrly()) {
+                privatePension.setContRateOPEe(0.05);
+                privatePension.setContRateOPEr(0.05);
+            }
+            if (getBenefitUnit().getWealthPPMembers() > 1.1) {
+                privatePension.setContRatePP(0.05);
+            } else if (getBenefitUnit().getWealthPPMembers() > 0.1 && labWageFullTimeHrly > partner.getLabWageFullTimeHrly()) {
+                privatePension.setContRatePP(0.05);
+            }
         } else {
             eduHighestPartnerC4L1 = null;
             healthPartnerSelfRatedL1 = null;
             demAgePartnerDiffL1 = null;
             idPartnerL1 = null;
-            wealthPensValue = getBenefitUnit().getPensionWealth();
+            privatePension.setWealth(getBenefitUnit().getPensionWealth());
+            if (getBenefitUnit().getWealthOPMembers() > 0.1) {
+                privatePension.setContRateOPEe(0.05);
+                privatePension.setContRateOPEr(0.05);
+            }
+            if (getBenefitUnit().getWealthPPMembers() > 0.1) {
+                privatePension.setContRatePP(0.05);
+            }
         }
         demPartnerStatusL1 = getDcpst();
         yPersAndPartnerGrossDiffMonthL1 = getYnbcpdf_dv(); //Lag(1) of difference between own and partner's gross personal non-benefit income
@@ -968,7 +996,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
                     //If age below or equal to 29 and in continuous education follow process F1a
                     double score = Parameters.getRegFertilityF1().getScore(this, Person.DoublesVariables.class);
-                    if (!Parameters.checkFinite(score))
+                    if (!Parameters.isFinite(score))
                         throw new ArithmeticException("Failure to evaluate score for fertility rate");
                     prob = Parameters.getRegFertilityF1().getProbability(score + probitAdjustment);
 
@@ -990,20 +1018,33 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public void updatePensionContributionStatus() {
-        if (!Parameters.projectPensionWealth) {
-            pensionContributor = false;
-            return;
+
+        if (Parameters.projectPensionWealth) {
+            privatePension = new PrivatePension();
+            privatePension.membership(this, privatePensionL1.isMemberOP(), privatePensionL1.isMemberPP(), statInnovations.getDoubleDraw(5), statInnovations.getDoubleDraw(6));
+            privatePension.contributionRates(this, statInnovations.getDoubleDraw(39), statInnovations.getDoubleDraw(40),
+                    statInnovations.getDoubleDraw(41), statInnovations.getDoubleDraw(42), statInnovations.getDoubleDraw(43));
         }
-        pensionContributor = (statInnovations.getDoubleDraw(2) < Parameters.pensionContributionProbability);
+    }
+
+    public double getPrivatePensionContributionRate() {
+
+        if (privatePension == null)
+            throw new RuntimeException("Private pension not initialised");
+
+        return privatePension.getContRateOPEe() + privatePension.getContRatePP();
     }
 
     public void updatePensionWealth() {
-        if (!Parameters.projectPensionWealth) return;
-        double prior = Objects.requireNonNullElse(wealthPensValueL1, 0.0);
-        PensionWealth pw = new PensionWealth(prior);
-        double annualEmpIncome = (yEmpPersGrossMonth != null) ? Math.sinh(yEmpPersGrossMonth) * 12.0 : 0.0;
-        pw.projectValue(Parameters.pensionWealthAnnualGrowthRate, pensionContributor, labC4, annualEmpIncome, Parameters.pensionContributionRate);
-        wealthPensValue = pw.getValue();
+
+        if (!Parameters.projectPensionWealth)
+            return;
+
+        privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.pensionWealthAnnualGrowthRate, labC4);
+        wealthPensValue = privatePension.getWealth();
+        contRateOPEe = privatePension.getContRateOPEe();
+        contRateOPEr = privatePension.getContRateOPEr();
+        contRatePP = privatePension.getContRatePP();
     }
 
     private void updateUnemploymentState() {
@@ -1150,7 +1191,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthMentalHM1Level() {
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
             double score = Parameters.getRegHealthHM1Level().getScore(this, Person.DoublesVariables.class);
-            if (!Parameters.checkFinite(score))
+            if (!Parameters.isFinite(score))
                 throw new ArithmeticException("Failure to evaluate score for mental health level");
             double rmse = Parameters.getRMSEForRegression("HM1_L");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(1));
@@ -1177,12 +1218,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelMales().getScore(this, Person.DoublesVariables.class);
-                if (!Parameters.checkFinite(dhmPrediction))
+                if (!Parameters.isFinite(dhmPrediction))
                     throw new ArithmeticException("Failure to evaluate score for mental health level (HM2)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelFemales().getScore(this, Person.DoublesVariables.class);
-                if (!Parameters.checkFinite(dhmPrediction))
+                if (!Parameters.isFinite(dhmPrediction))
                     throw new ArithmeticException("Failure to evaluate score for mental health level (HM2b)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else System.out.println("healthMentalHM2 method in Person class: Person has no gender!");
@@ -1466,7 +1507,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
      * @return {@code Person.demLifeSatScore0to10} score constrained to 0-10
      */
     protected Double constrainLifeSatisfactionEstimate(double dls_estimate) {
-        if (!Parameters.checkFinite(dls_estimate)) {
+        if (!Parameters.isFinite(dls_estimate)) {
             return null;
         }
 
@@ -1519,7 +1560,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             careFormalFlag = false;
             careFromInformalFlag = false;
         }
-        if (!Parameters.checkFinite(careHrsInformalWeek))
+        if (!Parameters.isFinite(careHrsInformalWeek))
             careHrsInformalWeek = 0.0;
 
         if (demAge >= Parameters.MIN_AGE_SOCIAL_CARE && year > getStartYear()) {
@@ -1964,7 +2005,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesNE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentNotEmp;
             }
         }
-        if (!Parameters.checkFinite(logFullTimeHourlyEarnings))
+        if (!Parameters.isFinite(logFullTimeHourlyEarnings))
             throw new ArithmeticException("Failure to project full-time earnings estimate");
 
         // Uprate and set level of potential earnings
@@ -2528,6 +2569,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Age85plus,
         AgeOver39,
         AgeUnder25,
+        Asinhop_empee,
         Blpay_Q2,
         Blpay_Q3,
         Blpay_Q4,
@@ -2568,6 +2610,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Covid19GrossPayMonthly_L1,
         Covid19ReceivesSEISS_L1,
         CovidTransitionsMonth,
+        Current_op_memb,
         Cut1,       // ordered probit/logit cut points - ignore these when evaluating score
         Cut2,
         Cut3,
@@ -2762,6 +2805,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dnc_L1, 						//Lag(1) of number of children of all ages in the benefitUnit
         Dnc02_L1, 						//Lag(1) of number of children aged 0-2 in the benefitUnit
         Dnc017, 						//Number of children aged 0-17 in the benefitUnit
+        Earnings_Q2,
+        Earnings_Q3,
+        Earnings_Q4,
+        Earnings_Q5,
+        Employee_cont_0,
+        Employee_cont_3,
+        Employee_cont_5,
         EmployedToUnemployed,
         Employmentsonflexiblefurlough,
         Employmentsonfullfurlough,
@@ -2822,9 +2872,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Lessp_c3_Student_L1,			//Partner variables
         Lesnr_c2_NotEmployed_L1,
         Reached_Retirement_Age_Lesnr_c2_NotEmployed_L1,
-        Liwwh,									//Work history in months
+        Liwwh,
         LnAge,
         Lnonwork,
+        Lnop_all,//Work history in months
         Lstudent,
         Lunion,
         HrsReceivedFormalIHS_L1,
@@ -3889,7 +3940,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return yFinDstrssFlag ? 1. : 0.;
             }
             case GrossEarningsYearly -> {
-                return getGrossEarningsYearly();
+                return getEarningsYearly();
             }
             case GrossLabourIncomeMonthly -> {
                 return getCovidModuleGrossLabourIncome_Baseline();
@@ -3914,6 +3965,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }            //A person who was not active but has become active in this year should have an employment_status_lag == null.  In this case, we assume this means 0 for the Employment regression, where Lemployed is used.
             case Lnonwork -> {
                 return (labC4L1.equals(Les_c4.NotEmployed) || labC4L1.equals(Les_c4.Retired)) ? 1. : 0.;
+            }
+            case Lnop_all -> {
+                return (privatePension.isMemberOP()) ? Math.log(privatePension.getContRateOPEe() + privatePension.getContRateOPEr()) : 0.0;
             }
             case Lstudent -> {
                 //			log.debug("Lstudent");
@@ -4553,6 +4607,27 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     return xEquivYear;
                 } else return -9999.99;
             }
+            case Earnings_Q2 -> {
+                return (Quintiles.Q2.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
+            }
+            case Earnings_Q3 -> {
+                return (Quintiles.Q3.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
+            }
+            case Earnings_Q4 -> {
+                return (Quintiles.Q4.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
+            }
+            case Earnings_Q5 -> {
+                return (Quintiles.Q5.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
+            }
+            case Employee_cont_0 -> {
+                return (privatePension.getContRateOPEe() < 0.005) ? 1.0 : 0.0;
+            }
+            case Employee_cont_3 -> {
+                return (privatePension.getContRateOPEe() > 0.025 && privatePension.getContRateOPEe() < 0.035) ? 1.0 : 0.0;
+            }
+            case Employee_cont_5 -> {
+                return (privatePension.getContRateOPEe() > 0.045 && privatePension.getContRateOPEe() < 0.055) ? 1.0 : 0.0;
+            }
             //New enums for the mental health Step 1 and 2:
             case EmployedToUnemployed -> {
                 return (labC4L1.equals(Les_c4.EmployedOrSelfEmployed) && labC4.equals(Les_c4.NotEmployed) && healthDsblLongtermFlag.equals(Indicator.False)) ? 1. : 0.;
@@ -4740,6 +4815,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Les_c7_Covid_Furlough_L1 -> {
                 return (getLes_c7_covid_lag1().equals(Les_c7_covid.FurloughedFlex) || getLes_c7_covid_lag1().equals(Les_c7_covid.FurloughedFull)) ? 1. : 0.;
             }
+            case Asinhop_empee -> {
+                return Parameters.asinh(privatePension.getContRateOPEe());
+            }
             case Blpay_Q2 -> {
                 return (getCovidYLabGrossXt5().equals(Quintiles.Q2)) ? 1. : 0.;
             }
@@ -4760,6 +4838,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case RealGDPGrowth -> {
                 return Parameters.getTimeSeriesIndex(getYear(), UpratingCase.Capital);
+            }
+            case Current_op_memb -> {
+                return (privatePension.isMemberOP()) ? 1.0 : 0.0;
             }
             case Cut1 -> {
                 // ordered probit/logit cut points ignored when calculating score
@@ -5193,7 +5274,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public int getLabourSupplyHoursWeekly() {
-        return (labHrsWorkEnumWeek != null) ? labHrsWorkEnumWeek.getHours(this) : 0;
+        return (labHrsWorkWeek != null) ? labHrsWorkWeek : 0;
     }
 
     public double getDoubleLabourSupplyHoursWeekly() {
@@ -5204,6 +5285,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void setLabourSupplyWeekly(Labour labourSupply) {
         labHrsWorkEnumWeek = labourSupply;
         labHrsWorkWeek = getLabourSupplyHoursWeekly(); // Update number of hours worked weekly
+        if (!Les_c4.Student.equals(getLes_c4()) && !Les_c4.Retired.equals(getLes_c4())) {
+            if (labHrsWorkWeek > 0) {
+                setLes_c4(Les_c4.EmployedOrSelfEmployed);
+            } else  {
+                setLes_c4(Les_c4.NotEmployed);
+            }
+        }
     }
 
     public double getLabourSupplyHoursYearly() {
@@ -5214,18 +5302,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return getLabourSupplyHoursYearly() * model.getScalingFactor();
     }
 
-
-    public double getGrossEarningsWeekly() {
-        return labWageFullTimeHrly * (double) getLabourSupplyHoursWeekly();
-    }
-
-    public double getGrossEarningsYearly() {
-        Double gew = getGrossEarningsWeekly();
-        if(Double.isFinite(gew) && gew > 0.) {
-            return gew * Parameters.WEEKS_PER_YEAR;
-        }
-        else return 0.;
-//		else return null;
+    public double getEarningsYearly() {
+        return getEarningsWeekly() * Parameters.WEEKS_PER_YEAR;
     }
 
     public int getAtRiskOfPoverty() {
@@ -5525,7 +5603,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setYptciihs_dv(double yMiscPersGrossMonth) {
         this.yMiscPersGrossMonth = yMiscPersGrossMonth;
-        if (!Parameters.checkFinite(this.yMiscPersGrossMonth))
+        if (!Parameters.isFinite(this.yMiscPersGrossMonth))
             throw new IllegalArgumentException("yptciihs_dv is not finite");
     }
 
@@ -5546,7 +5624,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public Double getPensionWealthValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthPensValue)) {
+        if (!Parameters.isFinite(wealthPensValue)) {
             if (throwError)
                 throw new IllegalArgumentException("pensionWealthValue is not finite");
             else
@@ -5557,10 +5635,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setWealthPensValue(Double v) {
         wealthPensValue = v;
-    }
-
-    public Boolean isPensionContributor() {
-        return pensionContributor;
     }
 
     public double getyEmpPersGrossMonthL1() {
@@ -6115,7 +6189,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public double getHoursInformalSocialCare() {
-        return (Parameters.checkFinite(careHrsInformalWeek) && careHrsInformalWeek > 0.0) ? careHrsInformalWeek : 0.0;
+        return (Parameters.isFinite(careHrsInformalWeek) && careHrsInformalWeek > 0.0) ? careHrsInformalWeek : 0.0;
     }
 
     public double getCareHoursFromPartnerWeekly() {
@@ -6149,7 +6223,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public double getCareHoursProvidedWeekly() {
         double hours = 0.0;
-        if (Parameters.checkFinite(careHrsProvidedWeek) && careHrsProvidedWeek > 0.0)
+        if (Parameters.isFinite(careHrsProvidedWeek) && careHrsProvidedWeek > 0.0)
             hours = careHrsProvidedWeek;
         return hours;
     }
@@ -6384,7 +6458,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public double getYLifeTime() {
-        if (Parameters.checkFinite(yLifeTime))
+        if (Parameters.isFinite(yLifeTime))
             return yLifeTime;
         else
             throw new RuntimeException("yLifeTime is not finite");
@@ -6396,7 +6470,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             yLifeTime = newVal;
         } else {
 
-            if (!Parameters.checkFinite(yLifeTime))
+            if (!Parameters.isFinite(yLifeTime))
                 throw new RuntimeException("yLifeTime is not defined");
             double curVal = yLifeTime;
             double years = demAge + 1;
@@ -6448,5 +6522,41 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             return partner.getId();
         }
+    }
+
+    public PrivatePension getPrivatePension() {
+        return new PrivatePension(privatePension);
+    }
+
+    private Quintiles getEmploymentEarningsQuintile() {
+        return getEmploymentEarningsQuintile(false);
+    }
+
+    private Quintiles getEmploymentEarningsQuintile(boolean refresh) {
+
+        if (refresh || i_yEarningsQuintileC5 == null) {
+
+            SimPathsCollector collector = getBenefitUnit().getCollector();
+            if (collector.getStats() != null) { //Collector only gets initialised when simulation starts running
+
+                // quintile cut-offs are evaluated for preceding year - uprate for wage growth
+                double wageGrowth = Parameters.getTimeSeriesIndex(model.getYear(), UpratingCase.Earnings) /
+                        Parameters.getTimeSeriesIndex(model.getYear() - 1, UpratingCase.Earnings);
+                if (getEarningsYearly() < collector.getStats().getEmployedEarningsP20() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q1;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP40() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q2;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP60() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q3;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP80() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q4;
+                } else {
+                    i_yEarningsQuintileC5 = Quintiles.Q5;
+                }
+            } else {
+                i_yEarningsQuintileC5 = Quintiles.Q3;
+            }
+        }
+        return i_yEarningsQuintileC5;
     }
 }
