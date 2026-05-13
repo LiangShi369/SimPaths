@@ -586,9 +586,9 @@ public class Expectations {
         } else {
             double ptPremium;
             if (currentStates.getGenderCode()==Gender.Male) {
-                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesE, "Pt");
+                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesE, "labPt");
             } else {
-                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesE, "Pt");
+                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesE, "labPt");
             }
             return Math.exp( Math.log(labWageFullTimeHrly) + ptPremium);
         }
