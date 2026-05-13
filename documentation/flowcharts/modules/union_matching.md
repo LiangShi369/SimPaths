@@ -16,7 +16,7 @@ flowchart TD
     J["Pool unmatched males and females across regions<br/>(remove matching by region)"] --> B
 
     B --> C["For each admissible pair:<br/>compute matching score"]
-    S["abs(actual earnings gap - female desired earnings gap)<br/>+<br/>abs(actual age gap - male desired age gap)"] --> C
+    S["(actual earnings gap - female desired earnings gap)^2<br/>+<br/>(actual age gap - male desired age gap)^2"] --> C
 
     C --> D["Sort candidate pairs by ascending score"]
     D --> E["Scan sorted pairs from top to bottom"]
@@ -43,6 +43,7 @@ flowchart TD
 
 - The logic is pair-based, not woman-by-woman.
 - `GlobalMatching` sorts all admissible male-female pairs by score, then scans that global list from best to worst.
+- The matching score is the sum of squared earnings-gap and age-gap deviations from the desired gaps.
 - A pair is matched only if both members are still unmatched at that point in the scan.
 - If same-region matching leaves unmatched persons, the model runs a second round with region relaxed.
 
@@ -108,7 +109,7 @@ Compact version:
 - `compute matching score`
 
 More explicit version:
-- `abs(actual earnings gap - female desired earnings gap) + abs(actual age gap - male desired age gap)`
+- `(actual earnings gap - female desired earnings gap)^2 + (actual age gap - male desired age gap)^2`
 
 If the score formula changes in code, update only the score box and keep the rest of the pair-based structure unless the algorithm itself changes.
 
