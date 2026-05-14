@@ -381,7 +381,7 @@ forval kk = 1/`nn' {
 			replace housingi = `hw' if (_n==`kk')
 			replace mortgagei = `mm' if (_n==`kk')
 			replace op_membui = `op' if (_n==`kk')
-			replace pp_membui = `op' if (_n==`kk')
+			replace pp_membui = `pp' if (_n==`kk')
 		}
 		replace rnk=`rnk' if (_n==`kk')
 		drop chk
@@ -406,6 +406,7 @@ by bu: egen total_wealth = sum(wealthi)
 by bu: egen total_pensions = sum(tot_peni)
 by bu: egen housing_wealth = sum(housingi)
 by bu: egen mortgage_debt = sum(mortgagei)
+drop op_membu pp_membu
 by bu: egen op_membu = sum(op_membui)
 by bu: egen pp_membu = sum(pp_membui)
 recode total_wealth (-9=0)

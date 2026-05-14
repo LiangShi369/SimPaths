@@ -597,7 +597,7 @@ foreach file in "$dir_was_data\was_round_5_person_eul_oct_2020.dta" ///
 		
 		// inflation adjust
 		gen CPI = .
-		forvalues yy = ${inflation_minyear}/${inflation_maxyear} {
+		forvalues yy = $inflation_minyear/$inflation_maxyear {
 
 			replace CPI = inflation[`yy'-${inflation_minyear}+1,1] if year == `yy'
 		}

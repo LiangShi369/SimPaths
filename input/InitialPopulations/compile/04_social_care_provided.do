@@ -51,7 +51,6 @@ foreach waveid in $scProvWaves {
 	keep pidp swv aidhrs aidhu* rindiv*
 	save "${dir_data}/ukhls_scprov_`waveid'.dta", replace
 }
-clear all
 foreach waveid in $scProvWaves {
 	if ("`waveid'" == "f") {
 		use "${dir_data}/ukhls_scprov_`waveid'.dta", clear

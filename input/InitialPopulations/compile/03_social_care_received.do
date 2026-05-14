@@ -441,7 +441,7 @@ tab formal_socare_hrs if rec_care2==3
 * evaluate formal care costs
 *************************************************************************************/
 cap gen formal_socare_cost = -9
-forvalues yy = ${careWageRate_minyear}/${careWageRate_maxyear} {
+forvalues yy = $careWageRate_minyear/$careWageRate_maxyear {
 
 	replace formal_socare_cost = formal_socare_hrs * careHourlyWageRates[`yy'-${careWageRate_minyear},1] if (formal_socare_hrs>0) & stm==`yy'
 }

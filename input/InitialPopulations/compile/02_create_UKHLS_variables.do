@@ -2109,7 +2109,7 @@ drop dnc013 dnc1418
 
 /************************Inflation deflators********************************************/ 
 gen CPI = .
-forvalues yy = ${inflation_minyear}/${inflation_maxyear} {
+forvalues yy = $inflation_minyear/$inflation_maxyear {
 
 	replace CPI = inflation[`yy'-${inflation_minyear}+1,1] if intdaty_dv == `yy'
 }

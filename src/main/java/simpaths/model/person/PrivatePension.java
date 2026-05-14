@@ -41,7 +41,7 @@ public class PrivatePension {
 
     public void membership(Person person, boolean memberOPL1, boolean memberPPL1, double innov1, double innov2) {
 
-        if (Les_c4.EmployedOrSelfEmployed.equals(person.getLes_c4())) {
+        if (Les_c4.EmployedOrSelfEmployed.equals(person.getLabC4())) {
 
             memberOP = ManagerRegressions.getAnnualEventFromBiennial(person, memberOPL1, innov1, RegressionName.WealthPensionPW1a, RegressionName.WealthPensionPW1b);
             memberPP = ManagerRegressions.getAnnualEventFromBiennial(person, memberPPL1, innov2, RegressionName.WealthPensionPW2a, RegressionName.WealthPensionPW2b);
@@ -60,11 +60,15 @@ public class PrivatePension {
             PensionContribRate pcrDiscrete = ManagerRegressions.getEvent(person, RegressionName.WealthPensionPW1c, innov1);
             if (pcrDiscrete.equals(PensionContribRate.Other)) {
 
-                double score, rmse, gauss, val;
+                Double val;
+                double score, rmse, gauss;
                 score = Parameters.getRegPW1d().getScore(person, Person.DoublesVariables.class);
                 rmse = Parameters.getRMSEForRegression("PW1d");
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov2);
                 val = Math.sinh(score + gauss * rmse);
+                if (!Parameters.isFinite(val))
+                    throw new RuntimeException("contRateOPEe is not finite");
+                val = Math.min(100.0, Math.max(0.0, val));
                 int test = (int)Math.round(val);
                 while (test == 0 || test == 3 || test == 5) {
 
@@ -76,6 +80,9 @@ public class PrivatePension {
                     }
                     gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov2);
                     val = Math.sinh(score + gauss * rmse);
+                    if (!Parameters.isFinite(val))
+                        throw new RuntimeException("contRateOPEe is not finite");
+                    val = Math.min(100.0, Math.max(0.0, val));
                     test = (int)Math.round(val);
                 }
                 contRateOPEe = val / 100.0;
@@ -87,22 +94,29 @@ public class PrivatePension {
             pcrDiscrete = ManagerRegressions.getEvent(person, RegressionName.WealthPensionPW1e, innov3);
             if (pcrDiscrete.equals(PensionContribRate.Other)) {
 
-                double score, rmse, gauss, val;
+                Double val;
+                double score, rmse, gauss;
                 score = Parameters.getRegPW1f().getScore(person, Person.DoublesVariables.class);
                 rmse = Parameters.getRMSEForRegression("PW1f");
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov4);
                 val = Math.sinh(score + gauss * rmse);
+                if (!Parameters.isFinite(val))
+                    throw new RuntimeException("contRateOPEr is not finite");
+                val = Math.min(100.0, Math.max(0.0, val));
                 int test = (int)Math.round(val);
                 while (test == 0 || test == 3 || test == 5) {
 
                     // need to re-draw
-                    if (innov2 > 0.5) {
-                        innov2 = (innov2 - 0.5) / 0.5;
+                    if (innov4 > 0.5) {
+                        innov4 = (innov4 - 0.5) / 0.5;
                     } else {
-                        innov2 = innov2 / 0.5;
+                        innov4 = innov4 / 0.5;
                     }
                     gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov4);
                     val = Math.sinh(score + gauss * rmse);
+                    if (!Parameters.isFinite(val))
+                        throw new RuntimeException("contRateOPEr is not finite");
+                    val = Math.min(100.0, Math.max(0.0, val));
                     test = (int)Math.round(val);
                 }
                 contRateOPEr = val / 100.0;
@@ -121,6 +135,12 @@ public class PrivatePension {
             rmse = Parameters.getRMSEForRegression("PW2c");
             gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov5);
             contRatePP = Math.exp(score + gauss * rmse);
+            if (!Parameters.isFinite(contRatePP))
+                throw new RuntimeException("contRatePP is not finite");
+            contRatePP = Math.min(100.0, Math.max(0.0, contRatePP)) / 100.0;
+        } else {
+
+            contRatePP = 0.0;
         }
     }
 
@@ -171,7 +191,9 @@ public class PrivatePension {
     }
 
     public void setContRateOPEr(double contRateOPEr) {
+
         this.contRateOPEr = contRateOPEr;
+        memberOP = (contRateOPEe + contRateOPEr > 0.001);
     }
 
     public double getContRateOPEe() {
@@ -179,7 +201,9 @@ public class PrivatePension {
     }
 
     public void setContRateOPEe(double contRateOPEe) {
+
         this.contRateOPEe = contRateOPEe;
+        memberOP = (contRateOPEe + contRateOPEr > 0.001);
     }
 
     public double getContRatePP() {
@@ -187,7 +211,9 @@ public class PrivatePension {
     }
 
     public void setContRatePP(double contRatePP) {
+
         this.contRatePP = contRatePP;
+        memberPP = (contRatePP > 0.001);
     }
 
     public double getWealth() {

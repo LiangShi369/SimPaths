@@ -119,39 +119,39 @@ public class Statistics {
 		this.yHhQuintilesC5P80 = yHhQuintilesC5P80;
 	}
 
-	public double getSIndex_p50() {
+	public double getSIndexP50() {
 		return sIndex_p50;
 	}
 
-	public void setSIndex_p50(double sIndex_p50) {
+	public void setSIndexP50(double sIndex_p50) {
 		this.sIndex_p50 = sIndex_p50;
 	}
 
-	public double getGrossLabourForceEarnings_p20() {
+	public double getYLabFceEarningsP20() {
 		return yLabFceEarningsP20;
 	}
 
-	public void setGrossLabourForceEarnings_p20(double yLabP20) { this.yLabFceEarningsP20 = yLabP20; }
+	public void setYLabFceEarningsP20(double yLabP20) { this.yLabFceEarningsP20 = yLabP20; }
 
-	public double getGrossLabourForceEarnings_p40() {
+	public double getYLabFceEarningsP40() {
 		return yLabFceEarningsP40;
 	}
 
-	public void setGrossLabourForceEarnings_p40(double yLabP40) {
+	public void setYLabFceEarningsP40(double yLabP40) {
 		this.yLabFceEarningsP40 = yLabP40;
 	}
 
-	public double getGrossLabourForceEarnings_p60() {
+	public double getYLabFceEarningsP60() {
 		return yLabFceEarningsP60;
 	}
 
-	public void setGrossLabourForceEarnings_p60(double yLabP60) {
+	public void setYLabFceEarningsP60(double yLabP60) {
 		this.yLabFceEarningsP60 = yLabP60;
 	}
 
-	public double getGrossLabourForceEarnings_p80() { return yLabFceEarningsP80; }
+	public double getYLabFceEarningsP80() { return yLabFceEarningsP80; }
 
-	public void setGrossLabourForceEarnings_p80(double yLabP80) { this.yLabFceEarningsP80 = yLabP80; }
+	public void setYLabFceEarningsP80(double yLabP80) { this.yLabFceEarningsP80 = yLabP80; }
 
 	public double getEmployedEarningsP20() { return yEmployedEarningsP20; }
 

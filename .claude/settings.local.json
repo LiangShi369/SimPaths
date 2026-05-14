@@ -28,7 +28,8 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn\" test -Dtest=\"PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest\" --no-transfer-progress)",
-      "Bash(JAVA_HOME=\"/c/Users/justi/.jdks/corretto-22.0.2\" \"/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn\" test -Dtest=\"PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest\" --no-transfer-progress)"
+      "Bash(JAVA_HOME=\"/c/Users/justi/.jdks/corretto-22.0.2\" \"/c/Program Files/JetBrains/IntelliJ IDEA 2025.3.3/plugins/maven/lib/maven3/bin/mvn\" test -Dtest=\"PensionWealthTest,BenefitUnitPensionContributionTest,PersonTest\" --no-transfer-progress)",
+      "Bash(awk -F: '$2+0 >= 600 && $2+0 <= 720')"
     ]
   }
 }

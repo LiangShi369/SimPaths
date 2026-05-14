@@ -387,20 +387,20 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             percentileFunction = new PercentileArrayFunction(grossEarnings);
             percentileFunction.updateSource();
 
-            stats.setGrossLabourForceEarnings_p20(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P20));
-            stats.setGrossLabourForceEarnings_p40(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P40));
-            stats.setGrossLabourForceEarnings_p60(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P60));
-            stats.setGrossLabourForceEarnings_p80(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P80));
+            stats.setYLabFceEarningsP20(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P20));
+            stats.setYLabFceEarningsP40(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P40));
+            stats.setYLabFceEarningsP60(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P60));
+            stats.setYLabFceEarningsP80(percentileFunction.getDoubleValue(PercentileArrayFunction.Variables.P80));
 
             for (Person person : model.getPersons()) {
-                double covidModuleGrossLabourIncomeBaseline = person.getCovidModuleGrossLabourIncome_Baseline();
-                if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p20()) {
+                double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
+                if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);

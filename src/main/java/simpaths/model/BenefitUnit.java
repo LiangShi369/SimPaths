@@ -1058,8 +1058,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double maleIncome = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getyMiscPersGrossMonth());
-                double femaleIncome = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getyMiscPersGrossMonth());
+                double maleIncome = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getYMiscPersGrossMonth());
+                double femaleIncome = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getYMiscPersGrossMonth());
                 double originalIncomePerMonth = maleIncome + femaleIncome;
                 double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
@@ -1074,7 +1074,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
-                double originalIncomePerMonth = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getyMiscPersGrossMonth());
+                double originalIncomePerMonth = maleEmpPerMonth - pensionContributionPerMonth(male, maleEmpPerMonth) + Math.sinh(male.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1086,7 +1086,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double originalIncomePerMonth = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getyMiscPersGrossMonth());
+                double originalIncomePerMonth = femaleEmpPerMonth - pensionContributionPerMonth(female, femaleEmpPerMonth) + Math.sinh(female.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1644,7 +1644,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     maleDisability = male.getDisability();
                     maleAtRiskOfWork = male.atRiskOfWork();
                     male.updatePensionContributionStatus();
-                    maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() * (1.0 - male.getPrivatePensionContributionRate()) + Math.sinh(male.getyMiscPersGrossMonth());
+                    maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() * (1.0 - male.getPrivatePensionContributionRate()) + Math.sinh(male.getYMiscPersGrossMonth());
                 }
                 if (female != null) {
 
@@ -1653,7 +1653,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     femaleDisability = female.getDisability();
                     femaleAtRiskOfWork = female.atRiskOfWork();
                     female.updatePensionContributionStatus();
-                    femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() * (1.0 - female.getPrivatePensionContributionRate()) + Math.sinh(female.getyMiscPersGrossMonth());
+                    femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() * (1.0 - female.getPrivatePensionContributionRate()) + Math.sinh(female.getYMiscPersGrossMonth());
                 }
 
                 // Earnings are composed of the labour income and non-benefit non-employment income Yptciihs_dv() (this is monthly, so no need to multiply by WEEKS_PER_MONTH_RATIO)
@@ -3990,7 +3990,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthTotValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthTotValue)) {
+        if (!Parameters.isFinite(wealthTotValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit liquid wealth before it is initialised.");
             else
@@ -4008,7 +4008,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthPensValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthPensValue)) {
+        if (!Parameters.isFinite(wealthPensValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit pension wealth before it is initialised.");
             else
@@ -4026,7 +4026,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthPrptyValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthPrptyValue)) {
+        if (!Parameters.isFinite(wealthPrptyValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit housing wealth before it is initialised.");
             else
@@ -4043,7 +4043,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return getXChildCareWeek(true);
     }
     public double getXChildCareWeek(boolean throwError) {
-        if (!Parameters.checkFinite(xChildCareWeek)) {
+        if (!Parameters.isFinite(xChildCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit childcare cost before it is initialised.");
             } else {
@@ -4057,7 +4057,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return getXCareWeek(true);
     }
     public double getXCareWeek(boolean throwError) {
-        if (!Parameters.checkFinite(xCareWeek)) {
+        if (!Parameters.isFinite(xCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit social care cost before it is initialised.");
             } else {

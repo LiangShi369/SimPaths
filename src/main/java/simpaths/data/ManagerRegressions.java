@@ -247,6 +247,12 @@ public class ManagerRegressions {
             case SocialCareS2c -> {
                 return Parameters.getRegSocialCareMarketS2c();
             }
+            case WealthPensionPW1c -> {
+                return Parameters.getRegPW1c();
+            }
+            case WealthPensionPW1e -> {
+                return Parameters.getRegPW1e();
+            }
             // case SocialCareS2e -> {
             //     return Parameters.getRegPartnerSupplementaryCareS2e();
             // }
@@ -401,10 +407,10 @@ public class ManagerRegressions {
         double pper = pent + Math.sqrt(pper2 - pent2);
         if (lagIncidence) {
 
-            return (rand < pent);
+            return (rand < pper);
         } else {
 
-            return (rand < pper);
+            return (rand < pent);
         }
     }
 
@@ -420,7 +426,7 @@ public class ManagerRegressions {
 
     public static <E extends Enum<E> & IntegerValuedEnum> E getEvent(Map<E, Double> probs, double rand) {
 
-        List<E> eventList = (List<E>) probs.keySet();
+        List<E> eventList = new ArrayList<>(probs.keySet());
         eventList.sort(Comparator.comparingInt(IntegerValuedEnum::getValue));
 
         double prob = 0.0;

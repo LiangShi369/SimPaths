@@ -260,6 +260,10 @@ public class LabourMarket {
             //Update Labour Supply
             benefitUnitsAllRegions.parallelStream()
                     .forEach(BenefitUnit::updateLabourSupplyAndIncome);
+//            for (BenefitUnit benefitUnit : benefitUnitsAllRegions) {
+//
+//                benefitUnit.updateLabourSupplyAndIncome();
+//            }
 
             Map<Education, Double> potentialHourlyEarningsByEdu = new LinkedHashMap<Education, Double>();
             Map<Education, Integer> countByEdu = new LinkedHashMap<Education, Integer>();
@@ -319,13 +323,13 @@ public class LabourMarket {
             if (person != null && person.getCovidYLabGrossXt5() == null) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
                 Statistics stats = ((SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName())).getStats();
-                if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p20()) {
+                if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getGrossLabourForceEarnings_p80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);

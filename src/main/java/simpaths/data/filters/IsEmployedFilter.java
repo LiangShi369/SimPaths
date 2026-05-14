@@ -16,6 +16,6 @@ public class IsEmployedFilter implements ICollectionFilter {
     public boolean isFiltered(Object o) {
         Person person = (Person) o;
 
-        return (person.getLes_c4() == Les_c4.EmployedOrSelfEmployed);
+        return (person.getLabC4() == Les_c4.EmployedOrSelfEmployed);
     }
 }

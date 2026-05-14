@@ -1305,7 +1305,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 								continue;
 							}
 							RegionEducationWorkingCSfilter regionEduWorkingFilter = new RegionEducationWorkingCSfilter(region, edu);
-							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true);
+							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getEarningsYearly", true);
 							wagesCS.setFilter(regionEduWorkingFilter);
 							earningsPlotter.addSources("(" + region.getName() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(wagesCS), colorOfEducation(edu));
 						}
@@ -1331,7 +1331,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 						}
 						for (Gender gender : Gender.values()) {
 							GenderEducationWorkingCSfilter genderEducationWorkingFilter = new GenderEducationWorkingCSfilter(gender, edu);
-							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true); // Note: these are nominal values for each simulated year
+							Weighted_CrossSection.Double wagesCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getEarningsYearly", true); // Note: these are nominal values for each simulated year
 							wagesCS.setFilter(genderEducationWorkingFilter);
 							grossEarningsByGenderAndEducationPlotter.addSeries("(" + gender.toString() + ", " + edu.toString() + ")", new Weighted_MeanArrayFunction(wagesCS), null, colorArrayList.get(colorCounter), false);
 							grossEarningsByGenderAndEducationPlotter.addSeries("Validation (" + gender + ", " + edu + ")", validator, Validator.DoublesVariables.valueOf("grossEarnings_"+ gender +"_"+ edu), colorArrayList.get(colorCounter), true);
@@ -1459,7 +1459,7 @@ public class SimPathsObserver extends AbstractSimulationObserverManager implemen
 			    
 			    ValidPersonEarningsCSfilter validEarningsFilter = new ValidPersonEarningsCSfilter();
 			    Weighted_HistogramSimulationPlotter grossEarningsHistPlotter = new Weighted_HistogramSimulationPlotter("Individual Gross Earnings (yearly)", "Euro", histogramType.getHistogramType(), numberOfHistogramBins);
-			    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getGrossEarningsYearly", true);
+			    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.class, "getEarningsYearly", true);
 	//		    Weighted_CrossSection.Double grossEarningsCS = new Weighted_CrossSection.Double(model.getPersons(), Person.DoublesVariables.GrossEarningsYearly);
 			    grossEarningsCS.setFilter(validEarningsFilter);
 			    
