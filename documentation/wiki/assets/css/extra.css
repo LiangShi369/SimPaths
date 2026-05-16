@@ -377,6 +377,7 @@ body:has(.simpaths-home-hero) .md-header__title [data-md-component="header-topic
   text-transform: uppercase;
   color: var(--sp-midnight) !important;
   padding-bottom: 0.25rem;
+  z-index: 2;
   background: var(--md-default-bg-color) !important;
   box-shadow: 0 0 0.35rem 0.35rem var(--md-default-bg-color) !important;
 }
