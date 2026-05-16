@@ -7155,10 +7155,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public Double getWealthPensValue() {
-        return getPensionWealthValue(true);
+        return getWealthPensValue(true);
     }
 
-    public Double getPensionWealthValue(boolean throwError) {
+    public double getWealthPensValue(boolean throwError) {
         if (!Parameters.isFinite(wealthPensValue)) {
             if (throwError)
                 throw new IllegalArgumentException("pensionWealthValue is not finite");
@@ -8096,5 +8096,56 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
         }
         return i_yEarningsQuintileC5;
+    }
+
+    public Double getContRateOPEe() {
+        return getContRateOPEe(true);
+    }
+    public double getContRateOPEe(boolean throwError) {
+        if (!Parameters.isFinite(contRateOPEe)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRateOPEe is not finite");
+            else
+                return 0.0;
+        }
+        return contRateOPEe;
+    }
+
+    public void setContRateOPEe(Double contRateOPEe) {
+        this.contRateOPEe = contRateOPEe;
+    }
+
+    public Double getContRateOPEr() {
+        return getContRateOPEr(true);
+    }
+    public double getContRateOPEr(boolean throwError) {
+        if (!Parameters.isFinite(contRateOPEr)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRateOPEr is not finite");
+            else
+                return 0.0;
+        }
+        return contRateOPEr;
+    }
+
+    public void setContRateOPEr(Double contRateOPEr) {
+        this.contRateOPEr = contRateOPEr;
+    }
+
+    public Double getContRatePP() {
+        return getContRatePP(true);
+    }
+    public double getContRatePP(boolean throwError) {
+        if (!Parameters.isFinite(contRatePP)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRatePP is not finite");
+            else
+                return 0.0;
+        }
+        return contRatePP;
+    }
+
+    public void setContRatePP(Double contRatePP) {
+        this.contRatePP = contRatePP;
     }
 }

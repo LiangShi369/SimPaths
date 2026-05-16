@@ -684,7 +684,7 @@ public class Statistics2 {
         }
         for (int ii=0; ii<=2; ii++) {
 
-            if (popula[ii]>=0) {
+            if (popula[ii] > 0) {
 
                 labInc[ii] /= (workFT[ii] + workPT[ii]);
                 prMarr[ii] /= popula[ii];
