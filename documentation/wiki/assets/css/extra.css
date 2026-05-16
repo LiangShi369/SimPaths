@@ -370,36 +370,15 @@ body:has(.simpaths-home-hero) .md-header__title [data-md-component="header-topic
 ═══════════════════════════════════════════════ */
 
 .md-nav__title {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   font-family: var(--sp-heading-font) !important;
   font-weight: 600;
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--sp-midnight) !important;
-  margin-bottom: 0.28rem;
-  padding-top: 0.35rem;
-  padding-bottom: 0.42rem;
+  padding-bottom: 0.25rem;
   background: var(--md-default-bg-color) !important;
-  box-shadow: none !important;
-}
-
-.md-nav__link.md-nav__container {
-  background: var(--md-default-bg-color);
-}
-
-.md-nav__link.md-nav__container > .md-nav__link {
-  background: var(--md-default-bg-color) !important;
-}
-
-.md-nav__link.md-nav__container + .md-nav {
-  margin-top: 0.22rem;
-}
-
-.md-nav[data-md-level="1"] > .md-nav__title {
-  box-shadow: 0 1px 0 rgba(42,56,72,0.08) !important;
+  box-shadow: 0 0 0.35rem 0.35rem var(--md-default-bg-color) !important;
 }
 
 .md-nav--secondary .md-nav__title {
