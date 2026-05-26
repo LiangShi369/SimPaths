@@ -294,18 +294,20 @@
   filter: saturate(1.16) brightness(1.05) contrast(1.06) drop-shadow(0 5px 8px rgba(30, 40, 52, 0.12));
 }
 
-body:has(.simpaths-home-hero) .md-header__title .md-header__topic:first-child {
+/* Keep the brand topic stable everywhere. Material normally swaps this with
+   the page title, which causes a visible title jump on first homepage paint. */
+.md-header__title .md-header__topic:first-child {
   display: flex !important;
 }
 
-body:has(.simpaths-home-hero) .md-header__title--active .md-header__topic:first-child {
+.md-header__title--active .md-header__topic:first-child {
   opacity: 1 !important;
   pointer-events: auto !important;
   transform: none !important;
   z-index: 0 !important;
 }
 
-body:has(.simpaths-home-hero) .md-header__title [data-md-component="header-topic"] {
+.md-header__title [data-md-component="header-topic"] {
   display: none !important;
 }
 
