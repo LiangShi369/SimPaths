@@ -3,8 +3,6 @@
    Scholarly palette · Newsreader headings · Inter body
 ═══════════════════════════════════════════════ */
 
-@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Text&family=Libre+Baskerville:wght@400;700&display=swap");
-
 /* ── Self-hosted fonts ── */
 @font-face {
   font-family: "Inter";
@@ -38,8 +36,8 @@
 :root {
   --md-text-font: "Inter";
   --md-code-font: "JetBrains Mono";
-  --sp-brand-font: "Libre Baskerville", Georgia, "Times New Roman", serif;
   --sp-heading-font: "Newsreader", Georgia, "Times New Roman", serif;
+  --sp-brand-font: var(--sp-heading-font);
   --sp-hero-title-font: var(--sp-heading-font);
   --sp-research-font: var(--md-text-font), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -2851,11 +2849,17 @@ body:has(.simpaths-home-research-band) .md-footer__inner {
   line-height: 1;
 }
 
+.simpaths-home-intro-band__access-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.62rem 1.15rem;
+  margin-top: 1.35rem;
+}
+
 .md-typeset .simpaths-home-intro-band__access {
   display: inline-flex;
   align-items: center;
   gap: 0.42rem;
-  margin-top: 1.35rem;
   color: var(--sp-accent);
   font-size: 0.7rem;
   font-weight: 700;

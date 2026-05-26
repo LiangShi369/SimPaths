@@ -54,7 +54,10 @@ hide:
       <strong>SimPaths</strong>
     </div>
   </div>
-  <a href="https://github.com/simpaths/SimPaths" class="simpaths-home-intro-band__access">Access the code on GitHub</a>
+  <div class="simpaths-home-intro-band__access-row" aria-label="SimPaths source code repositories">
+    <a href="https://github.com/simpaths/SimPaths" class="simpaths-home-intro-band__access">UK repository</a>
+    <a href="https://github.com/simpaths/SimPathsEU" class="simpaths-home-intro-band__access">EU repository</a>
+  </div>
 </div>
 </section>
 
