@@ -41,7 +41,7 @@ theme:
     - content.code.annotate
 
 extra_css:
-  - assets/css/extra.css?v=20260526-repository-links
+  - assets/css/extra.css?v=20260526-font-swap-fix
 
 plugins:
   - search:
