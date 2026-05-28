@@ -5,7 +5,7 @@ maxNumberOfRuns: 2
 executeWithGui: false
 randomSeed: 100
 startYear: 2019
-endYear: 2022
+endYear: 2026
 popSize: 20000
 integrationTest: true
 

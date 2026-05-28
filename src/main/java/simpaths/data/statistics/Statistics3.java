@@ -10,6 +10,7 @@ import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Education;
 import simpaths.model.enums.Indicator;
+import simpaths.model.enums.Les_c4;
 
 @Entity
 public class Statistics3 {
@@ -35,6 +36,16 @@ public class Statistics3 {
 
     @Column(name = "pr_pp_55_74")
     private double yPPMember55to74Share;
+
+    //population shares employed or self-employed by age group
+    @Column(name = "pr_emp_18_29")
+    private double yEmployed18to29Share;
+
+    @Column(name = "pr_emp_30_54")
+    private double yEmployed30to54Share;
+
+    @Column(name = "pr_emp_55_74")
+    private double yEmployed55to74Share;
 
     //pension contribution rates of members
     @Column(name = "avcr_op_ee")
@@ -112,6 +123,30 @@ public class Statistics3 {
         this.yPPMember55to74Share = yPPMember55to74Share;
     }
 
+    public double getyEmployed18to29Share() {
+        return yEmployed18to29Share;
+    }
+
+    public void setyEmployed18to29Share(double yEmployed18to29Share) {
+        this.yEmployed18to29Share = yEmployed18to29Share;
+    }
+
+    public double getyEmployed30to54Share() {
+        return yEmployed30to54Share;
+    }
+
+    public void setyEmployed30to54Share(double yEmployed30to54Share) {
+        this.yEmployed30to54Share = yEmployed30to54Share;
+    }
+
+    public double getyEmployed55to74Share() {
+        return yEmployed55to74Share;
+    }
+
+    public void setyEmployed55to74Share(double yEmployed55to74Share) {
+        this.yEmployed55to74Share = yEmployed55to74Share;
+    }
+
     public double getyContRateOPEeAvg() {
         return yContRateOPEeAvg;
     }
@@ -165,6 +200,7 @@ public class Statistics3 {
         // initialise outputs
         double[] prOPMemb = {0.,0.,0.};
         double[] prPPMemb = {0.,0.,0.};
+        double[] prEmployed = {0.,0.,0.};
         double avContRateOPEe = 0.;
         double avContRateOPEr = 0.;
         double avContRatePP = 0.;
@@ -192,6 +228,7 @@ public class Statistics3 {
 
                 prOPMemb[ii] += (crOPEe + crOPEr > 0.0) ? 1.0: 0.0;
                 prPPMemb[ii] += (crPP > 0.0) ? 1.0: 0.0;
+                prEmployed[ii] += Les_c4.EmployedOrSelfEmployed.equals(person.getLabC4()) ? 1.0: 0.0;
                 avContRateOPEe += crOPEe;
                 avContRateOPEr += crOPEr;
                 avContRatePP += crPP;
@@ -212,6 +249,7 @@ public class Statistics3 {
 
                 prOPMemb[ii] /= popula[ii];
                 prPPMemb[ii] /= popula[ii];
+                prEmployed[ii] /= popula[ii];
                 avValue[ii] /= popula[ii];
             }
         }
@@ -223,6 +261,9 @@ public class Statistics3 {
         setyPPMember18to29Share(prPPMemb[0]);
         setyPPMember30to54Share(prPPMemb[1]);
         setyPPMember55to74Share(prPPMemb[2]);
+        setyEmployed18to29Share(prEmployed[0]);
+        setyEmployed30to54Share(prEmployed[1]);
+        setyEmployed55to74Share(prEmployed[2]);
         setyContRateOPEeAvg(avContRateOPEe);
         setyContRateOPErAvg(avContRateOPEr);
         setyContRatePPAvg(avContRatePP);
