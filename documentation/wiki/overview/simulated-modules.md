@@ -58,10 +58,7 @@ Physical health status is projected on a discrete 5-point scale, designed to ref
 
 Any individual aged 16 and above who is not in continuous education can become long-term sick or disabled. The probability of being long-term sick or disabled is described by a probit equation defined with respect to lagged disability status, prevailing and lagged physical health status, gender, age, education, income quintile, and lagged family demographics.
 
-<img width="700" height="650" alt="Disability" src="../../figures/modules/disability_module.png" />
-
-This Disability module is integrated in the `Person.health()` (Physical health) method in the current SimPaths model. 
-We split disability out for illustration purpose. 
+This Disability module is integrated in the `Person.health()` (Physical health) method in the current SimPaths model. The relevant illustration is integrated into the Physical Health flowchart.
 
 </details>
 
