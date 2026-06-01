@@ -10,6 +10,7 @@ import microsim.statistics.regression.*;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.io.FileUtils;
 import simpaths.data.startingpop.DataParser;
+import simpaths.model.decisions.DecisionParams;
 import simpaths.model.utilities.AnnuityRates;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
@@ -51,6 +52,15 @@ public class Parameters {
 //    private static String resolveCountryFile(Country country, String fileName) {
 //        return getCountryInputDir(country) + fileName;
 //    }
+
+    public static boolean projectLiquidWealth = false;
+    public static boolean projectHousingWealth = false;
+    public static double pensionWealthAnnualGrowthRate  = 0.05;
+    public static final double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
+    public static final double ANNUITY_RATE_OF_RETURN = 0.015;
+
+
+
 
     public static final boolean TESTING_FLAG = false;
     private static final double POI_MIN_INFLATE_RATIO = 0.005d;
@@ -190,6 +200,9 @@ public class Parameters {
         "yBenReceivedFlag",             //indicator of benefit receipt
         "yBenUCReceivedFlag",           //indicator of UC receipt
         "yBenNonUCReceivedFlag",        //indicator of other benefit receipt
+        "contRateOPEe",                 //initialisation value of employee contribution rate to occupational pension
+        "contRateOPEr",                 //initialisation value of employer contribution rate to occupational pension
+        "contRatePP",                   //initialisation value of contribution rate to occupational pension
         // "labWorkHist",               //Total years in employment since Jan 2007
 		//"yem", 					    //employment income
 		//"yse", 					    //self-employment income
@@ -225,9 +238,8 @@ public class Parameters {
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
 
     // parameters to manage simulation of optimised decisions
-    public static boolean projectLiquidWealth = false;
     public static boolean projectPensionWealth = false;
-    public static boolean projectHousingWealth = false;
+    public static boolean projectNonPensionWealth = false;
     public static boolean enableIntertemporalOptimisations = false;
     public static Grids grids = null;
 
@@ -292,9 +304,6 @@ public class Parameters {
     public static final int MIN_AGE_SOCIAL_CARE = 65; //Minimum age to receive formal social care
     public static final int MIN_AGE_FLEXIBLE_LABOUR_SUPPLY = 16; //Used when filtering people who can be "flexible in labour supply"
     public static final int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
-    public static final double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
-    public static final double ANNUITY_RATE_OF_RETURN = 0.015;
-    public static AnnuityRates annuityRates;
     public static final int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-demYear from part-demYear employment (needs to be consistent with Labour enum)
     public static final double MIN_HOURLY_WAGE_RATE = 1.5;
     public static final double MAX_HOURLY_WAGE_RATE = 150.0;
@@ -392,6 +401,11 @@ public class Parameters {
     public static Map<Integer, String> EUROMODpolicySchedule = new TreeMap<Integer, String>();
     public static Map<Integer, Pair<String, Integer>> EUROMODpolicyScheduleSystemYearMap = new TreeMap<>(); // This map stores year from which policy applies, and then a Pair of <name of policy, policy system year as specified in EM>. This is used when uprating values from the policy system year to a current simulated year.
     private static MultiKeyMap<Object, Double> fertilityRateByRegionYear;
+    public static AnnuityRates annuityRates = new AnnuityRates();
+    public static double annuityRealRateOfReturn = 0.011;
+    public static double annuityMoneysWorth = 0.97;
+    public static double pensionLumpSumShare = 0.25;
+    public static double pensionLumpSumCap = 250000;
     private static Map<Integer, Double> fertilityRateByYear;
     private static MultiKeyCoefficientMap populationProjections;
     public static final int ALIGN_MIN_AGE_ASSUME_DEATH = 65;
@@ -411,7 +425,7 @@ public class Parameters {
             partnershipTimeAdjustment, studentsTimeAdjustment, fertilityTimeAdjustment,
             utilityTimeAdjustmentSingleMales, utilityTimeAdjustmentACMales, utilityTimeAdjustmentSingleFemales, utilityTimeAdjustmentACFemales,
             utilityTimeAdjustmentCouples, utilityTimeAdjustmentSingleDepMen, utilityTimeAdjustmentSingleDepWomen,
-            upratingIndexMapRealWageGrowth, priceMapRealSavingReturns, priceMapRealDebtCostLow, priceMapRealDebtCostHigh,
+            upratingIndexMapRealWageGrowth, priceMapRealSavingReturns, priceMapRealPensionReturns, priceMapRealDebtCostLow, priceMapRealDebtCostHigh,
             wageRateFormalSocialCare, socialCarePolicy, partneredShare,
             employedShareACMales, employedShareACFemales, employedShareSingleDepMales, employedShareSingleDepFemales,
             employedShareSingleMales, employedShareSingleFemales, employedShareCouples, studentShare;
@@ -516,6 +530,20 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovarianceSocialCareS3c;
     private static MultiKeyCoefficientMap coeffCovarianceSocialCareS3d;
     // private static MultiKeyCoefficientMap coeffCovarianceSocialCareS3e; // retired process
+
+    //Pension wealth
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1a;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1b;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1c;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1d;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1e;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW1f;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW2a;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW2b;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW2c;
+
+    //Financial wealth
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW1a;
 
     //Unemployment
     private static MultiKeyCoefficientMap coeffCovarianceUnemploymentU1a;
@@ -750,6 +778,20 @@ public class Parameters {
     private static LinearRegression regCareHoursProvS3d;
     // private static LinearRegression regCareHoursProvS3e; // retired process
 
+    //Pension wealth
+    private static BinomialRegression regPW1a;
+    private static BinomialRegression regPW1b;
+    private static BinomialRegression regPW2a;
+    private static BinomialRegression regPW2b;
+    private static MultinomialRegression regPW1c;
+    private static MultinomialRegression regPW1e;
+    private static LinearRegression regPW1d;
+    private static LinearRegression regPW1f;
+    private static LinearRegression regPW2c;
+
+    //Financial wealth
+    private static LinearRegression regFW1a;
+
     //Unemployment
     private static BinomialRegression regUnemploymentMaleGraduateU1a;
     private static BinomialRegression regUnemploymentMaleNonGraduateU1b;
@@ -930,7 +972,6 @@ public class Parameters {
         populationInitialisationInputFileName = "population_initial_" + country;
         setCountryRegions(country);
         setEnableIntertemporalOptimisations(enableIntertemporalOptimisations);
-        setProjectLiquidWealth();
         String countryString = country.toString();
         loadTimeSeriesFactorMaps(country);
         instantiateAlignmentMaps();
@@ -1135,6 +1176,20 @@ public class Parameters {
         coeffCovarianceSocialCareS3d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_socialcare.xlsx", "S3d", 1);
         // coeffCovarianceSocialCareS3e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_socialcare.xlsx", "S3e", 1); // retired process
 
+        //Pension wealth
+        coeffCovariancePensionWealthPW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1a", 1);
+        coeffCovariancePensionWealthPW1b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1b", 1);
+        coeffCovariancePensionWealthPW1c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1c", 1);
+        coeffCovariancePensionWealthPW1d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1d", 1);
+        coeffCovariancePensionWealthPW1e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1e", 1);
+        coeffCovariancePensionWealthPW1f = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW1f", 1);
+        coeffCovariancePensionWealthPW2a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW2a", 1);
+        coeffCovariancePensionWealthPW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW2b", 1);
+        coeffCovariancePensionWealthPW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW2c", 1);
+
+        //Financial wealth
+        coeffCovarianceFinancialWealthFW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW1a", 1);
+
         //Unemployment
         coeffCovarianceUnemploymentU1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_unemployment.xlsx", "U1a", 1);
         coeffCovarianceUnemploymentU1b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_unemployment.xlsx", "U1b", 1);
@@ -1263,6 +1318,16 @@ public class Parameters {
                     {"coeffCovarianceSocialCareS3c", coeffCovarianceSocialCareS3c},
                     {"coeffCovarianceSocialCareS3d", coeffCovarianceSocialCareS3d},
                     // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
+                    {"coeffCovariancePensionWealthPW1a", coeffCovariancePensionWealthPW1a},
+                    {"coeffCovariancePensionWealthPW1b", coeffCovariancePensionWealthPW1b},
+                    {"coeffCovariancePensionWealthPW1c", coeffCovariancePensionWealthPW1c},
+                    {"coeffCovariancePensionWealthPW1d", coeffCovariancePensionWealthPW1d},
+                    {"coeffCovariancePensionWealthPW1e", coeffCovariancePensionWealthPW1e},
+                    {"coeffCovariancePensionWealthPW1f", coeffCovariancePensionWealthPW1f},
+                    {"coeffCovariancePensionWealthPW2a", coeffCovariancePensionWealthPW2a},
+                    {"coeffCovariancePensionWealthPW2b", coeffCovariancePensionWealthPW2b},
+                    {"coeffCovariancePensionWealthPW2c", coeffCovariancePensionWealthPW2c},
+                    {"coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a},
                     {"coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales},
                     {"coeffCovarianceEquivalisedIncomeFemales", coeffCovarianceEquivalisedIncomeFemales},
                     {"coeffCovarianceEquivalisedIncomeDynamics", coeffCovarianceEquivalisedIncomeDynamics},
@@ -1360,6 +1425,20 @@ public class Parameters {
             coeffCovarianceSocialCareS3d = bootstrapWithTrace("coeffCovarianceSocialCareS3d", coeffCovarianceSocialCareS3d);
             // coeffCovarianceSocialCareS3e = RegressionUtils.bootstrap(coeffCovarianceSocialCareS3e); // retired process
 
+            //Pension wealth
+            coeffCovariancePensionWealthPW1a = bootstrapWithTrace("coeffCovariancePensionWealthPW1a", coeffCovariancePensionWealthPW1a);
+            coeffCovariancePensionWealthPW1b = bootstrapWithTrace("coeffCovariancePensionWealthPW1b", coeffCovariancePensionWealthPW1b);
+            coeffCovariancePensionWealthPW1c = bootstrapWithTrace("coeffCovariancePensionWealthPW1c", coeffCovariancePensionWealthPW1c);
+            coeffCovariancePensionWealthPW1d = bootstrapWithTrace("coeffCovariancePensionWealthPW1d", coeffCovariancePensionWealthPW1d);
+            coeffCovariancePensionWealthPW1e = bootstrapWithTrace("coeffCovariancePensionWealthPW1e", coeffCovariancePensionWealthPW1e);
+            coeffCovariancePensionWealthPW1f = bootstrapWithTrace("coeffCovariancePensionWealthPW1f", coeffCovariancePensionWealthPW1f);
+            coeffCovariancePensionWealthPW2a = bootstrapWithTrace("coeffCovariancePensionWealthPW2a", coeffCovariancePensionWealthPW2a);
+            coeffCovariancePensionWealthPW2b = bootstrapWithTrace("coeffCovariancePensionWealthPW2b", coeffCovariancePensionWealthPW2b);
+            coeffCovariancePensionWealthPW2c = bootstrapWithTrace("coeffCovariancePensionWealthPW2c", coeffCovariancePensionWealthPW2c);
+
+            //Financial wealth
+            coeffCovarianceFinancialWealthFW1a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a);
+
             //lifetime incomes
             coeffCovarianceEquivalisedIncomeMales = bootstrapWithTrace("coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales);
             coeffCovarianceEquivalisedIncomeFemales = bootstrapWithTrace("coeffCovarianceEquivalisedIncomeFemales", coeffCovarianceEquivalisedIncomeFemales);
@@ -1445,6 +1524,20 @@ public class Parameters {
         regCareHoursProvS3c = new LinearRegression(coeffCovarianceSocialCareS3c);
         regCareHoursProvS3d = new LinearRegression(coeffCovarianceSocialCareS3d);
         // regCareHoursProvS3e = new LinearRegression(coeffCovarianceSocialCareS3e); // retired process
+
+        //Pension wealth
+        regPW1a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW1a);
+        regPW1b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW1b);
+        regPW1c = new MultinomialRegression<>(RegressionType.MultinomialLogit, PensionContribRate.class, coeffCovariancePensionWealthPW1c);
+        regPW1d = new LinearRegression(coeffCovariancePensionWealthPW1d);
+        regPW1e = new MultinomialRegression<>(RegressionType.MultinomialLogit, PensionContribRate.class, coeffCovariancePensionWealthPW1e);
+        regPW1f = new LinearRegression(coeffCovariancePensionWealthPW1f);
+        regPW2a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW2a);
+        regPW2b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW2b);
+        regPW2c = new LinearRegression(coeffCovariancePensionWealthPW2c);
+
+        //Financial wealth
+        regFW1a = new LinearRegression(coeffCovarianceFinancialWealthFW1a);
 
         //lifetime incomes
         regEquivalisedIncomeMales = new LinearRegression(coeffCovarianceEquivalisedIncomeMales);
@@ -1578,6 +1671,16 @@ public class Parameters {
 
         calculateFertilityRatesFromProjections();
         calculatePopulationGrowthRatiosFromProjections();
+        int startYearH, endYearH;
+        if (Parameters.enableIntertemporalOptimisations) {
+            startYearH = Math.min(MIN_START_YEAR, DecisionParams.minBirthYear + Parameters.MIN_AGE_TO_RETIRE);
+            endYearH = Math.max(MAX_START_YEAR, DecisionParams.maxBirthYear + Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY);
+        } else {
+            startYearH = MIN_START_YEAR;
+            endYearH = endYear;
+        }
+        annuityRates.evalAnnuityRates(startYearH, endYearH, Parameters.MIN_AGE_TO_RETIRE, Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY);
+
 
         /////////////////////////////////////////////////POPULATE STATISTICS FOR VALIDATION/////////////////////////////
         //Students by Age
@@ -1975,6 +2078,18 @@ public class Parameters {
     public static LinearRegression getRegCareHoursProvS3c() { return regCareHoursProvS3c; }
     public static LinearRegression getRegCareHoursProvS3d() { return regCareHoursProvS3d; }
     // public static LinearRegression getRegCareHoursProvS3e() { return regCareHoursProvS3e; } // retired process
+
+    public static BinomialRegression getRegPW1a() { return regPW1a; }
+    public static BinomialRegression getRegPW1b() { return regPW1b; }
+    public static BinomialRegression getRegPW2a() { return regPW2a; }
+    public static BinomialRegression getRegPW2b() { return regPW2b; }
+    public static MultinomialRegression getRegPW1c() { return regPW1c; }
+    public static MultinomialRegression getRegPW1e() { return regPW1e; }
+    public static LinearRegression getRegPW1d() { return regPW1d; }
+    public static LinearRegression getRegPW1f() { return regPW1f; }
+    public static LinearRegression getRegPW2c() { return regPW2c; }
+
+    public static LinearRegression getRegFW1a() { return regFW1a; }
 
     public static LinearRegression getRegEquivalisedIncomeMales() {return regEquivalisedIncomeMales;}
     public static LinearRegression getRegEquivalisedIncomeFemales() {return regEquivalisedIncomeFemales;}
@@ -2466,6 +2581,7 @@ public class Parameters {
 
         // load demYear varying rates
         priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
+        priceMapRealPensionReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_pension_returns", 1, 1);
         priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
         priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
 
@@ -2810,6 +2926,9 @@ public class Parameters {
             case RealSavingReturns -> {
                 map = priceMapRealSavingReturns;
             }
+            case RealPensionReturns -> {
+                map = priceMapRealPensionReturns;
+            }
             case RealDebtCostLow -> {
                 map = priceMapRealDebtCostLow;
             }
@@ -2936,12 +3055,8 @@ public class Parameters {
 
     public static void setEnableIntertemporalOptimisations(boolean val) {
         enableIntertemporalOptimisations = val;
-    }
-    public static void setProjectLiquidWealth() {
-        setProjectLiquidWealth(enableIntertemporalOptimisations);
-    }
-    public static void setProjectLiquidWealth(boolean val) {
-        projectLiquidWealth = val;
+        if (val)
+            projectNonPensionWealth = true;
     }
 
     public static double getTargetShare(int year, TargetShares targetShareType) {
@@ -3235,43 +3350,6 @@ public class Parameters {
     }
     public static MultiKeyCoefficientMap getCoeffLabourSupplyUtilitySingleDep() {
         return coeffLabourSupplyUtilitySingleDep;
-    }
-
-
-    public static double getLiquidWealthDiscount() {
-        return 0.0;
-    }
-
-    public static double getPensionWealthDiscount(int age) {
-        int youngAgeCeiling = 45, midAgeFloor = 55, oldAgeFloor = 65;
-        double discountYoung = 0.9, discountMid = 0.9, discountOld = 0.0;
-        if (age <= youngAgeCeiling) {
-            return discountYoung;
-        } else if (age <= midAgeFloor) {
-            return (discountYoung * (double)(midAgeFloor - age) + discountMid * (double)(age - youngAgeCeiling)) /
-                    (double)(midAgeFloor - youngAgeCeiling);
-        } else if (age < oldAgeFloor) {
-            return (discountMid * (double)(oldAgeFloor-age) + discountOld * (double)(age - midAgeFloor)) /
-                    (double)(oldAgeFloor - midAgeFloor);
-        } else {
-            return discountOld;
-        }
-    }
-
-    public static double getHousingWealthDiscount(int age) {
-        int youngAgeCeiling = 45, midAgeFloor = 55, oldAgeFloor = 65;
-        double discountYoung = 0.9, discountMid = 0.9, discountOld = 0.0;
-        if (age <= youngAgeCeiling) {
-            return discountYoung;
-        } else if (age <= midAgeFloor) {
-            return (discountYoung * (double)(midAgeFloor - age) + discountMid * (double)(age - youngAgeCeiling)) /
-                    (double)(midAgeFloor - youngAgeCeiling);
-        } else if (age < oldAgeFloor) {
-            return (discountMid * (double)(oldAgeFloor-age) + discountOld * (double)(age - midAgeFloor)) /
-                    (double)(oldAgeFloor - midAgeFloor);
-        } else {
-            return discountOld;
-        }
     }
 
     public static double updateProbability(double init, double threshold) {

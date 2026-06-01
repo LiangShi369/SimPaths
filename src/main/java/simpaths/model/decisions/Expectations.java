@@ -286,9 +286,9 @@ public class Expectations {
                 retiring = true;
             }
             if (retiring) {
-                pensionIncomePerYear = wealthLiqValue * Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT /
-                        Parameters.annuityRates.getAnnuityRate(currentStates.getOccupancyCode(), currentStates.getBirthYear(), currentStates.getYear());
-                wealthLiqValue *= (1.0 - Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT);
+                pensionIncomePerYear = wealthLiqValue * Parameters.pensionLumpSumShare /
+                        Parameters.annuityRates.getAnnuityRateByOccupancyBirthYearAge(currentStates.getOccupancyCode(), currentStates.getBirthYear(), currentStates.getYear());
+                wealthLiqValue *= (1.0 - Parameters.pensionLumpSumShare);
             }
         }
         if (cohabitation) {

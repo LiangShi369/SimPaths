@@ -288,13 +288,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         yPvrtyFlag = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlag,0);
         yPvrtyFlagL1 = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlagL1, yPvrtyFlag);
         yDiffDispEquivPrevYear = Objects.requireNonNullElse(originalBenefitUnit.yDiffDispEquivPrevYear,0.0);
-        if (Parameters.projectLiquidWealth)
-            initialiseLiquidWealth(
-                    originalBenefitUnit.getRefPersonForDecisions().getDemAge(),
-                    originalBenefitUnit.getWealthTotValue(),
-                    originalBenefitUnit.getWealthPensValue(false),
-                    originalBenefitUnit.getWealthPrptyValue(false)
-            );
         this.numberChildrenAll_lag1 = originalBenefitUnit.numberChildrenAll_lag1;
         this.numberChildren02_lag1 = originalBenefitUnit.numberChildren02_lag1;
         this.dem0to3L1 = originalBenefitUnit.dem0to3L1;
@@ -3991,15 +3984,6 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return new PanelEntityKey(key.getId());
     }
 
-    public void initialiseLiquidWealth(int age, double donorLiquidWealth, double donorPensionWealth, double donorHousingWealth) {
-        double wealth = (1.0 - Parameters.getLiquidWealthDiscount()) * donorLiquidWealth;
-        if (!Parameters.projectPensionWealth)
-            wealth += (1.0 - Parameters.getPensionWealthDiscount(age)) * donorPensionWealth;
-        if (!Parameters.projectHousingWealth)
-            wealth += (1.0 - Parameters.getHousingWealthDiscount(age)) * donorHousingWealth;
-        setWealthTotValue(wealth);
-    }
-
     public double getWealthTotValue() {
         return getWealthTotValue(true);
     }
@@ -4488,7 +4472,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             Occupancy occupancy = getOccupancy();
             if (toRetire && getWealthTotValue() > 0.0) {
                 yPensYear = wealthTotValue * Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT /
-                        Parameters.annuityRates.getAnnuityRate(occupancy, getYear()-refPerson.getDemAge(), refPerson.getDemAge());
+                        Parameters.annuityRates.getAnnuityRateByOccupancyBirthYearAge(occupancy, getYear()-refPerson.getDemAge(), refPerson.getDemAge());
                 wealthTotValue *= (1.0 - Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT);
 
                 // upate person variables

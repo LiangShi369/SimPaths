@@ -1,91 +1,76 @@
 package simpaths.model.utilities;
 
+import org.apache.commons.collections4.map.LinkedMap;
+import org.apache.commons.collections4.map.MultiKeyMap;
 import simpaths.data.Parameters;
-import simpaths.model.decisions.DecisionParams;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Occupancy;
+import simpaths.model.enums.TimeSeriesVariable;
 
+
+/*****************************************************
+ * CLASS TO MANAGE ANNUITY RATES
+ /*****************************************************/
 public class AnnuityRates {
 
-    private double[][][] annuityRates;      // first dim: single women / single men / couples; second dim: birth years; third dim: age
+    MultiKeyMap<Object, Double> annuityRates;      // first key: gender; second key: year; third key: age
 
     public AnnuityRates() {
 
-        annuityRates = new double[3][DecisionParams.maxBirthYear-DecisionParams.minBirthYear+1][Parameters.maxAge-Parameters.MIN_AGE_TO_RETIRE+1];
-
-        evalAnnunityRates(Gender.Female);
-        evalAnnunityRates(Gender.Male);
-        evalAnnuityRatesCouple();
+        annuityRates = MultiKeyMap.multiKeyMap(new LinkedMap<>());
     }
 
-    private void evalAnnunityRates(Gender gender) {
+    public void evalAnnuityRates(int minYear, int maxYear, int minAge, int maxAge) {
 
-        Occupancy occupancy;
-        if (Gender.Female.equals(gender)) {
-            occupancy = Occupancy.Single_Female;
-        } else {
-            occupancy = Occupancy.Single_Male;
+        int minBirthYear = minYear - maxAge;
+        int maxBirthYear = maxYear - minAge;
+        for (int birthYear=minBirthYear; birthYear<=maxBirthYear; birthYear++) {
+
+            evalAnnuityRates(Gender.Female, birthYear);
+            evalAnnuityRates(Gender.Male, birthYear);
         }
-        for (int birthYear=DecisionParams.minBirthYear; birthYear<=DecisionParams.maxBirthYear; birthYear++) {
+    }
 
-            double annuityRate = 0.0;
-            for (int age=Parameters.maxAge; age>= Parameters.MIN_AGE_TO_RETIRE; age--) {
-                if (age==Parameters.maxAge) {
-                    annuityRate = 1.0;
+    private void evalAnnuityRates(Gender gender, int birthYear) {
+
+        double fairAnnuityRate = 1.0, survivalRate, inflationIndexP1, inflationIndex = 1.0;
+        double realReturn = 1.0 + Parameters.annuityRealRateOfReturn;
+        for (int age=Parameters.maxAge; age>= Parameters.MIN_AGE_TO_RETIRE; age--) {
+
+            int year = birthYear + age;
+            inflationIndexP1 = inflationIndex;
+            inflationIndex = Parameters.getTimeSeriesValue(year, TimeSeriesVariable.Inflation);
+            if (age!=Parameters.maxAge) {
+
+                if (Gender.Female.equals(gender)) {
+
+                    survivalRate = (1.0 - Parameters.getMortalityProbability(Gender.Female, age, birthYear+age));
                 } else {
-                    annuityRate = 1.0 + annuityRate / (1.0 + Parameters.ANNUITY_RATE_OF_RETURN) *
-                            (1.0 - Parameters.getMortalityProbability(gender, age, birthYear+age));
+
+                    survivalRate = (1.0 - Parameters.getMortalityProbability(Gender.Male, age, birthYear+age));
                 }
-                setAnnuityRates(annuityRate, occupancy, birthYear, age);
+                fairAnnuityRate = 1.0 + fairAnnuityRate / realReturn * inflationIndex / inflationIndexP1 * survivalRate;
             }
-        }
-    }
-    private void evalAnnuityRatesCouple() {
-
-        Occupancy occupancy = Occupancy.Couple;
-        for (int birthYear=DecisionParams.minBirthYear; birthYear<=DecisionParams.maxBirthYear; birthYear++) {
-
-            double annuityRate = 0.0;
-            for (int age=Parameters.maxAge; age>= Parameters.MIN_AGE_TO_RETIRE; age--) {
-                if (age==Parameters.maxAge) {
-                    annuityRate = 1.0;
-                } else {
-                    double mortM = Parameters.getMortalityProbability(Gender.Male, age, birthYear+age);
-                    double mortF = Parameters.getMortalityProbability(Gender.Female, age, birthYear+age);
-                    annuityRate = 1.0 + (annuityRate * (1.0 - mortM - mortF + mortM*mortF) +
-                            getAnnuityRate(Occupancy.Single_Male, birthYear, age+1) * 0.5 * (mortF * (1.0 - mortM)) +
-                            getAnnuityRate(Occupancy.Single_Female, birthYear, age+1) * 0.5 * (mortM * (1.0 - mortF))) /
-                             (1.0 + Parameters.ANNUITY_RATE_OF_RETURN);
-                }
-                setAnnuityRates(annuityRate, occupancy, birthYear, age);
-            }
+            annuityRates.put(gender, year, age, fairAnnuityRate / Parameters.annuityMoneysWorth);
         }
     }
 
-    private void setAnnuityRates(double annuityRate, Occupancy occupancy, int birthYear, int age) {
-        int ii;
-        if (Occupancy.Single_Female.equals(occupancy)) {
-            ii = 0;
-        } else if (Occupancy.Single_Male.equals(occupancy)) {
-            ii = 1;
+    public double getAnnuityRateByGenderAgeYear(Gender gender, int age, int year) {
+
+        Double annuityRate = annuityRates.get(gender, year, age);
+        if (annuityRate==null)
+            throw new RuntimeException("Annuity rate not found for " + gender + " " + age + " " + year);
+        return annuityRate;
+    }
+
+    public double getAnnuityRateByOccupancyBirthYearAge(Occupancy occupancy, int birthYear, int age) {
+
+        if (Occupancy.Single_Male.equals(occupancy)) {
+            return annuityRates.get(Gender.Male, birthYear+age, age);
+        } else if (Occupancy.Single_Female.equals(occupancy)) {
+            return annuityRates.get(Gender.Female, birthYear+age, age);
         } else {
-            ii = 2;
+            return 0.5 * (annuityRates.get(Gender.Male, birthYear+age, age) + annuityRates.get(Gender.Female, birthYear+age, age));
         }
-        annuityRates[ii][birthYear-DecisionParams.minBirthYear][age-Parameters.MIN_AGE_TO_RETIRE] = annuityRate;
-    }
-    public double getAnnuityRate(Occupancy occupancy, int birthYear, int age) {
-        double rate;
-        int bb = Math.min( Math.max( birthYear, DecisionParams.minBirthYear), DecisionParams.maxBirthYear) - DecisionParams.minBirthYear;
-        int aa = Math.min( Math.max(age, Parameters.MIN_AGE_TO_RETIRE), Parameters.maxAge) - Parameters.MIN_AGE_TO_RETIRE;
-        if (Occupancy.Couple.equals(occupancy)) {
-            rate = annuityRates[2][bb][aa];
-        } else if (Occupancy.Single_Male.equals(occupancy)) {
-            rate = annuityRates[1][bb][aa];
-        } else {
-            rate = annuityRates[0][bb][aa];
-        }
-        if (rate<1.01 && age<100)
-            throw new RuntimeException("annuity rate lower than expected: " + rate);
-        return rate;
     }
 }
