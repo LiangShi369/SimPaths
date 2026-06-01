@@ -1647,7 +1647,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         regressionScore = regressionScore - (betaMen * xMen); //term "(betaMen * xMen)" should be zero but this is just a precaution
 
                     } else throw new IllegalArgumentException("None of the partners are at risk of work! HHID " + getKey().getId());
-                    if (!Parameters.checkFinite(regressionScore)) {
+                    if (!Parameters.isFinite(regressionScore)) {
                         regressionScore = -700.0;
                     }
 
@@ -1680,7 +1680,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         } else {
                             regressionScore = Parameters.getRegLabourSupplyUtilityMales().getScore(this, Regressors.class);
                         }
-                        if (!Parameters.checkFinite(regressionScore)) {
+                        if (!Parameters.isFinite(regressionScore)) {
                             regressionScore = -700.0;
                         }
 
@@ -1710,7 +1710,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         } else {
                             regressionScore = Parameters.getRegLabourSupplyUtilityFemales().getScore(this, BenefitUnit.Regressors.class);
                         }
-                        if (!Parameters.checkFinite(regressionScore)) {
+                        if (!Parameters.isFinite(regressionScore)) {
                             regressionScore = -700.0;
                         }
                         disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
@@ -3966,7 +3966,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                             - Math.log(yDispEquivYearL1 / Parameters.getTimeSeriesValue(model.getYear()-1, TimeSeriesVariable.Inflation) + 1);
         }
         yDiffDispEquivPrevYear = yearlyChangeInLogEquivalisedDisposableIncome;
-        if (!Parameters.checkFinite(yDiffDispEquivPrevYear))
+        if (!Parameters.isFinite(yDiffDispEquivPrevYear))
             throw new RuntimeException("problem evaluating yearly change in log edi");
         return yearlyChangeInLogEquivalisedDisposableIncome;
     }
@@ -4005,7 +4005,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthTotValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthTotValue)) {
+        if (!Parameters.isFinite(wealthTotValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit liquid wealth before it is initialised.");
             else
@@ -4023,7 +4023,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthPensValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthPensValue)) {
+        if (!Parameters.isFinite(wealthPensValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit pension wealth before it is initialised.");
             else
@@ -4041,7 +4041,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
     }
 
     public double getWealthPrptyValue(boolean throwError) {
-        if (!Parameters.checkFinite(wealthPrptyValue)) {
+        if (!Parameters.isFinite(wealthPrptyValue)) {
             if (throwError)
                 throw new RuntimeException("Call to get benefit unit housing wealth before it is initialised.");
             else
@@ -4058,7 +4058,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return getXChildCareWeek(true);
     }
     public double getXChildCareWeek(boolean throwError) {
-        if (!Parameters.checkFinite(xChildCareWeek)) {
+        if (!Parameters.isFinite(xChildCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit childcare cost before it is initialised.");
             } else {
@@ -4072,7 +4072,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return getXCareWeek(true);
     }
     public double getXCareWeek(boolean throwError) {
-        if (!Parameters.checkFinite(xCareWeek)) {
+        if (!Parameters.isFinite(xCareWeek)) {
             if (throwError) {
                 throw new RuntimeException("Call to get benefit unit social care cost before it is initialised.");
             } else {
@@ -4579,13 +4579,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         if ( Parameters.enableIntertemporalOptimisations ) {
 
             // project benefit unit consumption
-            if (!Parameters.checkFinite(getDisposableIncomeMonthly())) {
+            if (!Parameters.isFinite(getDisposableIncomeMonthly())) {
                 throw new RuntimeException("Disposable income not defined.");
             }
 
             double cashOnHand = Math.max(getWealthTotValue(), DecisionParams.getMinWealthByAge(getIntValue(Regressors.MaximumAge)))
                     + getDisposableIncomeMonthly()*12.0 + labStatesContObject.getAvailableCredit() - getNonDiscretionaryConsumptionPerYear();
-            if (!Parameters.checkFinite(cashOnHand)) {
+            if (!Parameters.isFinite(cashOnHand)) {
                 throw new RuntimeException("Problem identifying cash on hand");
             }
             if (cashOnHand < 1.0E-5) {
@@ -4595,7 +4595,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 xDiscretionaryYear = Parameters.grids.consumption.interpolateAll(labStatesContObject, false);
                 xDiscretionaryYear *= cashOnHand;
             }
-            if ( !Parameters.checkFinite(xDiscretionaryYear) ) {
+            if ( !Parameters.isFinite(xDiscretionaryYear) ) {
                 throw new RuntimeException("annual discretionary consumption not defined (1)");
             }
         } else {
@@ -4613,11 +4613,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         }
         return nonDiscretionaryConsumptionPerYear;
     }
-    public double getDiscretionaryConsumptionPerYear() {
-        return getDiscretionaryConsumptionPerYear(true);
+    public double getXDiscConsumptionAnnual() {
+        return getXDiscConsumptionAnnual(true);
     }
-    public double getDiscretionaryConsumptionPerYear(boolean throwError) {
-        if (!Parameters.checkFinite(xDiscretionaryYear)) {
+    public double getXDiscConsumptionAnnual(boolean throwError) {
+        if (!Parameters.isFinite(xDiscretionaryYear)) {
             if (throwError) {
                 throw new RuntimeException("annual consumption not defined (2)");
             } else {

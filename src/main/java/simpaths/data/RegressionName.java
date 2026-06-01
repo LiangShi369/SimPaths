@@ -45,7 +45,7 @@ public enum RegressionName {
 
     RMSE(RegressionType.Linear),
 
-    SocialCareS1b (RegressionType.Linear),
+    SocialCareS1b(RegressionType.Linear),
     SocialCareS2a(RegressionType.Probit),
     SocialCareS2b(RegressionType.Probit),
     SocialCareS2c(RegressionType.MultinomialLogit),
@@ -62,6 +62,16 @@ public enum RegressionName {
     SocialCareS3c(RegressionType.Linear),
     SocialCareS3d(RegressionType.Linear),
     SocialCareS3e(RegressionType.Linear),
+
+    WealthPensionPW1a(RegressionType.Logit),
+    WealthPensionPW1b(RegressionType.Logit),
+    WealthPensionPW1c(RegressionType.MultinomialLogit),
+    WealthPensionPW1d(RegressionType.Linear),
+    WealthPensionPW1e(RegressionType.MultinomialLogit),
+    WealthPensionPW1f(RegressionType.Linear),
+    WealthPensionPW2a(RegressionType.Logit),
+    WealthPensionPW2b(RegressionType.Logit),
+    WealthPensionPW2c(RegressionType.Linear),
 
     UnemploymentU1a(RegressionType.Probit),
     UnemploymentU1b(RegressionType.Probit),

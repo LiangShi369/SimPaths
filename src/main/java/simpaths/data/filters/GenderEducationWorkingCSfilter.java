@@ -23,7 +23,7 @@ public class GenderEducationWorkingCSfilter implements ICollectionFilter{
 			return (person.getDemMaleFlag().equals(demSex) &&
 					person.getEduHighestC4().equals(education) &&
 					person.getLabC4().equals(Les_c4.EmployedOrSelfEmployed) &&
-					person.getGrossEarningsYearly() >= 1. &&
+					person.getEarningsYearly() >= 1. &&
 					person.getLabourSupplyHoursWeekly() > 0);
 		}
 		else throw new IllegalArgumentException("Object passed to GenderEducationWorkingCSfilter must be of type Person!");

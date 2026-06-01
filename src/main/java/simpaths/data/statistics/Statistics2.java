@@ -652,7 +652,7 @@ public class Statistics2 {
                 } else {
                     grossDisInc[ii] += person.getBenefitUnit().getDisposableIncomeMonthlyNoNull() / es;
                 }
-                double expenditurePerMonth = person.getBenefitUnit().getDiscretionaryConsumptionPerYear(false) / 12.0 +
+                double expenditurePerMonth = person.getBenefitUnit().getXDiscConsumptionAnnual(false) / 12.0 +
                         person.getBenefitUnit().getXChildCareWeek(false) * Parameters.WEEKS_PER_MONTH +
                         person.getBenefitUnit().getXCareWeek(false) * Parameters.WEEKS_PER_MONTH;
                 if (expenditurePerMonth > 0.0) {
@@ -684,7 +684,7 @@ public class Statistics2 {
         }
         for (int ii=0; ii<=2; ii++) {
 
-            if (popula[ii]>=0) {
+            if (popula[ii] > 0) {
 
                 labInc[ii] /= (workFT[ii] + workPT[ii]);
                 prMarr[ii] /= popula[ii];

@@ -7,13 +7,12 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import simpaths.data.filters.FlexibleInLabourSupplyFilter;
+import simpaths.data.filters.FlexibleInLabourForceFilter;
 import simpaths.data.statistics.EmploymentStatistics;
 import simpaths.data.statistics.HealthStatistics;
 import simpaths.model.BenefitUnit;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Quintiles;
-import microsim.statistics.Series;
 import microsim.statistics.functions.*;
 // import plug-in packages
 import org.apache.commons.math3.util.Pair;
@@ -375,8 +374,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         public void update() {
             personsGrossLabourIncomesCS = new CrossSection.Double(model.getPersons(), GrossLabourIncomeMonthly); // Retrieve Gross Labour Income monthly value using native access through IDoubleSource
-            FlexibleInLabourSupplyFilter flexibleInLabourSupplyFilter = new FlexibleInLabourSupplyFilter();
-            personsGrossLabourIncomesCS.setFilter(flexibleInLabourSupplyFilter); // Filter only those who could work for calculation of quintiles of gross labour income
+            FlexibleInLabourForceFilter flexibleInLabourForceFilter = new FlexibleInLabourForceFilter();
+            personsGrossLabourIncomesCS.setFilter(flexibleInLabourForceFilter); // Filter only those who could work for calculation of quintiles of gross labour income
 
             percentileFunctionGrossLabourIncomes = new PercentileArrayFunction(personsGrossLabourIncomesCS);
             percentileFunctionGrossLabourIncomes.updateSource();

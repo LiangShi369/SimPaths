@@ -568,7 +568,7 @@ public class CloneBenefitUnit {
         long idchk = getLong(obs,name);
         if (idchk!=0) {
             Double val = (Double)idKey.get(idchk);
-            if (!Parameters.checkFinite(val)) {
+            if (!Parameters.isFinite(val)) {
                 pass = false;
                 val = 0.0;
             }

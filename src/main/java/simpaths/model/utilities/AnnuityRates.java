@@ -1,11 +1,9 @@
-package simpaths.model;
+package simpaths.model.utilities;
 
 import simpaths.data.Parameters;
 import simpaths.model.decisions.DecisionParams;
-import simpaths.model.enums.Dcpst;
 import simpaths.model.enums.Gender;
 import simpaths.model.enums.Occupancy;
-import simpaths.model.decisions.DecisionParams;
 
 public class AnnuityRates {
 

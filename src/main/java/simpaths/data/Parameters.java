@@ -10,7 +10,7 @@ import microsim.statistics.regression.*;
 import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.io.FileUtils;
 import simpaths.data.startingpop.DataParser;
-import simpaths.model.AnnuityRates;
+import simpaths.model.utilities.AnnuityRates;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.enums.*;
@@ -334,7 +334,7 @@ public class Parameters {
     public static final boolean systemOut = true;
 
     //Bootstrap all the regression coefficients if true
-    public static final boolean bootstrapAll = true;
+    public static final boolean bootstrapAll = false;
 
     //Scheduling
     public static final int MODEL_ORDERING = 0;
@@ -2917,7 +2917,7 @@ public class Parameters {
     public static double getSampleAverageRate(TimeVaryingRate rateType) {
 
         Double val = getTimeSeriesRateParameter(rateType);
-        if (!checkFinite(val)) {
+        if (!isFinite(val)) {
 
             val = 0.0;
             double nn = 0.0;
@@ -3292,13 +3292,13 @@ public class Parameters {
         switch (variableType) {
             case PartnershipAlignment -> {
                 Double val = partnershipAlignAdjustment.get(year);
-                if (!checkFinite(val))
+                if (!isFinite(val))
                     throw new RuntimeException("value undefined for partnershipAlignAdjustment in year " + year);
                 return val;
             }
             case FertilityAlignment -> {
                 Double val = fertilityAlignAdjustment.get(year);
-                if (!checkFinite(val))
+                if (!isFinite(val))
                     throw new RuntimeException("value undefined for fertilityAlignAdjustment in year " + year);
                 return val;
             }
@@ -3324,7 +3324,7 @@ public class Parameters {
 
     public static double getFertilityRateByYear(int year) {
         Double val = fertilityRateByYear.get(year);
-        if (!checkFinite(val))
+        if (!isFinite(val))
             throw new RuntimeException("value undefined for getFertilityRateByYear in year " + year);
         return val;
     }
@@ -3464,7 +3464,7 @@ public class Parameters {
         return INPUT_DIRECTORY;
     }
 
-    public static boolean checkFinite(Double dd) {
+    public static boolean isFinite(Double dd) {
         if (dd==null)
             return false;
         return !dd.isInfinite() && !dd.isNaN();

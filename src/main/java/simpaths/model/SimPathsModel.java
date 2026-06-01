@@ -37,7 +37,6 @@ import simpaths.model.decisions.DecisionParams;
 import simpaths.model.decisions.ManagerPopulateGrids;
 import simpaths.model.enums.*;
 import simpaths.model.lifetime_incomes.BirthCohort;
-import simpaths.model.lifetime_incomes.Individual;
 import simpaths.model.lifetime_incomes.LifetimeIncomeImputation;
 import simpaths.model.lifetime_incomes.ManagerProjectLifetimeIncomes;
 import simpaths.model.taxes.*;
@@ -519,7 +518,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         //yearlySchedule.addEvent(this, Processes.CheckForEmptyHouseholds);
 
         // Check whether persons have reached retirement Age
-        yearlySchedule.addCollectionEvent(persons, Person.Processes.ConsiderRetirement, false);
+        yearlySchedule.addCollectionEvent(persons, Person.Processes.Retirement, false);
 
         // EDUCATION MODULE
         // Check In School - check whether still in education, and if leaving school, reset Education Level
@@ -531,9 +530,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // Align the level of education if required
         addEventToAllYears(Processes.EducationLevelAlignment);
-
-        // Homeownership status
-        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
         // HEALTH MODULE
         // Update Health - determine health (continuous) based on regression models: done here because health depends on education
@@ -566,6 +562,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.Fertility);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.GiveBirth, false);        //Cannot use read-only collection schedule as newborn children cause concurrent modification exception.  Need to specify false in last argument of Collection event.
         addCollectionEventToAllYears(benefitUnits, BenefitUnit.Processes.UpdateDemographics);
+
+        // Homeownership status
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
         // TIME USE MODULE
         // Social care

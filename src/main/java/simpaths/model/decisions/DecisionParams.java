@@ -1,7 +1,7 @@
 package simpaths.model.decisions;
 
 import simpaths.data.Parameters;
-import simpaths.model.AnnuityRates;
+import simpaths.model.utilities.AnnuityRates;
 import simpaths.model.enums.*;
 
 import java.io.File;

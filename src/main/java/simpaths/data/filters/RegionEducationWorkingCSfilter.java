@@ -23,7 +23,7 @@ public class RegionEducationWorkingCSfilter implements ICollectionFilter{
 			if (person.getEduHighestC4()==null || person.getLabC4()==null) {
 				return false;
 			} else {
-				return (person.getRegion().equals(demRgn) && person.getEduHighestC4().equals(education) && person.getLabC4().equals(Les_c4.EmployedOrSelfEmployed) && person.getGrossEarningsYearly() >= 0.);
+				return (person.getRegion().equals(demRgn) && person.getEduHighestC4().equals(education) && person.getLabC4().equals(Les_c4.EmployedOrSelfEmployed) && person.getEarningsYearly() >= 0.);
 			}
 		}
 		else throw new IllegalArgumentException("Object passed to RegionEducationWorkingCSfilter must be of type Person!");

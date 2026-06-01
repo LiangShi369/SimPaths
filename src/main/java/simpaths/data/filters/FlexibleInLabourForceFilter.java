@@ -6,9 +6,9 @@ import simpaths.model.enums.Indicator;
 import simpaths.model.enums.Les_c4;
 import microsim.statistics.ICollectionFilter;
 
-public class FlexibleInLabourSupplyFilter implements ICollectionFilter {
+public class FlexibleInLabourForceFilter implements ICollectionFilter {
 
-    public FlexibleInLabourSupplyFilter() {
+    public FlexibleInLabourForceFilter() {
         super();
     }
 
@@ -17,7 +17,7 @@ public class FlexibleInLabourSupplyFilter implements ICollectionFilter {
         Person person = (Person) o;
 
         /*
-        Person "flexible in labour supply" must meet the following conditions:
+        Person "flexible in labour force" must meet the following conditions:
         age >= 16 and <= 75
         not a student or retired
         not disabled

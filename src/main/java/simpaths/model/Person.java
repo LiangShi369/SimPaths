@@ -637,7 +637,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         // eduSpellFlag = (Les_c4.Student.equals(labC4)) ? Indicator.True : Indicator.False;
         // no need to update eduSpellFlag as its value is persisted from the previous year
 
-        if (!Parameters.checkFinite(careHrsInformalWeek))
+        if (!Parameters.isFinite(careHrsInformalWeek))
             careHrsInformalWeek = 0.0;
         if (careHrsProvidedWeek < 0.01) {
             careProvidedFlag = Indicator.False;
@@ -779,7 +779,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Aging,
         Cohabitation,
         ConsiderMortality,
-        ConsiderRetirement,
+        Retirement,
         Fertility,
         FinancialDistress,
         GiveBirth,
@@ -834,7 +834,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case ConsiderMortality -> {
                 considerMortality();
             }
-            case ConsiderRetirement -> {
+            case Retirement -> {
                 considerRetirement();
             }
             case Fertility -> {
@@ -1409,7 +1409,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
      * @return {@code Person.demLifeSatScore0to10} score constrained to 0-10
      */
     protected Double constrainLifeSatisfactionEstimate(double dls_estimate) {
-        if (!Parameters.checkFinite(dls_estimate)) {
+        if (!Parameters.isFinite(dls_estimate)) {
             return null;
         }
 
@@ -1462,7 +1462,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             careFormalFlag = false;
             careFromInformalFlag = false;
         }
-        if (!Parameters.checkFinite(careHrsInformalWeek))
+        if (!Parameters.isFinite(careHrsInformalWeek))
             careHrsInformalWeek = 0.0;
 
         if (demAge >= Parameters.MIN_AGE_SOCIAL_CARE && year > getStartYear()) {
@@ -2158,7 +2158,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         if (Parameters.enableIntertemporalOptimisations) {
 
-            xEquivYear = benefitUnit.getDiscretionaryConsumptionPerYear() / benefitUnit.getEquivalisedWeight();
+            xEquivYear = benefitUnit.getXDiscConsumptionAnnual() / benefitUnit.getEquivalisedWeight();
         } else {
 
             if (getLabC4().equals(Les_c4.Retired)) {
@@ -4524,7 +4524,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return yFinDstrssFlag ? 1. : 0.;
             }
             case GrossEarningsYearly -> {
-                return getGrossEarningsYearly();
+                return getEarningsYearly();
             }
             case GrossLabourIncomeMonthly -> {
                 return getCovidYLabGross();
@@ -6759,7 +6759,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return labWageFullTimeHrly * (double) getLabourSupplyHoursWeekly();
     }
 
-    public double getGrossEarningsYearly() {
+    public double getEarningsYearly() {
         Double gew = getGrossEarningsWeekly();
         if(Double.isFinite(gew) && gew > 0.) {
             return gew * Parameters.WEEKS_PER_YEAR;
@@ -7065,7 +7065,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setYMiscPersGrossMonth(double yMiscPersGrossMonth) {
         this.yMiscPersGrossMonth = yMiscPersGrossMonth;
-        if (!Parameters.checkFinite(this.yMiscPersGrossMonth))
+        if (!Parameters.isFinite(this.yMiscPersGrossMonth))
             throw new IllegalArgumentException("yMiscPersGrossMonth is not finite");
     }
 
@@ -7633,7 +7633,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public double getHoursInformalSocialCare() {
-        return (Parameters.checkFinite(careHrsInformalWeek) && careHrsInformalWeek > 0.0) ? careHrsInformalWeek : 0.0;
+        return (Parameters.isFinite(careHrsInformalWeek) && careHrsInformalWeek > 0.0) ? careHrsInformalWeek : 0.0;
     }
 
     public double getCareHoursFromPartnerWeekly() {
@@ -7667,7 +7667,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public double getCareHoursProvidedWeekly() {
         double hours = 0.0;
-        if (Parameters.checkFinite(careHrsProvidedWeek) && careHrsProvidedWeek > 0.0)
+        if (Parameters.isFinite(careHrsProvidedWeek) && careHrsProvidedWeek > 0.0)
             hours = careHrsProvidedWeek;
         return hours;
     }
@@ -7902,7 +7902,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public double getYLifeTime() {
-        if (Parameters.checkFinite(yLifeTime))
+        if (Parameters.isFinite(yLifeTime))
             return yLifeTime;
         else
             throw new RuntimeException("yLifeTime is not finite");
@@ -7914,7 +7914,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             yLifeTime = newVal;
         } else {
 
-            if (!Parameters.checkFinite(yLifeTime))
+            if (!Parameters.isFinite(yLifeTime))
                 throw new RuntimeException("yLifeTime is not defined");
             double curVal = yLifeTime;
             double years = demAge + 1;
