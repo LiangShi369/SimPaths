@@ -35,17 +35,29 @@ public class Statistics {
 	private double yHhQuintilesC5P80;
 
 	//Percentiles of gross labour income:
-	@Column(name = "Gross_Labour_Income_p20")
-	private double yLabP20;
+	@Column(name = "Gross_Labour_Force_Earnings_p20")
+	private double yLabFceEarningsP20;
 
-	@Column(name = "Gross_Labour_Income_p40")
-	private double yLabP40;
+	@Column(name = "Gross_Labour_Force_Earnings_p40")
+	private double yLabFceEarningsP40;
 
-	@Column(name = "Gross_Labour_Income_p60")
-	private double yLabP60;
+	@Column(name = "Gross_Labour_Force_Earnings_p60")
+	private double yLabFceEarningsP60;
 
-	@Column(name = "Gross_Labour_Income_p80")
-	private double yLabP80;
+	@Column(name = "Gross_Labour_Force_Earnings_p80")
+	private double yLabFceEarningsP80;
+
+	@Column(name = "Gross_Employed_Earnings_p20")
+	private double yEmployedEarningsP20;
+
+	@Column(name = "Gross_Employed_Earnings_p40")
+	private double yEmployedEarningsP40;
+
+	@Column(name = "Gross_Employed_Earnings_p60")
+	private double yEmployedEarningsP60;
+
+	@Column(name = "Gross_Employed_Earnings_p80")
+	private double yEmployedEarningsP80;
 
 	//Equivalised disposable income
 	@Column(name = "EDI_p50")
@@ -107,44 +119,62 @@ public class Statistics {
 		this.yHhQuintilesC5P80 = yHhQuintilesC5P80;
 	}
 
-	public double getSIndex_p50() {
+	public double getSIndexP50() {
 		return sIndex_p50;
 	}
 
-	public void setSIndex_p50(double sIndex_p50) {
+	public void setSIndexP50(double sIndex_p50) {
 		this.sIndex_p50 = sIndex_p50;
 	}
 
-	public double getYLabP20() {
-		return yLabP20;
+	public double getYLabFceEarningsP20() {
+		return yLabFceEarningsP20;
 	}
 
-	public void setYLabP20(double yLabP20) {
-		this.yLabP20 = yLabP20;
+	public void setYLabFceEarningsP20(double yLabP20) { this.yLabFceEarningsP20 = yLabP20; }
+
+	public double getYLabFceEarningsP40() {
+		return yLabFceEarningsP40;
 	}
 
-	public double getYLabP40() {
-		return yLabP40;
+	public void setYLabFceEarningsP40(double yLabP40) {
+		this.yLabFceEarningsP40 = yLabP40;
 	}
 
-	public void setYLabP40(double yLabP40) {
-		this.yLabP40 = yLabP40;
+	public double getYLabFceEarningsP60() {
+		return yLabFceEarningsP60;
 	}
 
-	public double getYLabP60() {
-		return yLabP60;
+	public void setYLabFceEarningsP60(double yLabP60) {
+		this.yLabFceEarningsP60 = yLabP60;
 	}
 
-	public void setYLabP60(double yLabP60) {
-		this.yLabP60 = yLabP60;
+	public double getYLabFceEarningsP80() { return yLabFceEarningsP80; }
+
+	public void setYLabFceEarningsP80(double yLabP80) { this.yLabFceEarningsP80 = yLabP80; }
+
+	public double getEmployedEarningsP20() { return yEmployedEarningsP20; }
+
+	public void setEmployedEarningsP20(double yEmployedEarningsP20) { this.yEmployedEarningsP20 = yEmployedEarningsP20; }
+
+	public double getEmployedEarningsP40() { return yEmployedEarningsP40; }
+
+	public void setEmployedEarningsP40(double yEmployedEarningsP40) { this.yEmployedEarningsP40 = yEmployedEarningsP40; }
+
+	public double getEmployedEarningsP60() {
+		return yEmployedEarningsP60;
 	}
 
-	public double getYLabP80() {
-		return yLabP80;
+	public void setEmployedEarningsP60(double yEmployedEarningsP60) {
+		this.yEmployedEarningsP60 = yEmployedEarningsP60;
 	}
 
-	public void setYLabP80(double yLabP80) {
-		this.yLabP80 = yLabP80;
+	public double getEmployedEarningsP80() {
+		return yEmployedEarningsP80;
+	}
+
+	public void setEmployedEarningsP80(double yEmployedEarningsP80) {
+		this.yEmployedEarningsP80 = yEmployedEarningsP80;
 	}
 
 	public double getEdi_p50() {

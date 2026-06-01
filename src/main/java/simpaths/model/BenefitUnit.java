@@ -4475,7 +4475,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         Parameters.annuityRates.getAnnuityRateByOccupancyBirthYearAge(occupancy, getYear()-refPerson.getDemAge(), refPerson.getDemAge());
                 wealthTotValue *= (1.0 - Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT);
 
-                // upate person variables
+                // update person variables
                 double val;
                 if (Occupancy.Couple.equals(occupancy)) {
                     val = asinh(yPensYear /12.0/2.0);

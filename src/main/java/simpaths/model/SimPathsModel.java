@@ -563,7 +563,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.GiveBirth, false);        //Cannot use read-only collection schedule as newborn children cause concurrent modification exception.  Need to specify false in last argument of Collection event.
         addCollectionEventToAllYears(benefitUnits, BenefitUnit.Processes.UpdateDemographics);
 
-        // Homeownership status
+        // Homeownership status - influenced by benefit unit demographics
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
         // TIME USE MODULE

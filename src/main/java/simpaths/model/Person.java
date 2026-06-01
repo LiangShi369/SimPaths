@@ -3943,14 +3943,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (getCareHrsTotalWeekL1() > 0.01) ? 1. : 0.;
             }
             case ReceiveCare -> {
-                return (getHoursFormalSocialCare() + getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (getHoursFormalSocialCare() + getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case ReceiveCarePartner -> {
                 Person partner = getPartner();
                 if (partner == null) {
                     return 0.;
                 }
-                return (partner.getHoursFormalSocialCare() + partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (partner.getHoursFormalSocialCare() + partner.getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case HrsReceivedInformalIHS_L1 -> {
                 return Parameters.asinh(getCareHrsInformalWeekL1());
@@ -3963,7 +3963,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return Parameters.asinh(hours);
             }
             case CareMarketMixed -> {
-                return (getHoursFormalSocialCare() > 0.01 && getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (getHoursFormalSocialCare() > 0.01 && getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case CareMarketMixed_L1, CareMarketMixed_L1_Mixed, CareMarketMixed_L1_Formal -> {
                 return (getCareHrsFormalWeekL1() > 0.01 && getCareHrsInformalWeekL1() > 0.01) ? 1. : 0.;
@@ -3976,7 +3976,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 if (partner == null) {
                     return 0.;
                 }
-                return (partner.getHoursFormalSocialCare() < 0.01 && partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (partner.getHoursFormalSocialCare() < 0.01 && partner.getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case CareMarketFormal_L1, CareMarketFormal_L1_Mixed, CareMarketFormal_L1_Formal -> {
                 return (getCareHrsFormalWeekL1() > 0.01 && getCareHrsInformalWeekL1() < 0.01) ? 1. : 0.;
@@ -3986,7 +3986,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 if (partner == null) {
                     return 0.;
                 }
-                return (partner.getHoursFormalSocialCare() > 0.01 && partner.getHoursInformalSocialCare() < 0.01) ? 1. : 0.;
+                return (partner.getHoursFormalSocialCare() > 0.01 && partner.getCareHrsInformalWeek() < 0.01) ? 1. : 0.;
             }
             case CareFromPartner_L1 -> {
                 return (getCareHoursFromPartner_L1() > 0.01) ? 1. : 0.;
@@ -5968,7 +5968,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case careMarketMixedPsrtner -> {
                 Person partner = getPartner();
                 if (partner == null) return 0.;
-                return (partner.getHoursFormalSocialCare() > 0.01 && partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (partner.getHoursFormalSocialCare() > 0.01 && partner.getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case careNeedFlag -> {
                 return Indicator.True.equals(careNeedFlag) ? 1. : 0.;
@@ -5988,7 +5988,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case careReceivedPartnerFlag -> {
                 Person partner = getPartner();
                 if (partner == null) return 0.;
-                return (partner.getHoursFormalSocialCare() + partner.getHoursInformalSocialCare() > 0.01) ? 1. : 0.;
+                return (partner.getHoursFormalSocialCare() + partner.getCareHrsInformalWeek() > 0.01) ? 1. : 0.;
             }
             case demAgePartnerDiffL1 -> {
                 return (demAgePartnerDiffL1 != null) ? (double) demAgePartnerDiffL1 : 0.0;
@@ -7338,11 +7338,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         //          1 for only informal care
         //          2 for informal and formal care
         //          3 for only formal care
-        if (getHoursFormalSocialCare()<0.01 && getHoursInformalSocialCare()<0.01)
+        if (getHoursFormalSocialCare()<0.01 && getCareHrsInformalWeek()<0.01)
             return SocialCareReceipt.None;
-        else if (getHoursFormalSocialCare()<0.01 && getHoursInformalSocialCare()>0.01)
+        else if (getHoursFormalSocialCare()<0.01 && getCareHrsInformalWeek()>0.01)
             return SocialCareReceipt.Informal;
-        else if (getHoursFormalSocialCare()>0.01 && getHoursInformalSocialCare()>0.01)
+        else if (getHoursFormalSocialCare()>0.01 && getCareHrsInformalWeek()>0.01)
             return SocialCareReceipt.Mixed;
         else return SocialCareReceipt.Formal;
     }
@@ -7356,7 +7356,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             return SocialCareReceiptState.NoneNeeded;
         else if (getHoursFormalSocialCare()<0.01)
             return SocialCareReceiptState.NoFormal;
-        else if (getHoursInformalSocialCare()<0.01)
+        else if (getCareHrsInformalWeek()<0.01)
             return SocialCareReceiptState.Formal;
         else return SocialCareReceiptState.Mixed;
     }
@@ -7632,13 +7632,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return hours;
     }
 
-    public double getHoursInformalSocialCare() {
+    public double getCareHrsInformalWeek() {
         return (Parameters.isFinite(careHrsInformalWeek) && careHrsInformalWeek > 0.0) ? careHrsInformalWeek : 0.0;
     }
 
     public double getCareHoursFromPartnerWeekly() {
         if (getPartner() != null) {
-            return getHoursInformalSocialCare();
+            return getCareHrsInformalWeek();
         }
         return 0.0;
     }
@@ -7660,7 +7660,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public double getCareHoursFromOtherWeekly() {
         if (getPartner() == null) {
-            return getHoursInformalSocialCare();
+            return getCareHrsInformalWeek();
         }
         return 0.0;
     }
