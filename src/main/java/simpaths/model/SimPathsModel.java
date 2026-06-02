@@ -589,8 +589,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // CONSUMPTION AND SAVINGS MODULE
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ProjectDiscretionaryConsumption);
-        if (enableIntertemporalOptimisations)
-            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ProjectDiscretionaryConsumption);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.ProjectEquivConsumption);
         if (Parameters.projectNonPensionWealth) {
 

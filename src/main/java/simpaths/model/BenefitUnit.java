@@ -4779,11 +4779,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             Person female = getFemale();
             if (male != null) {
                 male.updateInvestmentIncome();
-                yInvestAnnual += male.getYCapitalPersMonth() * 12.0;
+                yInvestAnnual += Math.sinh(male.getYCapitalPersMonth()) * 12.0;
             }
             if (female != null) {
                 female.updateInvestmentIncome();
-                yInvestAnnual += female.getYCapitalPersMonth() * 12.0;
+                yInvestAnnual += Math.sinh(female.getYCapitalPersMonth()) * 12.0;
             }
         } else if (Parameters.enableIntertemporalOptimisations) {
             // non-pension wealth explicit, intertemporally optimised
@@ -4827,21 +4827,21 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    private void allocateInvestmentIncome(double income) {
+    private void allocateInvestmentIncome(double incomeAnnual) {
 
         double val;
         Occupancy occupancy = getOccupancy();
         Person male = getMale();
         Person female = getFemale();
         if (Occupancy.Couple.equals(occupancy)) {
-            val = asinh(income /12.0/2.0);
+            val = Parameters.asinh(incomeAnnual / 12.0 / 2.0);
             male.setyCapitalPersMonth(val);
             female.setyCapitalPersMonth(val);
         } else if (Occupancy.Single_Male.equals(occupancy)) {
-            val = asinh(income /12.0);
+            val = Parameters.asinh(incomeAnnual / 12.0);
             male.setyCapitalPersMonth(val);
         } else {
-            val = asinh(income /12.0);
+            val = Parameters.asinh(incomeAnnual / 12.0);
             female.setyCapitalPersMonth(val);
         }
     }
