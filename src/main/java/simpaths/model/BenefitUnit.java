@@ -11,6 +11,7 @@ import simpaths.data.MultiValEvent;
 import simpaths.model.annotations.Lag;
 import simpaths.model.annotations.NullInitialised;
 import simpaths.model.annotations.UpdateManager;
+import simpaths.model.benefitunit.WealthNonPension;
 import simpaths.model.enums.*;
 import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.LinkedMap;
@@ -62,14 +63,22 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     private Long statSeed;
 
     // unit specific variables
+    private String demCreatedByConstructor;
+    @Transient private String sampleEntry;
+    @Transient private int yearEntry;
+
     @NullInitialised @Transient private States labStatesContObject;
-    @NullInitialised private Double yInvestYear;
-    @NullInitialised private Double yPensYear;
-    @NullInitialised private Double xDiscretionaryYear;
-    @NullInitialised @Column(name="wealthTotValue") private Double wealthTotValue;            // total net wealth (includes pensions assets and housing)
-    @NullInitialised @Column(name="wealthPensValue") private Double wealthPensValue;        // total private (personal and occupational) pensions
-    @NullInitialised @Column(name="wealthPrptyValue") private Double wealthPrptyValue;        // value of main home (gross of mortgage debt)
-    @NullInitialised @Column(name="wealthMortgageDebtValue") private Double wealthMortgageDebtValue;          // value of outstanding mortgage debt
+    @NullInitialised private Double yInvestAnnual;                                                      // annual investment income
+    @NullInitialised private Double yPensionAnnual;                                                     // annual private pension income
+    @NullInitialised private Double xDiscConsumptionAnnual;                                             // annual discretionary consumption
+    @NullInitialised @Transient private WealthNonPension wealthNonPension;
+    @Lag(getter="getWealthNonPension") @Transient private WealthNonPension wealthNonPensionL1;
+    @NullInitialised @Column(name="wealthPensValue") private Double wealthPensValue;                    // total private (personal and occupational) pensions
+    @NullInitialised @Column(name="wealthTotValue") private Double wealthTotValue;                      // total net wealth (includes pensions assets and housing)
+    @NullInitialised @Column(name="wealthPrptyValue") private Double wealthPrptyValue;                  // value of main home (gross of mortgage debt)
+    @NullInitialised @Column(name="wealthMortgageDebtValue") private Double wealthMortgageDebtValue;    // value of outstanding mortgage debt
+    @NullInitialised @Column(name="wealthPrptyFlag") private Boolean wealthPrptyFlag;                                    // identifies homeowners
+
     @NullInitialised private Double yDispMonth;
     @NullInitialised private Double yGrossMonth;
     @NullInitialised private Double yBenAmountMonth;
@@ -95,8 +104,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @NullInitialised @Transient private Double i_yNonBenHhGrossAsinh;
     @NullInitialised private Dhhtp_c4 demCompHhC4;
     @Lag(getter = "getDemCompHhC4") @Transient private Dhhtp_c4 demCompHhC4L1;
-    private String demCreatedByConstructor;
-    @Column(name="wealthPrptyFlag") private Boolean wealthPrptyFlag; // are any of the individuals in the benefit unit a homeowner? True / false
     @Transient ArrayList<Triple<Les_c7_covid, Double, Integer>> covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale = new ArrayList<>();
     @Transient ArrayList<Triple<Les_c7_covid, Double, Integer>> covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleFemale = new ArrayList<>(); // This ArrayList stores monthly values of labour market states and gross incomes, to be sampled from by the LabourMarket class, for the female member of the benefit unit
 
@@ -198,43 +205,43 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         this.statSeed = statSeed;
         statInnovations = new Innovations(9, 1, statSeed);
 
-        this.numberChildrenAll_lag1 = 0;
-        this.numberChildren02_lag1 = 0;
-        this.dem0to3L1 = Indicator.False;
-        this.dem4to12L1 = Indicator.False;
-        this.xChildCareWeek = 0.0;
-        this.xCareWeek = 0.0;
-        this.careProvidedFlag = 0;
-        this.yDispMonth = 0.;
-        this.yGrossMonth = 0.;
-        this.yDispEquivYear = 0.;
-        this.yBenAmountMonth = 0.;
-        this.demCreatedByConstructor = "LongID";
-        if (Parameters.projectLiquidWealth)
-            setWealthTotValue(0.);
+        numberChildrenAll_lag1 = 0;
+        numberChildren02_lag1 = 0;
+        dem0to3L1 = Indicator.False;
+        dem4to12L1 = Indicator.False;
+        xChildCareWeek = 0.0;
+        xCareWeek = 0.0;
+        careProvidedFlag = 0;
+        yDispMonth = 0.;
+        yGrossMonth = 0.;
+        yDispEquivYear = 0.;
+        yBenAmountMonth = 0.;
+        demCreatedByConstructor = "LongID";
     }
 
-    // USED TO CONSTRUCT NEW BENEFIT UNITS FOR PEOPLE AS NEEDED
+    // USED TO CONSTRUCT NEW BENEFIT UNITS FOR SINGLE PEOPLE AS NEEDED
     // SEE THE PERSON OBJECT, setupNewBenefitUnit METHOD
     public BenefitUnit(Person person, long statSeed) {
 
         // initialise benefit unit
         this(benefitUnitIdCounter++, statSeed);
         region = person.getRegion();
-        if (Parameters.projectLiquidWealth) {
-            // transfer wealth between benefit units
 
-            BenefitUnit fromBenefitUnit = person.getBenefitUnit();
-            setWealthTotValue(person.getLiquidWealth());
-            if (this != fromBenefitUnit) {
-                fromBenefitUnit.setWealthTotValue(fromBenefitUnit.getWealthTotValue() - person.getLiquidWealth());
-            }
+        // update wealth variables if necessary
+        if (Parameters.projectNonPensionWealth) {
+
+            wealthNonPensionL1 = new WealthNonPension();
+            wealthNonPensionL1.setWealthOtherValue(person.getWealthNonPensValueL1());
         }
 
         // finalise
-        this.demCreatedByConstructor = "Singles";
+        demCreatedByConstructor = "Singles";
+        sampleEntry = "MaturityOrRelationDissolve";
+        yearEntry = model.getYear();
     }
 
+    // USED TO CONSTRUCT NEW BENEFIT UNIT FOR RELATIONSHIP FORMATION
+    // SEE THE PERSON OBJECT, setupNewBenefitUnit METHOD
     public BenefitUnit(Person p1, Person p2) {
 
         // initialise benefit unit
@@ -242,26 +249,22 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         region = p1.getRegion();
         if (region != p2.getRegion())
             throw new RuntimeException("ERROR - region of responsible male and female must match!");
-        if (Parameters.projectLiquidWealth) {
-            // transfer wealth between benefit units
 
-            setWealthTotValue(p1.getLiquidWealth() + p2.getLiquidWealth());
-            BenefitUnit pBU = p1.getBenefitUnit();
-            if (this!=pBU) {
-                pBU.setWealthTotValue(pBU.getWealthTotValue() - p1.getLiquidWealth());
-            }
-            pBU = p2.getBenefitUnit();
-            if (this!=pBU) {
-                pBU.setWealthTotValue(pBU.getWealthTotValue() - p2.getLiquidWealth());
-            }
+        // update wealth variables if necessary
+        if (Parameters.projectNonPensionWealth) {
+
+            wealthNonPensionL1 = new WealthNonPension();
+            wealthNonPensionL1.setWealthOtherValue(p1.getWealthNonPensValueL1() + p2.getWealthNonPensValueL1());
         }
 
         // finalise
         demCreatedByConstructor = "Couples";
+        sampleEntry = "RelationFormed";
+        yearEntry = model.getYear();
     }
 
-    // Below is a "copy constructor" for benefitUnits: it takes an original benefit unit as input, changes the ID, copies
-    // the rest of the benefit unit's properties, and creates a new benefit unit.
+    // a "copy constructor" for benefitUnits: used by the cloneBenefitUnit method of the SimPathsModel object
+    // used to generate clones both at population load (to un-weight data) and to generate international immigrants
     public BenefitUnit(BenefitUnit originalBenefitUnit, long benefitUnitInnov, SampleEntry sampleEntry) {
 
         this(benefitUnitIdCounter++, benefitUnitInnov);
@@ -277,10 +280,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
         }
 
-
         this.log = originalBenefitUnit.log;
         yDispMonth = Objects.requireNonNullElse(originalBenefitUnit.getDisposableIncomeMonthly(),0.0);
-        xDiscretionaryYear = Objects.requireNonNullElse(originalBenefitUnit.xDiscretionaryYear, 0.0);
+        xDiscConsumptionAnnual = Objects.requireNonNullElse(originalBenefitUnit.xDiscConsumptionAnnual, 0.0);
         yGrossMonth = Objects.requireNonNullElse(originalBenefitUnit.getGrossIncomeMonthly(),0.0);
         yDispEquivYear = Objects.requireNonNullElse(originalBenefitUnit.yDispEquivYear,0.0);
         yDispEquivYearL1 = Objects.requireNonNullElse(originalBenefitUnit.yDispEquivYearL1, yDispEquivYear);
@@ -288,6 +290,15 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         yPvrtyFlag = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlag,0);
         yPvrtyFlagL1 = Objects.requireNonNullElse(originalBenefitUnit.yPvrtyFlagL1, yPvrtyFlag);
         yDiffDispEquivPrevYear = Objects.requireNonNullElse(originalBenefitUnit.yDiffDispEquivPrevYear,0.0);
+        wealthTotValue = Objects.requireNonNullElse(originalBenefitUnit.wealthTotValue,0.0);
+        wealthPensValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPensValue,0.0);
+        wealthPrptyValue = Objects.requireNonNullElse(originalBenefitUnit.wealthPrptyValue,0.0);
+        wealthPrptyFlag = Objects.requireNonNullElse(originalBenefitUnit.wealthPrptyFlag,false);
+        wealthMortgageDebtValue = Objects.requireNonNullElse(originalBenefitUnit.wealthMortgageDebtValue,0.0);
+        if (originalBenefitUnit.wealthNonPension != null)
+            wealthNonPension = new WealthNonPension(originalBenefitUnit.wealthNonPension);
+        if (originalBenefitUnit.wealthNonPensionL1 != null)
+            wealthNonPensionL1 = new WealthNonPension(originalBenefitUnit.wealthNonPensionL1);
         this.numberChildrenAll_lag1 = originalBenefitUnit.numberChildrenAll_lag1;
         this.numberChildren02_lag1 = originalBenefitUnit.numberChildren02_lag1;
         this.dem0to3L1 = originalBenefitUnit.dem0to3L1;
@@ -300,9 +311,23 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         this.yHhQuintilesMonthC5L1 = originalBenefitUnit.yHhQuintilesMonthC5L1;
         this.demCompHhC4L1 = originalBenefitUnit.demCompHhC4L1;
         this.wealthPrptyFlag = originalBenefitUnit.wealthPrptyFlag;
-        demCreatedByConstructor = Objects.requireNonNullElse(originalBenefitUnit.demCreatedByConstructor,"CopyConstructor");
         i_yNonBenHhGrossAsinh = Objects.requireNonNullElse(originalBenefitUnit.i_yNonBenHhGrossAsinh, 0.0);
         demDbMatchTax = originalBenefitUnit.getTaxDbMatch();
+
+        demCreatedByConstructor = Objects.requireNonNullElse(originalBenefitUnit.demCreatedByConstructor,"CopyConstructor");
+        this.sampleEntry = sampleEntry.name();
+        yearEntry = model.getYear();
+    }
+
+
+    /******************************************************************
+     * method to generate additional benefit unit level characteristics
+     * for initialisation population
+     ******************************************************************/
+    public void setAdditionalFieldsInInitialPopulation() {
+
+        wealthNonPension = new WealthNonPension(wealthTotValue, wealthPrptyValue, wealthMortgageDebtValue, wealthPensValue);
+        wealthPrptyFlag = (wealthPrptyValue > 0.0);
     }
 
 
@@ -318,6 +343,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         CalculateChangeInEDI, //Calculate change in equivalised disposable income
         Homeownership,
         ReceivesBenefits,
+        UpdatePensionWealth,
+        UpdateNonPensionWealth,
         UpdateStates,
         UpdateInvestmentIncome,
         ProjectDiscretionaryConsumption,
@@ -333,6 +360,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             case UpdateWealth -> {
                 updateWealth();
             }
+            case UpdateInvestmentIncome -> {
+                setInvestmentIncomeAnnual();
+            }
             case UpdateDemographics -> {
                 updateDemographics();
             }
@@ -345,6 +375,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case ReceivesBenefits -> {
                 setReceivesBenefitsFlag();
+            }
+            case UpdateNonPensionWealth -> {
+                updateNonPensionWealth();
             }
             case UpdateStates -> {
                 setStates();
@@ -389,13 +422,43 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         statInnovations.getNewDoubleDraws();
     }
 
+
     protected void updateWealth() {
-        wealthTotValue += yDispMonth * 12.0 - xDiscretionaryYear - getNonDiscretionaryConsumptionPerYear();
+        wealthTotValue += yDispMonth * 12.0 - xDiscConsumptionAnnual - getNonDiscretionaryConsumptionPerYear();
     }
 
-    /*
-Contemporaneous values of dhhtp_c4 are required for validation. Update and output here.
- */
+    public void updateNonPensionWealth() {
+
+        if (!Parameters.projectNonPensionWealth)
+            return;
+
+        if (wealthNonPension == null)
+            wealthNonPension = new WealthNonPension();
+        else
+            throw new RuntimeException("ERROR - wealthNonPension already set for this BenefitUnit");
+
+        double wealthL1 = wealthNonPensionL1.getWealthTotalValue();
+        wealthNonPension.projectWealth(wealthL1, yDispMonth * 12.0, xDiscConsumptionAnnual);
+        wealthTotValue = wealthNonPension.getWealthTotalValue();
+        wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
+        wealthMortgageDebtValue = wealthNonPension.getWealthMortgageDebtValue();
+        wealthPrptyFlag = wealthNonPension.isHomeOwner();
+    }
+
+
+    public double getPerAdultWealthAccrual() {
+
+        if (getCoupleBoolean()) {
+            return wealthNonPension.getInYearAccrualTotal() / 2.0;
+        } else {
+            return wealthNonPension.getInYearAccrualTotal();
+        }
+    }
+
+
+    /**
+     * Contemporaneous values of dhhtp_c4 are required for validation. Update and output here.
+    */
     private void updateDemographics() {
         demCompHhC4 = getDemCompHhC4();
     }
@@ -992,8 +1055,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
         // Must be current since investment/pension enter originalIncomePerMonth in IO branch,
         // and may matter for regressors; keep consistent with existing method.
-        updateNonLabourIncome();
-
+        setNonLabourIncome();
 
         boolean cacheValid =
                 labourChoiceCacheYear != null
@@ -1019,8 +1081,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
 
-                double maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
-                double femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
+                double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
+                double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
+                double maleIncome = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
+                double femaleIncome = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
                 double originalIncomePerMonth = maleIncome + femaleIncome;
                 double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
@@ -1034,7 +1098,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
-                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
+                double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
+                double originalIncomePerMonth = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1045,7 +1110,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
-                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
+                double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
+                double originalIncomePerMonth = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1354,20 +1420,20 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                         var reg = Parameters.getRegLabourSupplyUtilityCouples();
 
                         double betaMen = reg.getCoefficient("AlignmentFixedCostMen");
-                        double xMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
+                        double xMen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostMen"));
 
                         double betaWomen = reg.getCoefficient("AlignmentFixedCostWomen");
-                        double xWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
+                        double xWomen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostWomen"));
                         utilityScore += betaMen * xMen + betaWomen * xWomen;
 
                     } else {
                     var reg = Parameters.getRegLabourSupplyUtilitySingleDep();
                     double betaMen = reg.getCoefficient("AlignmentFixedCostMen");
-                    double xMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
+                    double xMen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostMen"));
 
                     // Alignment-only regressor for the single-dep male subgroup.
                     double betaSingleDepMen = reg.getCoefficient("AlignmentSingleDepMen");
-                    double xSingleDepMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentSingleDepMen"));
+                    double xSingleDepMen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentSingleDepMen"));
 
                     utilityScore += betaMen * xMen + betaSingleDepMen * xSingleDepMen;
                     }
@@ -1376,10 +1442,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     var reg = Parameters.getRegLabourSupplyUtilitySingleDep();
 
                     double betaWomen = reg.getCoefficient("AlignmentFixedCostWomen");
-                    double xWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
+                    double xWomen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostWomen"));
                     // Alignment-only regressor for the single-dep female subgroup.
                     double betaSingleDepWomen = reg.getCoefficient("AlignmentSingleDepWomen");
-                    double xSingleDepWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentSingleDepWomen"));
+                    double xSingleDepWomen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentSingleDepWomen"));
                     utilityScore += betaWomen * xWomen + betaSingleDepWomen * xSingleDepWomen;
 
                 }
@@ -1390,13 +1456,13 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
                     var reg = Parameters.getRegLabourSupplyUtilityACMales();
                     double betaMen = reg.getCoefficient("AlignmentFixedCostMen");
-                    double xMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
+                    double xMen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostMen"));
 
                     utilityScore += betaMen * xMen;
                 } else {
                     var reg = Parameters.getRegLabourSupplyUtilityMales();
                     double betaMen = reg.getCoefficient("AlignmentFixedCostMen");
-                    double xMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
+                    double xMen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostMen"));
 
                     utilityScore += betaMen * xMen;
                 }
@@ -1408,14 +1474,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     var reg = Parameters.getRegLabourSupplyUtilityACFemales();
 
                     double betaWomen = reg.getCoefficient("AlignmentFixedCostWomen");
-                    double xWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
+                    double xWomen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostWomen"));
                     utilityScore += betaWomen * xWomen;
                 } else {
 
                     var reg = Parameters.getRegLabourSupplyUtilityFemales();
 
                     double betaWomen = reg.getCoefficient("AlignmentFixedCostWomen");
-                    double xWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
+                    double xWomen = this.getDoubleValue(Enum.valueOf(Regressors.class, "AlignmentFixedCostWomen"));
                     utilityScore += betaWomen * xWomen;
                 }
             }
@@ -1474,7 +1540,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         // populate final incomes from cache (NO taxWrapper)
         LabourEval chosenEval = cachedEvalByLabourPairs.get(labourSupplyChoice);
         yDispMonth = chosenEval.disposableIncomeMonthly;
-        yPensYear = chosenEval.benefitsReceivedPerMonth;
+        yBenAmountMonth = chosenEval.benefitsReceivedPerMonth;
         yGrossMonth = chosenEval.grossIncomeMonthly;
         demDbMatchTax = chosenEval.taxDbMatch;
         idtaxDbDonor = demDbMatchTax.getCandidateID();
@@ -1559,12 +1625,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 dlltsdF = female.getDisability();
             }
 
-            updateNonLabourIncome();
+            setNonLabourIncome();
 
             // evaluate original income
             double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * (labourIncomeWeeklyM + labourIncomeWeeklyF) +
-                    yInvestYear /12.0 + yPensYear /12.0;
-            double secondIncomePerMonth = Math.min(labourIncomeWeeklyM, labourIncomeWeeklyF) * Parameters.WEEKS_PER_MONTH;
+                    yInvestAnnual /12.0;
+            double secondIncomePerMonth = 0.0;
+            if (Occupancy.Couple.equals(occupancy))
+                secondIncomePerMonth = Math.min(labourIncomeWeeklyM, labourIncomeWeeklyF) * Parameters.WEEKS_PER_MONTH;
 
             TaxEvaluation evaluatedTransfers = taxWrapper(hoursWorkedPerWeekM, hoursWorkedPerWeekF, dlltsdM, dlltsdF, originalIncomePerMonth, secondIncomePerMonth);
 
@@ -1578,7 +1646,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         } else {
             // intertemporal optimisations disabled
 
-            updateNonLabourIncome();
+            setNonLabourIncome();
 
             // prepare temporary storage variables
             MultiKey<? extends Labour> labourSupplyChoice = null;
@@ -1588,131 +1656,90 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             MultiKeyMap<Labour, Match> taxDbMatchByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
             LinkedHashSet<MultiKey<Labour>> possibleLabourCombinations = findPossibleLabourCombinations(); // Find possible labour combinations for this benefit unit
             MultiKeyMap<Labour, Double> labourSupplyUtilityRegressionScoresByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
+            boolean maleAtRiskOfWork = false, femaleAtRiskOfWork = false;
 
             // Sometimes one of the occupants of the couple will be retired (or even under the age to work, which is currently the age to leave home).
             // For this case, the person (not at risk of work)'s labour supply will always be zero, while the other person at risk of work has a choice over the single person Labour Supply set.
-            if (Occupancy.Couple.equals(occupancy)) {
+            for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) { //PB: for each possible discrete number of hours
 
-                for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) { //PB: for each possible discrete number of hours
+                int maleWorkHoursWeekly = 0, femaleWorkHoursWeekly = 0, maleDisability = -1, femaleDisability = -1;
+                double maleIncome = 0.0, femaleIncome = 0.0, originalIncomePerMonth, secondIncomePerMonth = 0.0;
+                if (male != null) {
 
-                    // Sets values for regression score calculation
                     male.setLabourSupplyWeekly(labourKey.getKey(0));
+                    maleWorkHoursWeekly = male.getLabourSupplyHoursWeekly();
+                    maleDisability = male.getDisability();
+                    maleAtRiskOfWork = male.atRiskOfWork();
+                    maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
+                }
+                if (female != null) {
+
                     female.setLabourSupplyWeekly(labourKey.getKey(1));
-
-                    // Earnings are composed of the labour income and non-benefit non-employment income Yptciihs_dv() (this is monthly, so no need to multiply by WEEKS_PER_MONTH_RATIO)
-                    double maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
-                    double femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
-                    double originalIncomePerMonth = maleIncome + femaleIncome;
-                    double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
-
-                    TaxEvaluation evaluatedTransfers = taxWrapper(labourKey.getKey(0).getHours(male), labourKey.getKey(1).getHours(female), male.getDisability(), female.getDisability(), originalIncomePerMonth, secondIncomePerMonth);
-
-                    yDispMonth = evaluatedTransfers.getDisposableIncomePerMonth();
-                    yBenAmountMonth = evaluatedTransfers.getBenefitsReceivedPerMonth();
-                    yGrossMonth = evaluatedTransfers.getGrossIncomePerMonth();
-                    setReceivedUC(evaluatedTransfers.getReceivedUC());
-                    setReceivedLegacyBenefits(evaluatedTransfers.getReceivedLegacyBenefit());
-
-                    // Note that only benefitUnits at risk of work are considered, so at least one partner is at risk of work
-                    double regressionScore = 0.;
-                    if (male.atRiskOfWork()) { //If male has flexible labour supply
-                        if (female.atRiskOfWork()) { //And female has flexible labour supply
-                            //Follow utility process for couples
-                            regressionScore = Parameters.getRegLabourSupplyUtilityCouples().getScore(this, BenefitUnit.Regressors.class);
-                        } else if (!female.atRiskOfWork()) { //Male has flexible labour supply, female doesn't
-                            //Male is at risk of work and has dependent female
-                            regressionScore = Parameters.getRegLabourSupplyUtilitySingleDep().getScore(this, BenefitUnit.Regressors.class);
-
-                            var reg = Parameters.getRegLabourSupplyUtilitySingleDep();
-                            double betaWomen = reg.getCoefficient("AlignmentFixedCostWomen");
-                            double xWomen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
-
-                            regressionScore = regressionScore - (betaWomen * xWomen); //term "(betaWomen * xWomen)" should be zero but this is just a precaution
-                        }
-                    } else if (female.atRiskOfWork() && !male.atRiskOfWork()) { //Male not at risk of work - female must be at risk of work since only benefitUnits at risk are considered here
-                        //Female is at risk of work and has dependent male
-                        regressionScore = Parameters.getRegLabourSupplyUtilitySingleDep().getScore(this, BenefitUnit.Regressors.class);
-
-                        var reg = Parameters.getRegLabourSupplyUtilitySingleDep();
-                        double betaMen = reg.getCoefficient("AlignmentFixedCostMen");
-                        double xMen = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
-
-                        regressionScore = regressionScore - (betaMen * xMen); //term "(betaMen * xMen)" should be zero but this is just a precaution
-
-                    } else throw new IllegalArgumentException("None of the partners are at risk of work! HHID " + getKey().getId());
-                    if (!Parameters.isFinite(regressionScore)) {
-                        regressionScore = -700.0;
-                    }
-
-                    disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
-                    benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
-                    grossIncomeMonthlyByLabourPairs.put(labourKey, getGrossIncomeMonthly());
-                    taxDbMatchByLabourPairs.put(labourKey, evaluatedTransfers.getMatch());
-                    labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore); //XXX: Adult children could contribute their income to the hh, but then utility would have to be joint for a household with adult children, and they couldn't be treated separately as they are at the moment?
+                    femaleWorkHoursWeekly = female.getLabourSupplyHoursWeekly();
+                    femaleDisability = female.getDisability();
+                    femaleAtRiskOfWork = female.atRiskOfWork();
+                    femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
                 }
-            } else {
-                // single adult
 
-                if (Occupancy.Single_Male.equals(occupancy)) {
+                // Earnings are composed of the labour income and non-benefit non-employment income Yptciihs_dv() (this is monthly, so no need to multiply by WEEKS_PER_MONTH_RATIO)
+                originalIncomePerMonth = maleIncome + femaleIncome;
+                if (Occupancy.Couple.equals(occupancy))
+                    secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
-                    for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) {
+                TaxEvaluation evaluatedTransfers = taxWrapper(maleWorkHoursWeekly, femaleWorkHoursWeekly, maleDisability, femaleDisability, originalIncomePerMonth, secondIncomePerMonth);
 
-                        male.setLabourSupplyWeekly(labourKey.getKey(0));
-                        double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
-                        TaxEvaluation evaluatedTransfers = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
+                yDispMonth = evaluatedTransfers.getDisposableIncomePerMonth();
+                yBenAmountMonth = evaluatedTransfers.getBenefitsReceivedPerMonth();
+                yGrossMonth = evaluatedTransfers.getGrossIncomePerMonth();
+                setReceivedUC(evaluatedTransfers.getReceivedUC());
+                setReceivedLegacyBenefits(evaluatedTransfers.getReceivedLegacyBenefit());
 
-                        yDispMonth = evaluatedTransfers.getDisposableIncomePerMonth();
-                        yBenAmountMonth = evaluatedTransfers.getBenefitsReceivedPerMonth();
-                        yGrossMonth = evaluatedTransfers.getGrossIncomePerMonth();
-                        setReceivedUC(evaluatedTransfers.getReceivedUC());
-                        setReceivedLegacyBenefits(evaluatedTransfers.getReceivedLegacyBenefit());
+                // Note that only benefitUnits at risk of work are considered, so at least one partner is at risk of work
+                double regressionScore = 0.;
+                if (maleAtRiskOfWork && femaleAtRiskOfWork) {
 
-                        double regressionScore = 0.;
-                        if (male.getAdultChildFlag() == 1) { //If adult children use labour supply estimates for male adult children
-                            regressionScore = Parameters.getRegLabourSupplyUtilityACMales().getScore(this, Regressors.class);
-                        } else {
-                            regressionScore = Parameters.getRegLabourSupplyUtilityMales().getScore(this, Regressors.class);
-                        }
-                        if (!Parameters.isFinite(regressionScore)) {
-                            regressionScore = -700.0;
-                        }
+                    regressionScore = Parameters.getRegLabourSupplyUtilityCouples().getScore(this, BenefitUnit.Regressors.class);
+                } else if (Occupancy.Couple.equals(occupancy) && (maleAtRiskOfWork || femaleAtRiskOfWork)) {
 
-                        disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
-                        benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
-                        grossIncomeMonthlyByLabourPairs.put(labourKey, getGrossIncomeMonthly());
-                        taxDbMatchByLabourPairs.put(labourKey, evaluatedTransfers.getMatch());
-                        labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore);
+                    regressionScore = Parameters.getRegLabourSupplyUtilitySingleDep().getScore(this, BenefitUnit.Regressors.class);
+                    var reg = Parameters.getRegLabourSupplyUtilitySingleDep();
+                    double beta, xVal;
+                    if (maleAtRiskOfWork) {
+
+                        beta = reg.getCoefficient("AlignmentFixedCostWomen");
+                        xVal = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostWomen"));
+                    } else {
+
+                        beta = reg.getCoefficient("AlignmentFixedCostMen");
+                        xVal = this.getDoubleValue(Enum.valueOf(BenefitUnit.Regressors.class, "AlignmentFixedCostMen"));
                     }
-                } else if (Occupancy.Single_Female.equals(occupancy)) {        //Occupant must be a single female
+                    regressionScore = regressionScore - (beta * xVal); //term "(betaWomen * xWomen)" should be zero but this is just a precaution
+                } else if (Occupancy.Single_Male.equals(occupancy) && maleAtRiskOfWork) {
 
-                    for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) {
-
-                        female.setLabourSupplyWeekly(labourKey.getKey(1));
-                        double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
-                        TaxEvaluation evaluatedTransfers = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
-
-                        yDispMonth = evaluatedTransfers.getDisposableIncomePerMonth();
-                        yBenAmountMonth = evaluatedTransfers.getBenefitsReceivedPerMonth();
-                        yGrossMonth = evaluatedTransfers.getGrossIncomePerMonth();
-                        setReceivedUC(evaluatedTransfers.getReceivedUC());
-                        setReceivedLegacyBenefits(evaluatedTransfers.getReceivedLegacyBenefit());
-
-                        double regressionScore = 0.;
-                        if (female.getAdultChildFlag() == 1) { //If adult children use labour supply estimates for female adult children
-                            regressionScore = Parameters.getRegLabourSupplyUtilityACFemales().getScore(this, BenefitUnit.Regressors.class);
-                        } else {
-                            regressionScore = Parameters.getRegLabourSupplyUtilityFemales().getScore(this, BenefitUnit.Regressors.class);
-                        }
-                        if (!Parameters.isFinite(regressionScore)) {
-                            regressionScore = -700.0;
-                        }
-                        disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
-                        benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
-                        grossIncomeMonthlyByLabourPairs.put(labourKey, getGrossIncomeMonthly());
-                        taxDbMatchByLabourPairs.put(labourKey, evaluatedTransfers.getMatch());
-                        labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore);
+                    if (male.getAdultChildFlag() == 1) { //If adult children use labour supply estimates for male adult children
+                        regressionScore = Parameters.getRegLabourSupplyUtilityACMales().getScore(this, Regressors.class);
+                    } else {
+                        regressionScore = Parameters.getRegLabourSupplyUtilityMales().getScore(this, Regressors.class);
                     }
+                } else if (Occupancy.Single_Female.equals(occupancy) && femaleAtRiskOfWork) {
+
+                    if (female.getAdultChildFlag() == 1) { //If adult children use labour supply estimates for female adult children
+                        regressionScore = Parameters.getRegLabourSupplyUtilityACFemales().getScore(this, Regressors.class);
+                    } else {
+                        regressionScore = Parameters.getRegLabourSupplyUtilityFemales().getScore(this, Regressors.class);
+                    }
+                } else
+                    throw new IllegalArgumentException("None of the partners are at risk of work! HHID " + getKey().getId());
+
+                if (!Parameters.isFinite(regressionScore)) {
+                    regressionScore = -700.0;
                 }
+
+                disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
+                benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
+                grossIncomeMonthlyByLabourPairs.put(labourKey, getGrossIncomeMonthly());
+                taxDbMatchByLabourPairs.put(labourKey, evaluatedTransfers.getMatch());
+                labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore); //XXX: Adult children could contribute their income to the hh, but then utility would have to be joint for a household with adult children, and they couldn't be treated separately as they are at the moment?
             }
             if (labourSupplyUtilityRegressionScoresByLabourPairs.isEmpty()) {
                 // error check
@@ -1756,19 +1783,18 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             } catch (RuntimeException e) {
                 System.out.print("Could not determine labour supply choice for BU with ID: " + getKey().getId());
             }
+
             // populate labour supply
             if(model.debugCommentsOn && labourSupplyChoice!=null) {
                 log.trace("labour supply choice " + labourSupplyChoice);
             }
-            if(Occupancy.Couple.equals(occupancy)) {
+            if (maleAtRiskOfWork) {
+
                 male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
+            }
+            if (femaleAtRiskOfWork) {
+
                 female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
-            } else {
-                if(Occupancy.Single_Male.equals(occupancy)) {
-                    male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
-                } else {        //Occupant must be single female
-                    female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
-                }
             }
 
             // allow for formal childcare costs
@@ -1985,6 +2011,19 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     public enum Regressors {
 
+        Age20to24,
+        Age25to29,
+        Age30to34,
+        Age35to39,
+        Age40to44,
+        Age45to49,
+        Age50to54,
+        Age55to59,
+        Age60to64,
+        Age65to69,
+        Age70to74,
+        Age75to79,
+        Age80plus,
         AlignmentFixedCostWomen,
         AlignmentFixedCostMen,
         // Alignment-only regressors for single-dependent subgroups.
@@ -1997,6 +2036,7 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         couple_emp_ftne,
         couple_emp_ftpt,
         couple_emp_ptne,
+        Couple,
         Cut1,       // ordered probit/logit cut points - ignore these when evaluating score
         Cut10,
         Cut2,
@@ -2181,6 +2221,9 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         L1_lhw_Male_42,
         L1_lhw_Male_43,
         L1_lhw_Male_44,
+        Leisure,
+        Leisure_IncomeDiv100,
+        LeisureSq,
         Liwwh_1,
         Liwwh_10,
         Liwwh_2,
@@ -2301,9 +2344,8 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         Liwwh_Male_64,
         Liwwh_Male_65,
         Liwwh_Male_66,
-        Leisure,
-        Leisure_IncomeDiv100,
-        LeisureSq,
+        LnDispInc,
+        LnDispInc_sq,
         MaleEduH_1,
         MaleEduH_10,
         MaleEduH_2,
@@ -2371,9 +2413,18 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         NumberChildren517, // Return number of children aged <5;17>
         NumberChildren59,
         NumberMembersOver17, // Return number of members of benefit unit aged over 17
+        NumberMembersUnder18,
+        PrivatePensionIncome,
+        MortgageHolder,
+        HomeOwnedOutright,
+        NumberFullTimeWork,
+        NumberPartTimeWork,
+        NumberSelfEmployed,
         single_emp_ft,
         single_emp_ne,
         single_emp_pt,
+        SingleFemale,
+        SingleMale,
         UKC,
         UKD,
         UKE,
@@ -2386,6 +2437,28 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         UKL,
         UKM,
         UKN,
+        Year,
+        Year2009,
+        Year2010,
+        Year2011,
+        Year2012,
+        Year2013,
+        Year2014,
+        Year2015,
+        Year2016,
+        Year2017,
+        Year2018,
+        Year2019,
+        Year2020,
+        Year2021,
+        Year2022,
+        Year2023,
+        Year2024,
+        Year2025,
+        Year2026,
+        Year2027,
+        Year2028,
+        Year2029,
         Year_transformed,
 
     }
@@ -2446,6 +2519,58 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
         switch ((Regressors) variableID) {
 
+            case Age20to24 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 20 && ref.getDemAge() <= 24) ? 1. : 0.;
+            }
+            case Age25to29 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 25 && ref.getDemAge() <= 29) ? 1. : 0.;
+            }
+            case Age30to34 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 30 && ref.getDemAge() <= 34) ? 1. : 0.;
+            }
+            case Age35to39 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 35 && ref.getDemAge() <= 39) ? 1. : 0.;
+            }
+            case Age40to44 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 40 && ref.getDemAge() <= 44) ? 1. : 0.;
+            }
+            case Age45to49 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 45 && ref.getDemAge() <= 49) ? 1. : 0.;
+            }
+            case Age50to54 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 50 && ref.getDemAge() <= 54) ? 1. : 0.;
+            }
+            case Age55to59 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 55 && ref.getDemAge() <= 59) ? 1. : 0.;
+            }
+            case Age60to64 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 60 && ref.getDemAge() <= 64) ? 1. : 0.;
+            }
+            case Age65to69 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 65 && ref.getDemAge() <= 69) ? 1. : 0.;
+            }
+            case Age70to74 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 70 && ref.getDemAge() <= 74) ? 1. : 0.;
+            }
+            case Age75to79 -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 75 && ref.getDemAge() <= 79) ? 1. : 0.;
+            }
+            case Age80plus -> {
+                Person ref = getRefPerson();
+                return  (ref.getDemAge() >= 80) ? 1. : 0.;
+            }
             case IncomeDiv100 -> {                             //Disposable monthly income from donor household divided by 100
                 return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
                         getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * 1.e-2;
@@ -3560,6 +3685,16 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     throw new RuntimeException("request for parameter Liwwh_Male_XY for non-couple");
                 }
             }
+            case LnDispInc -> {
+                if (yDispMonth == null)
+                    throw new RuntimeException("request for parameter LnDispInc without specifying yDispMonth");
+                return Math.log(Math.max(yDispMonth, 1.0));
+            }
+            case LnDispInc_sq -> {
+                if (yDispMonth == null)
+                    throw new RuntimeException("request for parameter LnDispInc without specifying yDispMonth");
+                return Math.pow(Math.log(Math.max(yDispMonth, 1.0)),2.0);
+            }
             case MaleEduM_10 -> {
                 return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.TEN) && getMale().getEduHighestC4().equals(Education.Medium)) ? 1. : 0.;
             }
@@ -3669,6 +3804,72 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case Constant -> {
                 return 1.0;
             }
+            case Year -> {
+                return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? Parameters.timeTrendStopsIn : getYear();
+            }
+            case Year2009 -> {
+                return (getYear() == 2009) ? 1. : 0.;
+            }
+            case Year2010 -> {
+                return (getYear() == 2010) ? 1. : 0.;
+            }
+            case Year2011 -> {
+                return (getYear() == 2011) ? 1. : 0.;
+            }
+            case Year2012 -> {
+                return (getYear() == 2012) ? 1. : 0.;
+            }
+            case Year2013 -> {
+                return (getYear() == 2013) ? 1. : 0.;
+            }
+            case Year2014 -> {
+                return (getYear() == 2014) ? 1. : 0.;
+            }
+            case Year2015 -> {
+                return (getYear() == 2015) ? 1. : 0.;
+            }
+            case Year2016 -> {
+                return (getYear() == 2016) ? 1. : 0.;
+            }
+            case Year2017 -> {
+                return (getYear() == 2017) ? 1. : 0.;
+            }
+            case Year2018 -> {
+                return (getYear() == 2018) ? 1. : 0.;
+            }
+            case Year2019 -> {
+                return (getYear() == 2019) ? 1. : 0.;
+            }
+            case Year2020 -> {
+                return (getYear() == 2020) ? 1. : 0.;
+            }
+            case Year2021 -> {
+                return (getYear() == 2021) ? 1. : 0.;
+            }
+            case Year2022 -> {
+                return (getYear() == 2022) ? 1. : 0.;
+            }
+            case Year2023 -> {
+                return (getYear() == 2023) ? 1. : 0.;
+            }
+            case Year2024 -> {
+                return (getYear() == 2024) ? 1. : 0.;
+            }
+            case Year2025 -> {
+                return (getYear() == 2025) ? 1. : 0.;
+            }
+            case Year2026 -> {
+                return (getYear() == 2026) ? 1. : 0.;
+            }
+            case Year2027 -> {
+                return (getYear() == 2027) ? 1. : 0.;
+            }
+            case Year2028 -> {
+                return (getYear() == 2028) ? 1. : 0.;
+            }
+            case Year2029 -> {
+                return (getYear() == 2029) ? 1. : 0.;
+            }
             case Year_transformed -> {
                 return (Parameters.isFixTimeTrend && getYear() >= Parameters.timeTrendStopsIn) ? (double) Parameters.timeTrendStopsIn - 2000 : (double) getYear() - 2000;
             }
@@ -3699,6 +3900,31 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case couple_emp_2ne -> {
                 return (getCoupleBoolean() && (getMaxWeeklyHoursWorked() == 0)) ? 1.0 : 0.0;
             }
+            case NumberFullTimeWork -> {
+                return getNumberFullTimeWork();
+            }
+            case NumberPartTimeWork -> {
+                return getNumberPartTimeWork();
+            }
+            case NumberSelfEmployed -> {
+                // placeholder as model does not currently distinguish self-employed
+                return 0.;
+            }
+            case NumberMembersOver17 -> { // Simulated Benefit unit can have at most 2 persons over 17
+                return (Occupancy.Couple.equals(getOccupancy())) ? 2.0 : 1.0;
+            }
+            case NumberMembersUnder18 -> { // Simulated Benefit unit can have at most 2 persons over 17
+                return getNumberChildren(0,17);
+            }
+            case PrivatePensionIncome -> {
+                return (yPensionAnnual > 0.0) ? 1. : 0.;
+            }
+            case MortgageHolder -> {
+                return (wealthNonPensionL1.getWealthMortgageDebtValue() > 0.0) ? 1. : 0.;
+            }
+            case HomeOwnedOutright -> {
+                return ((wealthNonPensionL1.getWealthPrptyValue() > 0.0) && (wealthNonPensionL1.getWealthMortgageDebtValue() == 0.0)) ? 1. : 0.;
+            }
             case single_emp_ft -> {
                 return (!getCoupleBoolean() && (getMinWeeklyHoursWorked() >= Parameters.MIN_HOURS_FULL_TIME_EMPLOYED)) ? 1.0 : 0.0;
             }
@@ -3712,6 +3938,12 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             case Graduate -> {
                 return (Education.High.equals(getHighestDehC4())) ? 1.0 : 0.0;
+            }
+            case SingleFemale -> {
+                return (getFemale()!=null && getMale()==null) ? 1.0 : 0.0;
+            }
+            case SingleMale -> {
+                return (getFemale()==null && getMale()!=null) ? 1.0 : 0.0;
             }
             case UKC -> {
                 return Region.UKC.equals(region) ? 1.0 : 0.0;
@@ -3794,35 +4026,11 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             case n_children_14 -> {
                 return getNumberChildren(14);
             }
-            case Cut1 -> {
+            case Couple -> {
+                return getCoupleDummy();
+            }
+            case Cut1, Cut2, Cut3, Cut4, Cut5, Cut6, Cut7, Cut8, Cut9, Cut10 -> {
                 // ordered probit/logit cut points ignored when calculating score
-                return 0.;
-            }
-            case Cut2 -> {
-                return 0.;
-            }
-            case Cut3 -> {
-                return 0.;
-            }
-            case Cut4 -> {
-                return 0.;
-            }
-            case Cut5 -> {
-                return 0.;
-            }
-            case Cut6 -> {
-                return 0.;
-            }
-            case Cut7 -> {
-                return 0.;
-            }
-            case Cut8 -> {
-                return 0.;
-            }
-            case Cut9 -> {
-                return 0.;
-            }
-            case Cut10 -> {
                 return 0.;
             }
             default -> {
@@ -3930,12 +4138,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     protected void homeownership() {
 
-        Person refPerson = getRefPersonForDecisions();
-        if (refPerson.getDemAge() >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
-            double prob = Parameters.getRegHomeownershipHO1a().getProbability(refPerson, Person.DoublesVariables.class);
-            boolean homeowner = (statInnovations.getDoubleDraw(6) < prob);
-            setWealthPrptyFlag(homeowner);
-        }
+        Person refPerson = getRefPerson();
+        double prob = Parameters.getRegHomeownershipHO1a().getProbability(refPerson, Person.DoublesVariables.class);
+        boolean homeowner = (statInnovations.getDoubleDraw(6) < prob);
+        setWealthPrptyFlag(homeowner);
     }
 
     public double calculateEquivalisedDisposableIncomeYearly() {
@@ -3998,6 +4204,22 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return wealthTotValue;
     }
 
+    public void setNonPensionWealth(Person person) {
+
+        wealthNonPensionL1 = new WealthNonPension();
+        wealthNonPensionL1.setOtherValue(person.getWealthNonPensValueL1());
+    }
+
+    public double getWealthNonPensValue(boolean throwError) {
+        if (wealthNonPension == null) {
+            if (throwError)
+                throw new RuntimeException("Call to get benefit unit pension wealth before it is initialised.");
+            else
+                return 0.0;
+        }
+        return wealthNonPension.getNonPensionValue();
+    }
+
     public void setWealthTotValue(Double wealthTotValue) {
         this.wealthTotValue = wealthTotValue;
     }
@@ -4014,6 +4236,10 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                 return 0.0;
         }
         return wealthPensValue;
+    }
+
+    public double getWealthNonPensValue() {
+        return getWealthNonPensValue(true);
     }
 
     public void setWealthPensValue(Double wealthPensValue) {
@@ -4349,6 +4575,46 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         labStatesContObject = new States(this, Parameters.grids.getScale());
     }
 
+    public Person getRefPerson() {
+
+        Person ref;
+        Person male = getMale();
+        Person female = getFemale();
+        if (male!=null && female!=null) {
+            // reference person defined as spouse:
+            //  if neither retired: person with highest wage potential
+            //	if one retired and the other not: person not retired
+            //	if both retired: male if at least as old as female and female otherwise
+
+            if (!Les_c4.Retired.equals(male.getLabC4()) && !Les_c4.Retired.equals(female.getLabC4())) {
+                if (male.getLabWageFullTimeHrly() >= female.getLabWageFullTimeHrly()) {
+                    ref = male;
+                } else {
+                    ref = female;
+                }
+            } else if (!Les_c4.Retired.equals(male.getLabC4())) {
+                ref = male;
+            } else if (!Les_c4.Retired.equals(female.getLabC4())) {
+                ref = female;
+            } else if (male.getDemAge() >= female.getDemAge()) {
+                ref = male;
+            } else {
+                ref = female;
+            }
+        } else {
+            // reference person is assigned to sole adult
+
+            if (male != null) {
+                ref = male;
+            } else if (female != null) {
+                ref = female;
+            } else {
+                throw new IllegalStateException("benefit unit missing responsible adult");
+            }
+        }
+        return ref;
+    }
+
     public Person getRefPersonForDecisions() {
 
         Person ref;
@@ -4445,65 +4711,82 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return children;
     }
 
-    public void updateNonLabourIncome() {
 
-        if (Parameters.projectLiquidWealth) {
+    /**************************************************
+     * method to set yPensionAnnual (BenefitUnit) and yPensPersGrossMonth (Person)
+     **************************************************/
+    public void updatePrivatePensionIncome() {
 
-            updateRetirementPensions();
-            setInvestmentIncomeAnnual();
-        } else {
+        if (!Parameters.enableIntertemporalOptimisations) {
 
+            yPensionAnnual = 0.;
             Person male = getMale();
             Person female = getFemale();
-            if (male != null)
-                male.updateNonLabourIncome();
-            if (female != null)
-                female.updateNonLabourIncome();
-        }
-    }
-
-    private void updateRetirementPensions() {
-
-        if ( Parameters.enableIntertemporalOptimisations ) {
+            if (male != null) {
+                yPensionAnnual += male.getYPensPersGrossMonth() * 12.0;
+            }
+            if (female != null) {
+                yPensionAnnual += female.getYPensPersGrossMonth() * 12.0;
+            }
+        } else {
 
             // check if need to update retirement status
             Person refPerson = getRefPersonForDecisions();
-            boolean toRetire = refPerson.considerRetirement();
+            boolean toRetire = refPerson.updateRetirementStatus();
             Occupancy occupancy = getOccupancy();
             if (toRetire && getWealthTotValue() > 0.0) {
-                yPensYear = wealthTotValue * Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT /
+
+                yPensionAnnual = wealthTotValue * Parameters.pensionLumpSumShare /
                         Parameters.annuityRates.getAnnuityRateByOccupancyBirthYearAge(occupancy, getYear()-refPerson.getDemAge(), refPerson.getDemAge());
-                wealthTotValue *= (1.0 - Parameters.SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT);
+                wealthTotValue *= (1.0 - Parameters.pensionLumpSumShare);
 
                 // update person variables
                 double val;
                 if (Occupancy.Couple.equals(occupancy)) {
-                    val = asinh(yPensYear /12.0/2.0);
+                    val = asinh(yPensionAnnual /12.0/2.0);
                     getMale().setyPensPersGrossMonth(val);
                     getFemale().setyPensPersGrossMonth(val);
                 } else if (Occupancy.Single_Male.equals(occupancy)) {
-                    val = asinh(yPensYear /12.0);
+                    val = asinh(yPensionAnnual /12.0);
                     getMale().setyPensPersGrossMonth(val);
                 } else {
-                    val = asinh(yPensYear /12.0);
+                    val = asinh(yPensionAnnual /12.0);
                     getFemale().setyPensPersGrossMonth(val);
                 }
             } else {
+
                 if (Occupancy.Couple.equals(occupancy)) {
-                    yPensYear = getMale().getPensionIncomeAnnual();
-                    yPensYear += getFemale().getPensionIncomeAnnual();
+                    yPensionAnnual = getMale().getPensionIncomeAnnual();
+                    yPensionAnnual += getFemale().getPensionIncomeAnnual();
                 } else {
-                    yPensYear = refPerson.getPensionIncomeAnnual();
+                    yPensionAnnual = refPerson.getPensionIncomeAnnual();
                 }
             }
-        } else {
-            throw new RuntimeException("Unrecognised call to update retirement pensions");
         }
     }
 
+
+    /**************************************************
+     * method to set yInvestAnnual (BenefitUnit) and yCapitalPersMonth (Person)
+     **************************************************/
     public void setInvestmentIncomeAnnual() {
 
-        if ( Parameters.enableIntertemporalOptimisations ) {
+        if (!Parameters.projectNonPensionWealth) {
+            // non-pension wealth projected at individual level using reduced forms
+
+            yInvestAnnual = 0.;
+            Person male = getMale();
+            Person female = getFemale();
+            if (male != null) {
+                male.updateInvestmentIncome();
+                yInvestAnnual += male.getYCapitalPersMonth() * 12.0;
+            }
+            if (female != null) {
+                female.updateInvestmentIncome();
+                yInvestAnnual += female.getYCapitalPersMonth() * 12.0;
+            }
+        } else if (Parameters.enableIntertemporalOptimisations) {
+            // non-pension wealth explicit, intertemporally optimised
 
             Person male = getMale();
             Person female = getFemale();
@@ -4519,44 +4802,67 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
                     phi = -wealthTotValue / wageFactor;
                 }
                 phi = Math.min(phi, 1.0);
-                yInvestYear = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealDebtCostLow)*(1.0-phi) +
+                yInvestAnnual = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealDebtCostLow)*(1.0-phi) +
                         Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealDebtCostHigh)*phi +
                         Parameters.realInterestRateInnov) * wealthTotValue;
             } else {
-                yInvestYear = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealSavingReturns) +
+                yInvestAnnual = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealSavingReturns) +
                         Parameters.realInterestRateInnov) * wealthTotValue;
             }
-            if ((yInvestYear < -20000000.0) || (yInvestYear > 200000000.0))
-                throw new RuntimeException("odd projection for annual investment income: " + yInvestYear);
+            if ((yInvestAnnual < -20000000.0) || (yInvestAnnual > 200000000.0))
+                throw new RuntimeException("odd projection for annual investment income: " + yInvestAnnual);
 
             // update person level variables
-            double val;
-            Occupancy occupancy = getOccupancy();
-            if (Occupancy.Couple.equals(occupancy)) {
-                val = asinh(yInvestYear /12.0/2.0);
-                male.setyCapitalPersMonth(val);
-                female.setyCapitalPersMonth(val);
-                val = asinh((yInvestYear + yPensYear)/12.0/2.0);
-                male.setYMiscPersGrossMonth(val);
-                female.setYMiscPersGrossMonth(val);
-            } else if (Occupancy.Single_Male.equals(occupancy)) {
-                val = asinh(yInvestYear /12.0);
-                male.setyCapitalPersMonth(val);
-                val = asinh((yInvestYear + yPensYear)/12.0);
-                male.setYMiscPersGrossMonth(val);
-            } else {
-                val = asinh(yInvestYear /12.0);
-                female.setyCapitalPersMonth(val);
-                val = asinh((yInvestYear + yPensYear)/12.0);
-                female.setYMiscPersGrossMonth(val);
-            }
+            allocateInvestmentIncome(yInvestAnnual);
         } else {
-            throw new RuntimeException("Unrecognised call to update investment income");
+            // non-pension wealth explicit, no intertemporal optimisations
+
+            if (wealthNonPensionL1 == null)
+                throw new RuntimeException("wealthNonPensionL1 not initialised");
+            yInvestAnnual = wealthNonPensionL1.projectWealthOtherIncomeAnnual(model.getYear());
+
+            // update person level variables
+            allocateInvestmentIncome(yInvestAnnual);
         }
     }
 
-    public double getInvestmentIncomeAnnual() {return (yInvestYear !=null) ? yInvestYear : 0.0;}
-    public double getPensionIncomeAnnual() {return (yPensYear !=null) ? yPensYear : 0.0;}
+
+    private void allocateInvestmentIncome(double income) {
+
+        double val;
+        Occupancy occupancy = getOccupancy();
+        Person male = getMale();
+        Person female = getFemale();
+        if (Occupancy.Couple.equals(occupancy)) {
+            val = asinh(income /12.0/2.0);
+            male.setyCapitalPersMonth(val);
+            female.setyCapitalPersMonth(val);
+        } else if (Occupancy.Single_Male.equals(occupancy)) {
+            val = asinh(income /12.0);
+            male.setyCapitalPersMonth(val);
+        } else {
+            val = asinh(income /12.0);
+            female.setyCapitalPersMonth(val);
+        }
+    }
+
+
+    public void setNonLabourIncome() {
+
+        Person male = getMale();
+        Person female = getFemale();
+        if (male != null) {
+            male.setNonLabourIncome();
+        }
+        if (female != null) {
+            female.setNonLabourIncome();
+        }
+    }
+
+
+    public double getInvestmentIncomeAnnual() {return (yInvestAnnual !=null) ? yInvestAnnual : 0.0;}
+    public double getPensionIncomeAnnual() {return (yPensionAnnual !=null) ? yPensionAnnual : 0.0;}
+
 
     void updateDiscretionaryConsumption() {
 
@@ -4574,16 +4880,28 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
             }
             if (cashOnHand < 1.0E-5) {
                 // allow for simulated debt exceeding assumed limit for behavioural solutions
-                xDiscretionaryYear = DecisionParams.MIN_CONSUMPTION_PER_YEAR;
+                xDiscConsumptionAnnual = DecisionParams.MIN_CONSUMPTION_PER_YEAR;
             } else {
-                xDiscretionaryYear = Parameters.grids.consumption.interpolateAll(labStatesContObject, false);
-                xDiscretionaryYear *= cashOnHand;
+                xDiscConsumptionAnnual = Parameters.grids.consumption.interpolateAll(labStatesContObject, false);
+                xDiscConsumptionAnnual *= cashOnHand;
             }
-            if ( !Parameters.isFinite(xDiscretionaryYear) ) {
+            if ( !Parameters.isFinite(xDiscConsumptionAnnual) ) {
                 throw new RuntimeException("annual discretionary consumption not defined (1)");
             }
+        } else if (Parameters.projectNonPensionWealth) {
+
+            double score, rmse, gauss;
+            score = Parameters.getRegFW1a().getScore(this, BenefitUnit.Regressors.class);
+            rmse = Parameters.getRMSEForRegression("FW1a");
+            gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(1));
+            xDiscConsumptionAnnual = Math.exp(score + gauss * rmse) * 12.0;
         } else {
-            throw new RuntimeException("Unrecognised call to update net liquid wealth");
+
+            if (getRefPerson().getLabC4().equals(Les_c4.Retired)) {
+                xDiscConsumptionAnnual = getEquivalisedDisposableIncomeYearly();
+            } else {
+                xDiscConsumptionAnnual = Math.max(0., (1.0 - model.getSavingRate()) * getEquivalisedDisposableIncomeYearly());
+            }
         }
     }
 
@@ -4601,14 +4919,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         return getXDiscConsumptionAnnual(true);
     }
     public double getXDiscConsumptionAnnual(boolean throwError) {
-        if (!Parameters.isFinite(xDiscretionaryYear)) {
+        if (!Parameters.isFinite(xDiscConsumptionAnnual)) {
             if (throwError) {
                 throw new RuntimeException("annual consumption not defined (2)");
             } else {
                 return 0.0;
             }
         } else {
-            return xDiscretionaryYear;
+            return xDiscConsumptionAnnual;
         }
     }
 
@@ -4712,6 +5030,76 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
 
     public void setI_labHrsWork2Week(Integer hours) {
         i_labHrsWork2Week = hours;
+    }
+
+    private Integer getNumberFullTimeWork() {
+
+        Integer val = null;
+        if (model==null) {
+
+            if (i_labHrsWork1Week == null)
+                throw new RuntimeException("reference to uninitialised labourHoursWeekly attribute of benefitUnit");
+            else
+            if (i_labHrsWork1Week >= Parameters.MIN_HOURS_FULL_TIME_EMPLOYED)
+                val = 1;
+            else
+                val = 0;
+            if (i_labHrsWork2Week != null)
+                if (i_labHrsWork2Week >= Parameters.MIN_HOURS_FULL_TIME_EMPLOYED)
+                    val += 1;
+        } else {
+
+            Person male = getMale();
+            Person female = getFemale();
+            if (male != null || female != null) {
+
+                val = 0;
+                if (male != null)
+                    if (male.getLabourSupplyHoursWeekly() >= Parameters.MIN_HOURS_FULL_TIME_EMPLOYED)
+                        val += 1;
+                if (female != null)
+                    if (female.getLabourSupplyHoursWeekly() >= Parameters.MIN_HOURS_FULL_TIME_EMPLOYED)
+                        val += 1;
+            } else
+                throw new RuntimeException("problem identifying responsible adults");
+        }
+
+        return val;
+    }
+
+    private Integer getNumberPartTimeWork() {
+
+        Integer val = null;
+        if (model==null) {
+
+            if (i_labHrsWork1Week == null)
+                throw new RuntimeException("reference to uninitialised labourHoursWeekly attribute of benefitUnit");
+            else
+            if (i_labHrsWork1Week < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED && i_labHrsWork1Week > 0)
+                val = 1;
+            else
+                val = 0;
+            if (i_labHrsWork2Week != null)
+                if (i_labHrsWork2Week < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED && i_labHrsWork2Week > 0)
+                    val += 1;
+        } else {
+
+            Person male = getMale();
+            Person female = getFemale();
+            if (male != null || female != null) {
+
+                val = 0;
+                if (male != null)
+                    if (male.getLabourSupplyHoursWeekly() < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED && male.getLabourSupplyHoursWeekly() > 0)
+                        val += 1;
+                if (female != null)
+                    if (female.getLabourSupplyHoursWeekly() < Parameters.MIN_HOURS_FULL_TIME_EMPLOYED && female.getLabourSupplyHoursWeekly() > 0)
+                        val += 1;
+            } else
+                throw new RuntimeException("problem identifying responsible adults");
+        }
+
+        return val;
     }
 
     private Integer getMinWeeklyHoursWorked() {
@@ -4928,5 +5316,14 @@ Contemporaneous values of dhhtp_c4 are required for validation. Update and outpu
         } else {
             return getFemale();
         }
+    }
+
+    public SimPathsCollector getCollector() { return collector; }
+
+    public WealthNonPension getWealthNonPension() {
+        if (wealthNonPension != null)
+            return new WealthNonPension(wealthNonPension);
+        else
+            return new WealthNonPension();
     }
 }

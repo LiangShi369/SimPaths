@@ -581,15 +581,22 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (enableIntertemporalOptimisations)
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateStates, false);
 
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateInvestmentIncome);
         yearlySchedule.addEvent(this, Processes.LabourMarketAndIncomeUpdate);
 
         // Assign benefit status to individuals in benefit units, from donors. Based on donor tax unit status.
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
 
         // CONSUMPTION AND SAVINGS MODULE
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ProjectDiscretionaryConsumption);
         if (enableIntertemporalOptimisations)
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ProjectDiscretionaryConsumption);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.ProjectEquivConsumption);
+        if (Parameters.projectNonPensionWealth) {
+
+            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateNonPensionWealth);
+            yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdateNonPensionWealth);
+        }
 
         // equivalised disposable income
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.CalculateChangeInEDI);
@@ -2695,6 +2702,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                     double hhweight = household.getWeight();
                     boolean hasChild = false;
                     for (BenefitUnit benefitUnit : household.getBenefitUnits()) {
+                        benefitUnit.setAdditionalFieldsInInitialPopulation();
                         for (Person person : benefitUnit.getMembers()) {
                             person.setAdditionalFieldsInInitialPopulation();
                             if (person.getDemAge()<Parameters.AGE_TO_BECOME_RESPONSIBLE)

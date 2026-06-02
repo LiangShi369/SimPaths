@@ -182,6 +182,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(field="yEmpPersGrossMonthL1") @Transient private Double yEmpPersGrossMonthL2; //Lag(2) of gross personal employment income
     @Lag(getter="getYEmpPersGrossMonth") @Transient private Double yEmpPersGrossMonthL1; //Lag(1) of gross personal employment income
 
+    // non-pension wealth
+    @NullInitialised @Column(name = "wealthNonPension") private Double wealthNonPensValue;
+    @Lag(field="wealthNonPensValue") @Transient private Double wealthNonPensValueL1;
+
     //For matching process
     @Transient private Double demAgeDiffDesired;
     @Transient private Double yWageDesired;
@@ -418,6 +422,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yPensPersGrossMonth = Objects.requireNonNullElse(originalPerson.yPensPersGrossMonth, 0.0);
         yPensPersGrossMonthL1 = originalPerson.yPensPersGrossMonthL1;
         yPensPersGrossMonthL2 = originalPerson.yPensPersGrossMonthL2;
+        wealthNonPensValue = originalPerson.wealthNonPensValue;
 
         labEmpNyear = Objects.requireNonNullElseGet(originalPerson.labEmpNyear, () -> ((Les_c4.EmployedOrSelfEmployed.equals(labC4)) ? 12 : 0));
         healthDsblLongtermFlag = originalPerson.healthDsblLongtermFlag;
@@ -710,8 +715,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         demPartnerStatusL2 = demPartnerStatusL1; // Updating of this lag must occur before parnters variables are updated
 
+        wealthNonPensValue = 0.0;
+
         // partner variables
         Person partner = getPartner();
+        if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
+
+            if (partner != null) {
+                wealthNonPensValue = getBenefitUnit().getWealthNonPensValue() / 2.0;
+            } else {
+                wealthNonPensValue = getBenefitUnit().getWealthNonPensValue();
+            }
+        }
         if (partner!=null) {
             eduHighestPartnerC4L1 = partner.eduHighestC4;
             healthPartnerSelfRatedL1 = partner.healthSelfRated;
@@ -803,6 +818,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         ReviseLifetimeIncome,
         SocialCareReceipt,
         SocialCareProvision,
+        UpdateNonPensionWealth,
         Unemployment,
         Update,
         UpdateOutputVariables,
@@ -908,6 +924,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Unemployment -> {
                 updateUnemploymentState();
             }
+            case UpdateNonPensionWealth -> {
+                updateNonPensionWealth();
+            }
             default -> {
                 throw new RuntimeException("failed to identify process type in Person.onEvent");
             }
@@ -952,6 +971,23 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (statInnovations.getDoubleDraw(29)<prob) {
                 demGiveBirthFlag = true;
             }
+        }
+    }
+
+    public void updateNonPensionWealth() {
+
+        if (!Parameters.projectNonPensionWealth)
+            return;
+
+        if (demAge < Parameters.AGE_TO_BECOME_RESPONSIBLE) {
+
+            wealthNonPensValue = 0.0;
+        } else {
+
+            double accrual = getBenefitUnit().getPerAdultWealthAccrual();
+            if (wealthNonPensValueL1 == null)
+                throw new RuntimeException("Non-pension wealth not initialised");
+            wealthNonPensValue = wealthNonPensValueL1 + accrual;
         }
     }
 
@@ -1078,6 +1114,44 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         return toRetire;
     }
+
+
+    /*******************************************
+     * considers retirement status
+     * @return true if to retire
+     *******************************************/
+    public boolean updateRetirementStatus() {
+        boolean toRetire = false;
+        if (demAge >= MIN_AGE_TO_RETIRE && !Les_c4.Retired.equals(labC4L1)) {
+
+            if (Parameters.enableIntertemporalOptimisations && DecisionParams.flagRetirement) {
+
+                if (Labour.ZERO.equals(labHrsWorkEnumWeekL1)) {
+                    toRetire = true;
+                }
+            } else {
+
+                if ( demAge <= MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
+
+                    double prob;
+                    if (getPartner() != null) {
+                        prob = Parameters.getRegRetirementR1b().getProbability(this, Person.DoublesVariables.class);
+                    } else {
+                        prob = Parameters.getRegRetirementR1a().getProbability(this, Person.DoublesVariables.class);
+                    }
+                    toRetire = (statInnovations.getDoubleDraw(23) < prob);
+                } else {
+                    toRetire = true;
+                }
+            }
+        }
+        if (toRetire || Les_c4.Retired.equals(labC4L1)) {
+
+            setLabC4(Les_c4.Retired);
+        }
+        return toRetire;
+    }
+
 
     private void updateFinancialDistress() {
         double prob = Parameters.getRegFinancialDistress().getProbability(this, Person.DoublesVariables.class);
@@ -2062,6 +2136,61 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         if (Parameters.enableIntertemporalOptimisations)
             throw new RuntimeException("request to update non-labour income in person object when wealth is explicit");
+    }
+
+
+    /***************************************************************
+     * method to project investment income where
+     * non-pension wealth is not explicitly simulated
+     ***************************************************************/
+    protected void updateInvestmentIncome() {
+
+        if (Parameters.projectNonPensionWealth)
+            throw new RuntimeException("request to update investment income in person object when wealth is explicit");
+
+        // Initialize to 0 here.
+        // This prevents the bug where you overwrite the calculation later.
+        yCapitalPersMonth = 0.0;
+
+        // ypncp: inverse hyperbolic sine of capital income per month
+        // ypnoab: inverse hyperbolic sine of pension income per month
+        // yptciihs_dv: inverse hyperbolic sine of capital and pension income per month
+        if (demAge >= Parameters.MIN_AGE_TO_HAVE_INCOME) {
+
+            double capitalInnov = statInnovations.getDoubleDraw(18);
+            // 1. SELECTION STEP (Process 1a - Binomial)
+            // Use I1a purely to determine the Probability of having income
+            double probCap = Parameters.getRegIncomeI1a().getProbability(this, Person.DoublesVariables.class);
+
+            boolean hasCapitalIncome = (capitalInnov < probCap);
+
+            if (hasCapitalIncome) {
+                // 2. AMOUNT STEP (Process 1b - Linear)
+                // Use I1b to calculate the Score (magnitude)
+                double score = Parameters.getRegIncomeI1b().getScore(this, Person.DoublesVariables.class);
+
+                // Ensure you fetch the RMSE for the linear process (I1b)
+                double rmse = Parameters.getRMSEForRegression("I1b");
+
+                // Calculate level and assign
+                double capinclevel = setIncomeBySource(score, rmse, IncomeSource.CapitalIncome, RegressionScoreType.Asinh);
+                yCapitalPersMonth = Parameters.asinh(capinclevel);
+            }
+        }
+    }
+
+
+    /***************************************************************
+     * method to summarise non-labour income
+     ***************************************************************/
+    protected void setNonLabourIncome() {
+
+        //Multiplied by the capital income multiplier, defined as chosen savings rate divided by the long-term average (specified in Parameters class)
+        double yptciihs_dv_tmp_level = Math.sinh(yCapitalPersMonth) + Math.sinh(yPensPersGrossMonth);
+        yMiscPersGrossMonth = Parameters.asinh(yptciihs_dv_tmp_level); //Non-employment non-benefit income is the sum of capital income and, for retired individuals, pension income.
+        if (yMiscPersGrossMonth > 13.0) {
+            yMiscPersGrossMonth = 13.5;
+        }
     }
 
 
@@ -7966,5 +8095,21 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             return partner.getId();
         }
+    }
+
+    public Double getWealthNonPensValue() {
+        return wealthNonPensValue;
+    }
+
+    public void setWealthNonPensValue(Double wealthNonPension) {
+        this.wealthNonPensValue = wealthNonPension;
+    }
+
+    public Double getWealthNonPensValueL1() {
+        return wealthNonPensValueL1;
+    }
+
+    public void setWealthNonPensValueL1(Double wealthNonPensValueL1) {
+        this.wealthNonPensValueL1 = wealthNonPensValueL1;
     }
 }

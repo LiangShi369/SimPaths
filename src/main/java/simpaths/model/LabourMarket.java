@@ -80,7 +80,7 @@ public class LabourMarket {
             benefitUnitsCovid19Update.clear();
 
             for (BenefitUnit benefitUnit : benefitUnits) {
-                benefitUnit.updateNonLabourIncome();
+                benefitUnit.setNonLabourIncome();
                 if (benefitUnit.getAtRiskOfWork()) {
                     benefitUnitsCovid19Update.add(benefitUnit); // Put benefit units at risk of work in a set to update. Could use the same set as structural model, but seems cleaner to keep the two separate
                 } else {
@@ -231,7 +231,7 @@ public class LabourMarket {
                     benefitUnitsByRegion.get(benefitUnit.getRegion()).add(benefitUnit);        //This is the collection of benefitUnits that will enter the labour market
                     benefitUnitsAllRegions.add(benefitUnit);
                 } else {
-                    benefitUnit.updateNonLabourIncome();
+                    benefitUnit.setNonLabourIncome();
                     benefitUnit.updateDisposableIncomeIfNotAtRiskOfWork();
                 }
             }
