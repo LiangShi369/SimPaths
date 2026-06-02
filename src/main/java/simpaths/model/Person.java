@@ -6920,6 +6920,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void setLabourSupplyWeekly(Labour labourSupply) {
         labHrsWorkEnumWeek = labourSupply;
         labHrsWorkWeek = getLabourSupplyHoursWeekly(); // Update number of hours worked weekly
+        if (!Les_c4.Student.equals(getLabC4()) && !Les_c4.Retired.equals(getLabC4())) {
+            if (labHrsWorkWeek > 0) {
+                setLabC4(Les_c4.EmployedOrSelfEmployed);
+            } else  {
+                setLabC4(Les_c4.NotEmployed);
+            }
+        }
     }
 
     public double getLabourSupplyHoursYearly() {
