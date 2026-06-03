@@ -813,6 +813,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         SocialCareReceipt,
         SocialCareProvision,
         UpdateNonPensionWealth,
+        UpdatePensionContributionStatus,
+        UpdatePensionWealth,
         Unemployment,
         Update,
         UpdateOutputVariables,
@@ -845,7 +847,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 considerMortality();
             }
             case Retirement -> {
-                considerRetirement();
+                updateRetirementStatus();
             }
             case Fertility -> {
                 fertility();
@@ -894,7 +896,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case LifeSatisfaction2 -> {
                 lifeSatisfaction2();
             }
-
             case HealthMentalHM1Case -> {
                 healthMentalHM1Case();
             }
@@ -920,6 +921,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case UpdateNonPensionWealth -> {
                 updateNonPensionWealth();
+            }
+            case UpdatePensionContributionStatus -> {
+                updatePensionContributionStatus();
+            }
+            case UpdatePensionWealth -> {
+                updatePensionWealth();
             }
             default -> {
                 throw new RuntimeException("failed to identify process type in Person.onEvent");
@@ -947,9 +954,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             if (model.getCountry().equals(Country.UK)) {
 
-                    //If age below or equal to 29 and in continuous education follow process F1a
-                    double score = Parameters.getRegFertilityF1().getScore(this, Person.DoublesVariables.class);
-                    prob = Parameters.getRegFertilityF1().getProbability(score + probitAdjustment);
+                //If age below or equal to 29 and in continuous education follow process F1a
+                double score = Parameters.getRegFertilityF1().getScore(this, Person.DoublesVariables.class);
+                if (!Parameters.isFinite(score))
+                    throw new ArithmeticException("Failure to evaluate score for fertility rate");
+                prob = Parameters.getRegFertilityF1().getProbability(score + probitAdjustment);
 
                 // else {
                 //     //Otherwise if not in continuous education, follow process F1b
@@ -983,6 +992,60 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 throw new RuntimeException("Non-pension wealth not initialised");
             wealthNonPensValue = wealthNonPensValueL1 + accrual;
         }
+    }
+
+    public void updatePensionContributionStatus() {
+
+        if (Parameters.projectPensionWealth) {
+
+            if (privatePension != null) {
+                if (privatePension.getPensionIncomeAnnual() > 0.0)
+                    throw new RuntimeException("privatePension is not null");
+            }
+
+            privatePension = new PrivatePension();
+            privatePension.membership(this, privatePensionL1.isMemberOP(), privatePensionL1.isMemberPP(), statInnovations.getDoubleDraw(5), statInnovations.getDoubleDraw(6));
+            privatePension.contributionRates(this, statInnovations.getDoubleDraw(39), statInnovations.getDoubleDraw(40),
+                    statInnovations.getDoubleDraw(41), statInnovations.getDoubleDraw(42), statInnovations.getDoubleDraw(43));
+        } else {
+
+            if (privatePension == null)
+                privatePension = new PrivatePension();
+        }
+    }
+
+    /*******************************************************
+     * Method to obtain private pension contribution (omitting employer contribution)
+     * Used for reducing earnings prior to evaluation of taxes and benefits
+     * @return
+     ********************************************************/
+    public double getPrivatePensionContributionRate() {
+
+        if (privatePension == null) {
+            if (Parameters.projectPensionWealth) {
+                throw new RuntimeException("Private pension not initialised");
+            } else {
+                privatePension = new PrivatePension();
+            }
+        }
+        return privatePension.getContRateOPEe() + privatePension.getContRatePP();
+    }
+
+    public void updatePensionWealth() {
+
+        if (!Parameters.projectPensionWealth)
+            return;
+
+        if (privatePension == null)
+            privatePension = new PrivatePension();
+
+        if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE && !Les_c4.Retired.equals(labC4L1))
+            privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturns), labC4);
+
+        wealthPensValue = privatePension.getWealth();
+        contRateOPEe = privatePension.getContRateOPEe();
+        contRateOPEr = privatePension.getContRateOPEr();
+        contRatePP = privatePension.getContRatePP();
     }
 
     private void updateUnemploymentState() {
@@ -1086,29 +1149,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
     }
 
-    public boolean considerRetirement() {
-        boolean toRetire = false;
-        if (demAge >= MIN_AGE_TO_RETIRE && !Les_c4.Retired.equals(labC4) && !Les_c4.Retired.equals(labC4L1)) {
-            if (Parameters.enableIntertemporalOptimisations && DecisionParams.flagRetirement) {
-                if (Labour.ZERO.equals(labHrsWorkEnumWeekL1)) {
-                    toRetire = true;
-                }
-           } else {
-                double prob;
-                if (getPartner() != null) {
-                    prob = Parameters.getRegRetirementR1b().getProbability(this, Person.DoublesVariables.class);
-                } else {
-                    prob = Parameters.getRegRetirementR1a().getProbability(this, Person.DoublesVariables.class);
-                }
-                toRetire = (statInnovations.getDoubleDraw(23) < prob);
-            }
-            if (toRetire) {
-                setLabC4(Les_c4.Retired);
-            }
-        }
-        return toRetire;
-    }
-
 
     /*******************************************
      * considers retirement status
@@ -1148,8 +1188,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
 
     private void updateFinancialDistress() {
-        double prob = Parameters.getRegFinancialDistress().getProbability(this, Person.DoublesVariables.class);
-        yFinDstrssFlag = statInnovations.getDoubleDraw(32) < prob;
+
+        if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
+
+            double prob = Parameters.getRegFinancialDistress().getProbability(this, Person.DoublesVariables.class);
+            yFinDstrssFlag = statInnovations.getDoubleDraw(32) < prob;
+        } else {
+            yFinDstrssFlag = false;
+        }
     }
 
     // * HEALTH AND WELLBEING ********************************************************************
@@ -1167,6 +1213,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthMentalHM1Level() {
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
             double score = Parameters.getRegHealthHM1Level().getScore(this, Person.DoublesVariables.class);
+            if (!Parameters.isFinite(score))
+                throw new ArithmeticException("Failure to evaluate score for mental health level");
             double rmse = Parameters.getRMSEForRegression("HM1_L");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(1));
             healthWbScore0to36 = score + rmse*gauss;
@@ -1192,9 +1240,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelMales().getScore(this, Person.DoublesVariables.class);
+                if (!Parameters.isFinite(dhmPrediction))
+                    throw new ArithmeticException("Failure to evaluate score for mental health level (HM2)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
                 dhmPrediction = Parameters.getRegHealthHM2LevelFemales().getScore(this, Person.DoublesVariables.class);
+                if (!Parameters.isFinite(dhmPrediction))
+                    throw new ArithmeticException("Failure to evaluate score for mental health level (HM2b)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else System.out.println("healthMentalHM2 method in Person class: Person has no gender!");
         } else if (healthWbScore0to36 != null) {
@@ -1748,13 +1800,20 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // update partner's variables first
             Person partner = getPartner();
             partner.setDemPartnerNYear(null);
-            partner.setDemLeftPartnerFlag(true); //Set to true if leaves partnership to use with fertility regression, this is never reset
+            partner.setDemLeftPartnerFlag(true);    //Set to true if leaves partnership to use with fertility regression, this is never reset
 
-            setDemPartnerNYear(null); 		  //Set number of years in partnership to null if leaving partner
-            setDemLeftPartnerFlag(true); //Set to true if leaves partnership to use with fertility regression, this is never reset
+            setDemPartnerNYear(null); 		        //Set number of years in partnership to null if leaving partner
+            setDemLeftPartnerFlag(true);            //Set to true if leaves partnership to use with fertility regression, this is never reset
             idHh = null;
 
             setupNewBenefitUnit(true);
+
+            if (Parameters.projectNonPensionWealth) {
+                // allocate wealth between benefit units
+
+                this.getBenefitUnit().setNonPensionWealth(this);
+                partner.getBenefitUnit().setNonPensionWealth(partner);
+            }
         }
     }
 
@@ -1768,75 +1827,82 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         // Documentation: diagram "SimPathsEU education module - MR2"
 
         eduLeaveSchoolFlag = false;
+        Boolean inSchool;
+        if (demAge < MIN_AGE_TO_LEAVE_EDUCATION) {
 
-        // Innovation for education decisions
-        double labourInnov = statInnovations.getDoubleDraw(24);
+            inSchool = true;
+        } else {
 
-        // Initial case (laggedStudent): In the previous period, was the individual a student?
-        // Yes
-        if (Les_c4.Student.equals(labC4L1)) {
+            // Innovation for education decisions
+            double labourInnov = statInnovations.getDoubleDraw(24);
 
-            // Is the age of the individual above the minimum age to leave education (age >= minQuittingAge)?
+            // Initial case (laggedStudent): In the previous period, was the individual a student?
             // Yes
-            if (demAge >= MIN_AGE_TO_LEAVE_EDUCATION) {
-                // Is the age of the individual below the max age to leave education (age < maxQuittingAge)?
-                // Yes
-                if (demAge <= MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION) {
-                    // --> process E1a
-                    double score = Parameters.getRegEducationE1a().getScore(this, Person.DoublesVariables.class);
-                    double prob = Parameters.getRegEducationE1a().getProbability(score + probitAdjustment);
+            if (Les_c4.Student.equals(labC4L1)) {
 
-                    if (labourInnov < prob) {
-                        // Remain a student *OUTCOME B*
-                        setLabC4(Les_c4.Student);  //not needed, more of a precaution
-                        //setEduSpellFlag(Indicator.True);           //(!) a bug; E1a is applied to everyone with Ded true and false
-                        //setEduReturnFlag(Indicator.False);          //(!) a bug; Der is set to true only when individual re-enters education (i.e. process E1b)
-                        return true; // Must return true as they remain in school
-                    } else {
+                // Is the age of the individual above the minimum age to leave education (age >= minQuittingAge)?
+                // Yes
+                if (demAge >= MIN_AGE_TO_LEAVE_EDUCATION) {
+                    // Is the age of the individual below the max age to leave education (age < maxQuittingAge)?
+                    // Yes
+                    if (demAge <= MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION) {
+                        // --> process E1a
+                        double score = Parameters.getRegEducationE1a().getScore(this, Person.DoublesVariables.class);
+                        double prob = Parameters.getRegEducationE1a().getProbability(score + probitAdjustment);
+
+                        if (labourInnov < prob) {
+                            // Remain a student *OUTCOME B*
+                            inSchool = true; // Must return true as they remain in school
+                        } else {
+                            // Leave education --> Process E2
+                            eduLeaveSchoolFlag = true; // Must set flag to true
+                            inSchool = false; // Must return false as they are leaving
+                        }
+                    }
+                    // No (demAge > MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION)
+                    else {
                         // Leave education --> Process E2
                         eduLeaveSchoolFlag = true; // Must set flag to true
-                        return false; // Must return false as they are leaving
+                        inSchool = false; // Must return false as they are leaving
                     }
                 }
-                // No (demAge > MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION)
+                // No (demAge < MIN_AGE_TO_LEAVE_EDUCATION)
                 else {
-                    // Leave education --> Process E2
-                    eduLeaveSchoolFlag = true; // Must set flag to true
-                    return false; // Must return false as they are leaving
-                }
-            }
-            // No (demAge < MIN_AGE_TO_LEAVE_EDUCATION)
-            else {
-                return true; // The individual remains a student *OUTCOME A*
-            }
-        }
-
-        // No (Not a Student in labC4L1)
-        else {
-            // In the previous period, was the individual a retired (laggedRetired)?
-            // Yes
-            if (Les_c4.Retired.equals(labC4L1)) {
-                return false;  // The individual can't be a student *OUTCOME C*
-                // Remain in current status which is retired
-            }
-
-            // No --> Process E1b
-            else {
-                double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
-                double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
-
-                if (labourInnov < prob) {
-                    // Become a student *OUTCOME E*
-                    setLabC4(Les_c4.Student);
-                    setEduReturnFlag(Indicator.True);
-                    setEduSpellFlag(Indicator.False); //not needed, more of a precaution as ded should already be false
-                    return true; // Must return true as they become a student
-                } else {
-                    return false;
+                    inSchool = true; // The individual remains a student *OUTCOME A*
                 }
             }
 
+            // No (Not a Student in labC4L1)
+            else {
+                // In the previous period, was the individual a retired (laggedRetired)?
+                // Yes
+                if (Les_c4.Retired.equals(labC4L1)) {
+                    inSchool = false;  // The individual can't be a student *OUTCOME C*
+                    // Remain in current status which is retired
+                }
+
+                // No --> Process E1b
+                else {
+
+                    double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
+                    double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
+                    if (labourInnov < prob) {
+                        // Become a student *OUTCOME E*
+                        setEduReturnFlag(Indicator.True);
+                        setEduSpellFlag(Indicator.False); //not needed, more of a precaution as ded should already be false
+                        inSchool = true; // Must return true as they become a student
+                    } else {
+
+                        inSchool = false;
+                    }
+                }
+            }
         }
+        if (inSchool)
+            setLabC4(Les_c4.Student);
+        else if (demAge < AGE_TO_BECOME_RESPONSIBLE)
+            setLabC4(Les_c4.NotEmployed);
+        return inSchool;
     }
 
 
