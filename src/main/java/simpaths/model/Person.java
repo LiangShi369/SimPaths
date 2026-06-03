@@ -16,6 +16,7 @@ import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
 import simpaths.data.filters.FertileFilter;
+import simpaths.experiment.SimPathsCollector;
 import simpaths.model.annotations.Lag;
 import simpaths.model.annotations.NullInitialised;
 import simpaths.model.annotations.UpdateManager;
@@ -1906,8 +1907,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
 
-
-
 //        //Min age to leave education set to 16 (from 18 previously) but note that age to leave home is 18.
 //        if (Les_c4.Retired.equals(labC4) || demAge < Parameters.MIN_AGE_TO_LEAVE_EDUCATION || demAge > Parameters.MAX_AGE_TO_ENTER_EDUCATION) {		//Only apply module for persons who are old enough to consider leaving education, but not retired
 //            return;
@@ -2041,6 +2040,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesNE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentNotEmp;
             }
         }
+        if (!Parameters.isFinite(logFullTimeHourlyEarnings))
+            throw new ArithmeticException("Failure to project full-time earnings estimate");
 
         // Uprate and set level of potential earnings
         double upratedFullTimeHourlyEarnings = Math.exp(logFullTimeHourlyEarnings);
@@ -2059,7 +2060,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yPensPersGrossMonth = val;
     }
     public double getPensionIncomeAnnual() {
-        return Math.sinh(yPensPersGrossMonth)*12.0;
+        return Math.sinh(yPensPersGrossMonth) * 12.0;
     }
     private double setIncomeBySource(double score, double rmse, IncomeSource source, RegressionScoreType scoreType) {
 
@@ -2357,17 +2358,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected void projectEquivConsumption() {
 
-        if (Parameters.enableIntertemporalOptimisations) {
-
-            xEquivYear = benefitUnit.getXDiscConsumptionAnnual() / benefitUnit.getEquivalisedWeight();
-        } else {
-
-            if (getLabC4().equals(Les_c4.Retired)) {
-                xEquivYear = benefitUnit.getEquivalisedDisposableIncomeYearly();
-            } else {
-                xEquivYear = Math.max(0., (1-model.getSavingRate())*benefitUnit.getEquivalisedDisposableIncomeYearly());
-            }
-        }
+        xEquivYear = benefitUnit.getXDiscConsumptionAnnual() / benefitUnit.getEquivalisedWeight();
     }
 
 
@@ -6593,8 +6584,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
 
-
-
     ////////////////////////////////////////////////////////////////////////////////
     //
     //	Override equals and hashCode to make unique BenefitUnit determined by Key.getId()
@@ -7009,18 +6998,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return getLabourSupplyHoursYearly() * model.getScalingFactor();
     }
 
-
-    public double getGrossEarningsWeekly() {
-        return labWageFullTimeHrly * (double) getLabourSupplyHoursWeekly();
-    }
-
     public double getEarningsYearly() {
-        Double gew = getGrossEarningsWeekly();
-        if(Double.isFinite(gew) && gew > 0.) {
-            return gew * Parameters.WEEKS_PER_YEAR;
-        }
-        else return 0.;
-//		else return null;
+        return getEarningsWeekly() * Parameters.WEEKS_PER_YEAR;
     }
 
     public int getAtRiskOfPoverty() {
@@ -7334,6 +7313,24 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setYEmpPersGrossMonth(double val) {
         yEmpPersGrossMonth = val;
+    }
+
+    public Double getWealthPensValue() {
+        return getWealthPensValue(true);
+    }
+
+    public double getWealthPensValue(boolean throwError) {
+        if (!Parameters.isFinite(wealthPensValue)) {
+            if (throwError)
+                throw new IllegalArgumentException("pensionWealthValue is not finite");
+            else
+                return 0.0;
+        }
+        return wealthPensValue;
+    }
+
+    public void setWealthPensValue(Double v) {
+        wealthPensValue = v;
     }
 
     public double getYEmpPersGrossMonthL1() {
@@ -8221,6 +8218,89 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             return partner.getId();
         }
+    }
+
+    private Quintiles getEmploymentEarningsQuintile() {
+        return getEmploymentEarningsQuintile(false);
+    }
+
+    private Quintiles getEmploymentEarningsQuintile(boolean refresh) {
+
+        if (refresh || i_yEarningsQuintileC5 == null) {
+
+            SimPathsCollector collector = getBenefitUnit().getCollector();
+            if (collector.getStats() != null) { //Collector only gets initialised when simulation starts running
+
+                // quintile cut-offs are evaluated for preceding year - uprate for wage growth
+                double wageGrowth = Parameters.getTimeSeriesIndex(model.getYear(), UpratingCase.Earnings) /
+                        Parameters.getTimeSeriesIndex(model.getYear() - 1, UpratingCase.Earnings);
+                if (getEarningsYearly() < collector.getStats().getEmployedEarningsP20() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q1;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP40() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q2;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP60() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q3;
+                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP80() * wageGrowth) {
+                    i_yEarningsQuintileC5 = Quintiles.Q4;
+                } else {
+                    i_yEarningsQuintileC5 = Quintiles.Q5;
+                }
+            } else {
+                i_yEarningsQuintileC5 = Quintiles.Q3;
+            }
+        }
+        return i_yEarningsQuintileC5;
+    }
+
+    public Double getContRateOPEe() {
+        return getContRateOPEe(true);
+    }
+    public double getContRateOPEe(boolean throwError) {
+        if (!Parameters.isFinite(contRateOPEe)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRateOPEe is not finite");
+            else
+                return 0.0;
+        }
+        return contRateOPEe;
+    }
+
+    public void setContRateOPEe(Double contRateOPEe) {
+        this.contRateOPEe = contRateOPEe;
+    }
+
+    public Double getContRateOPEr() {
+        return getContRateOPEr(true);
+    }
+    public double getContRateOPEr(boolean throwError) {
+        if (!Parameters.isFinite(contRateOPEr)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRateOPEr is not finite");
+            else
+                return 0.0;
+        }
+        return contRateOPEr;
+    }
+
+    public void setContRateOPEr(Double contRateOPEr) {
+        this.contRateOPEr = contRateOPEr;
+    }
+
+    public Double getContRatePP() {
+        return getContRatePP(true);
+    }
+    public double getContRatePP(boolean throwError) {
+        if (!Parameters.isFinite(contRatePP)) {
+            if (throwError)
+                throw new IllegalArgumentException("contRatePP is not finite");
+            else
+                return 0.0;
+        }
+        return contRatePP;
+    }
+
+    public void setContRatePP(Double contRatePP) {
+        this.contRatePP = contRatePP;
     }
 
     public PrivatePension getPrivatePension() {
