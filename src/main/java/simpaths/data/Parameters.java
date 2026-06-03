@@ -53,15 +53,6 @@ public class Parameters {
 //        return getCountryInputDir(country) + fileName;
 //    }
 
-    public static boolean projectLiquidWealth = false;
-    public static boolean projectHousingWealth = false;
-    public static double pensionWealthAnnualGrowthRate  = 0.05;
-    public static final double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
-    public static final double ANNUITY_RATE_OF_RETURN = 0.015;
-
-
-
-
     public static final boolean TESTING_FLAG = false;
     private static final double POI_MIN_INFLATE_RATIO = 0.005d;
 
@@ -241,6 +232,8 @@ public class Parameters {
     public static boolean projectPensionWealth = false;
     public static boolean projectNonPensionWealth = false;
     public static boolean enableIntertemporalOptimisations = false;
+
+    public static double pensionWealthAnnualGrowthRate  = 0.05;
     public static Grids grids = null;
 
     static {
@@ -1317,7 +1310,6 @@ public class Parameters {
                     {"coeffCovarianceSocialCareS3b", coeffCovarianceSocialCareS3b},
                     {"coeffCovarianceSocialCareS3c", coeffCovarianceSocialCareS3c},
                     {"coeffCovarianceSocialCareS3d", coeffCovarianceSocialCareS3d},
-                    // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
                     {"coeffCovariancePensionWealthPW1a", coeffCovariancePensionWealthPW1a},
                     {"coeffCovariancePensionWealthPW1b", coeffCovariancePensionWealthPW1b},
                     {"coeffCovariancePensionWealthPW1c", coeffCovariancePensionWealthPW1c},
@@ -1328,6 +1320,7 @@ public class Parameters {
                     {"coeffCovariancePensionWealthPW2b", coeffCovariancePensionWealthPW2b},
                     {"coeffCovariancePensionWealthPW2c", coeffCovariancePensionWealthPW2c},
                     {"coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a},
+                    // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
                     {"coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales},
                     {"coeffCovarianceEquivalisedIncomeFemales", coeffCovarianceEquivalisedIncomeFemales},
                     {"coeffCovarianceEquivalisedIncomeDynamics", coeffCovarianceEquivalisedIncomeDynamics},
@@ -1868,6 +1861,7 @@ public class Parameters {
         System.out.println("RMSE warning: missing RMSE for regression " + regressionName + ", defaulting to 0.0");
         return 0.0;
     }
+
 
     private static void calculateFertilityRatesFromProjections() {
 
@@ -3351,6 +3345,7 @@ public class Parameters {
     public static MultiKeyCoefficientMap getCoeffLabourSupplyUtilitySingleDep() {
         return coeffLabourSupplyUtilitySingleDep;
     }
+
 
     public static double updateProbability(double init, double threshold) {
 
