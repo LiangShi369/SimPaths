@@ -347,6 +347,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         UpdateNonPensionWealth,
         UpdateStates,
         UpdateInvestmentIncome,
+        UpdatePrivatePensionIncome,
         ProjectDiscretionaryConsumption,
         UpdateMembers,
     }
@@ -362,6 +363,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case UpdateInvestmentIncome -> {
                 setInvestmentIncomeAnnual();
+            }
+            case UpdatePrivatePensionIncome -> {
+                setPrivatePensionIncomeAnnual();
             }
             case UpdateDemographics -> {
                 updateDemographics();
@@ -4715,7 +4719,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     /**************************************************
      * method to set yPensionAnnual (BenefitUnit) and yPensPersGrossMonth (Person)
      **************************************************/
-    public void updatePrivatePensionIncome() {
+    public void setPrivatePensionIncomeAnnual() {
 
         if (!Parameters.enableIntertemporalOptimisations) {
 
@@ -4723,10 +4727,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             Person male = getMale();
             Person female = getFemale();
             if (male != null) {
-                yPensionAnnual += male.getYPensPersGrossMonth() * 12.0;
+                male.setNonLabourIncome();
+                yPensionAnnual += Math.sinh(male.getYPensPersGrossMonth()) * 12.0;
             }
             if (female != null) {
-                yPensionAnnual += female.getYPensPersGrossMonth() * 12.0;
+                female.setNonLabourIncome();
+                yPensionAnnual += Math.sinh(female.getYPensPersGrossMonth()) * 12.0;
             }
         } else {
 
@@ -4741,17 +4747,21 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 wealthTotValue *= (1.0 - Parameters.pensionLumpSumShare);
 
                 // update person variables
+                Person male = getMale();
+                Person female = getFemale();
                 double val;
                 if (Occupancy.Couple.equals(occupancy)) {
-                    val = asinh(yPensionAnnual /12.0/2.0);
-                    getMale().setyPensPersGrossMonth(val);
-                    getFemale().setyPensPersGrossMonth(val);
-                } else if (Occupancy.Single_Male.equals(occupancy)) {
-                    val = asinh(yPensionAnnual /12.0);
-                    getMale().setyPensPersGrossMonth(val);
+                    val = Parameters.asinh(yPensionAnnual / 12.0 / 2.0);
                 } else {
-                    val = asinh(yPensionAnnual /12.0);
-                    getFemale().setyPensPersGrossMonth(val);
+                    val = Parameters.asinh(yPensionAnnual / 12.0);
+                }
+                if (male != null) {
+                    male.setYPensPersGrossMonth(val);
+                    male.setNonLabourIncome();
+                }
+                if (female != null) {
+                    female.setYPensPersGrossMonth(val);
+                    female.setNonLabourIncome();
                 }
             } else {
 

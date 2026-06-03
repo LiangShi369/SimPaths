@@ -1995,7 +1995,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void setyCapitalPersMonth(double val) {
         yCapitalPersMonth = val;
     }
-    public void setyPensPersGrossMonth(double val) {
+    public void setYPensPersGrossMonth(double val) {
         yPensPersGrossMonth = val;
     }
     public double getPensionIncomeAnnual() {

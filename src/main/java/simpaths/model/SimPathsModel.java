@@ -582,7 +582,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateStates, false);
 
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateInvestmentIncome);
-        yearlySchedule.addEvent(this, Processes.LabourMarketAndIncomeUpdate);
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdatePrivatePensionIncome);
+        yearlySchedule.addEvent(this, Processes.LabourMarketUpdate);
 
         // Assign benefit status to individuals in benefit units, from donors. Based on donor tax unit status.
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
@@ -805,7 +806,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         StartYear,
         EndYear,
         UnionMatching,
-        LabourMarketAndIncomeUpdate,
+        LabourMarketUpdate,
 
         //Alignment Processes
         FertilityAlignment,
@@ -906,7 +907,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                     System.out.println("Education levels will be aligned.");
                 }
             }
-            case LabourMarketAndIncomeUpdate -> {
+            case LabourMarketUpdate -> {
 
                 labourMarket.update(year);
                 if (commentsOn) log.info("Labour market update complete.");
