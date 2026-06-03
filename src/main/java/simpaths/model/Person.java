@@ -595,7 +595,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         // initialise random draws
         this.statSeed = statSeed;
-        statInnovations = new Innovations(38, 1, 1, statSeed);
+        statInnovations = new Innovations(44, 1, 1, statSeed);
 
         //Draw desired age and wage differential for parametric partnership formation for people above age to get married:
         double[] sampleDifferentials = setMarriageTargets();
@@ -645,7 +645,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         careProvidedFlagL1 = Indicator.False;
     }
 
+
+    /*******************************************************
+     * method to generate additional person level characteristics
+     * for initialisation population
+     *******************************************************/
     public void setAdditionalFieldsInInitialPopulation() {
+
+        Person partner = getPartner();
 
         if (labHrsWorkEnumWeek ==null)
             labHrsWorkEnumWeek = Labour.convertHoursToLabour(model.getInitialHoursWorkedWeekly().get(key.getId()).intValue()); // TODO: this can be simplified to obtain value from already initialised hours worked weekly variable? The entire database query on setup is redundant? See initialisation of the lag below.
@@ -680,7 +687,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             careProvidedFlag = Indicator.True;
         }
-        if (demAge <Parameters.AGE_TO_BECOME_RESPONSIBLE) {
+        if (demAge < Parameters.AGE_TO_BECOME_RESPONSIBLE) {
             Person mother = benefitUnit.getFemale();
             if (mother!=null)
                 idMother = mother.getId();
@@ -694,84 +701,40 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
 
         // Mental and Physical health status of the partner
-        if (this.getPartner() != null) {
-            this.setHealthMentalPartnerMcs(getPartner().getHealthMentalMcs());
-            this.setHealthPhysicalPartnerPcs(getPartner().getHealthPhysicalPcs());
+        if (partner != null) {
+            this.setHealthMentalPartnerMcs(partner.getHealthMentalMcs());
+            this.setHealthPhysicalPartnerPcs(partner.getHealthPhysicalPcs());
         }
 
         //Lagged variables
-        yBenReceivedFlagL1 = yBenReceivedFlag;
-        labHrsWorkEnumWeekL1 = Labour.convertHoursToLabour(labHrsWorkWeekL1);
-        yBenNonUCReceivedFlagL1 = yBenNonUCReceivedFlag;
-        yBenUCReceivedFlagL1 = yBenUCReceivedFlag;
-        labC4L1 = labC4;
-        labC7CovidL1 = labC7Covid;
-        demStatusHhL1 = getHouseholdStatus();
-        healthSelfRatedL1 = healthSelfRated; //Update lag(1) of health
-        healthWbScore0to36L1 = healthWbScore0to36; //Update lag(1) of mental health
-        healthPsyDstrss0to12L1 = healthPsyDstrss0to12;
-        demLifeSatScore0to10L1 = demLifeSatScore0to10;
-        healthMentalMcsL1 = healthMentalMcs;
-        healthPhysicalPcsL1 = healthPhysicalPcs;
-        demPrptyFlagL1 = getBenefitUnit().isHousingOwned();
-        healthDsblLongtermFlagL1 = healthDsblLongtermFlag; //Update lag(1) of long-term sick or disabled status
-        careNeedFlagL1 = careNeedFlag;
-        careHrsFormalWeekL1 = careHrsFormalWeek;
-        careHrsInformalWeekL1 = careHrsInformalWeek;
-        careHrsProvidedWeekL1 = careHrsProvidedWeek;
-        careProvidedFlagL1 = careProvidedFlag;
-        labWageOfferLowFlagL1 = getLowWageOffer();
-        eduHighestC4L1 = eduHighestC4; //Update lag(1) of education level
-        eduSpellFlagL1 = eduSpellFlag ; //Update lag(1) of education level
-        yNonBenPersGrossMonthL1 = getYNonBenPersGrossMonth(); //Update lag(1) of gross personal non-benefit income
-        labHrsWorkEnumWeekL1 = getLabourSupplyWeekly(); // Lag(1) of labour supply
-        yBenReceivedFlagL1 = yBenReceivedFlag; // Lag(1) of flag indicating if individual receives benefits
-        yBenNonUCReceivedFlagL1 = yBenNonUCReceivedFlag; // Lag(1) of flag indicating if individual receives non-UC benefits
-        yBenUCReceivedFlagL1 = yBenUCReceivedFlag; // Lag(1) of flag indicating if individual receives UC
-        labWageFullTimeHrlyL1 = labWageFullTimeHrly; // Lag(1) of potential hourly earnings
-
-        yEmpPersGrossMonthL1 = getYEmpPersGrossMonth(); //Lag(1) of gross personal employment income
+        yEmpPersGrossMonthL1 = getYEmpPersGrossMonth();
         yEmpPersGrossMonthL2 = getYEmpPersGrossMonth();
-        yEmpPersGrossMonthL3 = getYEmpPersGrossMonth();
-
         yMiscPersGrossMonthL1 = getYMiscPersGrossMonth();
         yMiscPersGrossMonthL2 = getYMiscPersGrossMonth();
-        yMiscPersGrossMonthL3 = getYMiscPersGrossMonth();
-
         yCapitalPersMonthL1 = getYCapitalPersMonth();
-        yCapitalPersMonthL2 = getYCapitalPersMonth();
-
         yPensPersGrossMonthL1 = getYPensPersGrossMonth();
-        yPensPersGrossMonthL2 = getYPensPersGrossMonth();
+        demPartnerStatusL1 = demPartnerStatus;
 
-        demPartnerStatusL2 = demPartnerStatusL1; // Updating of this lag must occur before parnters variables are updated
-
+        // instantiate privatePension
+        wealthPensValue = 0.0;
         wealthNonPensValue = 0.0;
-
-        // partner variables
-        Person partner = getPartner();
+        privatePension = new PrivatePension();
         if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
 
             if (partner != null) {
+                wealthPensValue = getBenefitUnit().getWealthPensValue() / 2.0;
                 wealthNonPensValue = getBenefitUnit().getWealthNonPensValue() / 2.0;
             } else {
+                wealthPensValue = getBenefitUnit().getWealthPensValue();
                 wealthNonPensValue = getBenefitUnit().getWealthNonPensValue();
             }
+            privatePension.setWealth(wealthPensValue);
+            privatePension.setPensionIncomeAnnual(Math.sinh(yPensPersGrossMonth) * 12.0);
+            privatePension.setContRateOPEe(contRateOPEe);
+            privatePension.setContRateOPEr(contRateOPEr);
+            privatePension.setContRatePP(contRatePP);
+            privatePension.setRetired(Les_c4.Retired.equals(getLabC4()));
         }
-        if (partner!=null) {
-            eduHighestPartnerC4L1 = partner.eduHighestC4;
-            healthPartnerSelfRatedL1 = partner.healthSelfRated;
-            demAgePartnerDiffL1 = demAge - partner.demAge;
-            idPartnerL1 = partner.getId();
-        } else {
-            eduHighestPartnerC4L1 = null;
-            healthPartnerSelfRatedL1 = null;
-            demAgePartnerDiffL1 = null;
-            idPartnerL1 = null;
-        }
-        demPartnerStatusL1 = getDemPartnerStatus();
-        yPersAndPartnerGrossDiffMonthL1 = getYPersAndPartnerGrossDiffMonth(); //Lag(1) of difference between own and partner's gross personal non-benefit income
-        labStatusPartnerAndOwnC4L1 = getLabStatusPartnerAndOwnC4(); //Lag(1) of own and partner's activity status
     }
 
     //This method assign people to age groups used to define types in the SBAM matching procedure
