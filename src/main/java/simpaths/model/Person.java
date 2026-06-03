@@ -2038,44 +2038,21 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         return income;
     }
-    protected void updateNonLabourIncome() {
-        
-        if (Parameters.enableIntertemporalOptimisations)
-            throw new RuntimeException("request to update non-labour income in person object when wealth is explicit");
+
+
+    /***************************************************************
+     * method to project private pension income
+     ***************************************************************/
+    public double updatePrivatePensionIncome() {
 
         // Initialize to 0 here.
         // This prevents the bug where you overwrite the calculation later.
-        yCapitalPersMonth = 0.0;
         yPensPersGrossMonth = 0.0;
 
-        // ypncp: inverse hyperbolic sine of capital income per month
         // ypnoab: inverse hyperbolic sine of pension income per month
-        // yptciihs_dv: inverse hyperbolic sine of capital and pension income per month
-        // variables updated with labour supply when enableIntertemporalOptimisations (as retirement can affect wealth and pension income)
         if (demAge >= Parameters.MIN_AGE_TO_HAVE_INCOME) {
 
-            double capitalInnov = statInnovations.getDoubleDraw(18);
-            // 1. SELECTION STEP (Process 1a - Binomial)
-            // Use I1a purely to determine the Probability of having income
-            double probCap = Parameters.getRegIncomeI1a().getProbability(this, Person.DoublesVariables.class);
-
-            boolean hasCapitalIncome = (capitalInnov < probCap);
-
-            if (hasCapitalIncome) {
-                // 2. AMOUNT STEP (Process 1b - Linear)
-                // Use I1b to calculate the Score (magnitude)
-                double score = Parameters.getRegIncomeI1b().getScore(this, Person.DoublesVariables.class);
-
-                // Ensure you fetch the RMSE for the linear process (I1b)
-                double rmse = Parameters.getRMSEForRegression("I1b");
-
-                // Calculate level and assign
-                double capinclevel = setIncomeBySource(score, rmse, IncomeSource.CapitalIncome, RegressionScoreType.Asinh);
-                yCapitalPersMonth = Parameters.asinh(capinclevel);
-
-            }
-
-            // Retirement decision is modelled in the retirement process. Here only the amount of pension income for retired individuals is modelled.
+            // Retirement decision is modelled in the retirement process. Here only the amount of pension income for retired individuals is modeled.
             /*
                 Private pension income when individual was retired in the previous period is modelled using process I2b.
                 Private pension income when individual moves from non-retirement to retirement is modelled using:
@@ -2084,59 +2061,94 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             */
 
             // GLOBAL CONDITION: Process definitions require age 50+
-            if (demAge >= 50) {
+            if (demAge >= Parameters.MIN_AGE_TO_RETIRE) {
 
-                // --- BRANCH 1: CONTINUING PENSIONERS (Process I2b) ---
-                // Condition: Aged 50+ AND were Retired last year.
-                // Uses OLS (I2b) for amount.
-                if (Les_c4.Retired.equals(labC4L1) && yPensPersGrossMonthL1 != null && yPensPersGrossMonthL1 > 0.0) {
+                // --- BRANCH 1: CONTINUING PENSIONERS ---
+                if (Les_c4.Retired.equals(labC4L1)) {
 
-                    double score = Parameters.getRegIncomeI2b().getScore(this, Person.DoublesVariables.class);
-                    double rmse = Parameters.getRMSEForRegression("I2b");
-
-                    // "ihs" in instructions -> Use Asinh
-                    double pensionIncLevel = setIncomeBySource(score, rmse, IncomeSource.PrivatePension, RegressionScoreType.Asinh);
-
-                    // Follows your model's pattern of storing the asinh of the level
-                    yPensPersGrossMonth = Parameters.asinh(pensionIncLevel);
-
+                    updateContinuingRetiree();
                 }
-                // --- BRANCH 2: NEW / OTHER PENSIONERS (Process I3a & I3b) ---
-                // Condition: Aged 50+ AND Not Retired last year AND Not a Student.
-                else if (!Les_c4.Student.equals(labC4)) {
 
-                    // 1. SELECTION (Process I3a - Logit)
-                    double probPens = Parameters.getRegIncomeI3a().getProbability(this, Person.DoublesVariables.class);
+                // --- BRANCH 2: NEW PENSIONERS ---
+                else if (Les_c4.Retired.equals(labC4)) {
 
-                    // Using the same random draw index (19) as your previous pension logic
-                    boolean hasPrivatePensionIncome = (statInnovations.getDoubleDraw(19) < probPens);
-
-                    if (hasPrivatePensionIncome) {
-
-                        // 2. AMOUNT (Process I3b - OLS)
-                        double score = Parameters.getRegIncomeI3b().getScore(this, Person.DoublesVariables.class);
-                        double rmse = Parameters.getRMSEForRegression("I3b");
-
-                        // "ihs" in instructions -> Use Asinh
-                        // (Note: Your old code used 'Level' here, but I3b is explicitly 'ihs')
-                        double pensionIncLevel = setIncomeBySource(score, rmse, IncomeSource.PrivatePension, RegressionScoreType.Asinh);
-
-                        yPensPersGrossMonth = Parameters.asinh(pensionIncLevel);
-                    }
+                    updateNewRetiree();
                 }
             }
         }
-
-        double capital_income_multiplier = model.getSavingRate()/Parameters.SAVINGS_RATE;
-        double yptciihs_dv_tmp_level = capital_income_multiplier*(Math.sinh(yCapitalPersMonth) + Math.sinh(yPensPersGrossMonth)); //Multiplied by the capital income multiplier, defined as chosen savings rate divided by the long-term average (specified in Parameters class)
-        yMiscPersGrossMonth = Parameters.asinh(yptciihs_dv_tmp_level); //Non-employment non-benefit income is the sum of capital income and, for retired individuals, pension income.
-
-        if (yMiscPersGrossMonth > 13.0) {
-            yMiscPersGrossMonth = 13.5;
-        }
-        if (Parameters.enableIntertemporalOptimisations)
-            throw new RuntimeException("request to update non-labour income in person object when wealth is explicit");
+        return yPensPersGrossMonth;
     }
+
+
+    private void updateContinuingRetiree() {
+
+        double pensionIncMonth = 0.0;
+        if (Parameters.projectPensionWealth) {
+
+            /*
+            if (privatePension == null)
+                privatePension = new PrivatePension();
+            else
+                throw new RuntimeException("privatePension should be null");
+
+            pensionIncMonth = privatePension.projectInPaymentPension(model.getYear(), privatePensionL1.getPensionIncomeAnnual());
+
+             */
+        } else {
+
+            double score = Parameters.getRegIncomeI2b().getScore(this, Person.DoublesVariables.class);
+            double rmse = Parameters.getRMSEForRegression("I2b");
+
+            // "ihs" in instructions -> Use Asinh
+            pensionIncMonth = setIncomeBySource(score, rmse, IncomeSource.PrivatePension, RegressionScoreType.Asinh);
+        }
+        yPensPersGrossMonth = Parameters.asinh(pensionIncMonth);
+    }
+
+
+    private void updateNewRetiree() {
+
+        double pensionIncMonth = 0.0;
+        if (Parameters.projectPensionWealth) {
+
+            /*
+            if (privatePension == null)
+                privatePension = new PrivatePension();
+            else
+                throw new RuntimeException("privatePension should be null");
+
+            pensionIncMonth = privatePension.projectPensionAccess(demAge, demMaleFlag, benefitUnit.getYear(), privatePensionL1.getWealth());
+
+             */
+        } else {
+
+            // 1. SELECTION (Process I3a - Logit)
+            double probPens = Parameters.getRegIncomeI3a().getProbability(this, Person.DoublesVariables.class);
+
+            // Using the same random draw index (19) as your previous pension logic
+            boolean hasPrivatePensionIncome = (statInnovations.getDoubleDraw(19) < probPens);
+            if (hasPrivatePensionIncome) {
+
+                // 2. AMOUNT (Process I3b - OLS)
+                double score = Parameters.getRegIncomeI3b().getScore(this, Person.DoublesVariables.class);
+                double rmse = Parameters.getRMSEForRegression("I3b");
+
+                // "ihs" in instructions -> Use Asinh
+                // (Note: Your old code used 'Level' here, but I3b is explicitly 'ihs')
+                pensionIncMonth = setIncomeBySource(score, rmse, IncomeSource.PrivatePension, RegressionScoreType.Asinh);
+            }
+        }
+        yPensPersGrossMonth = Parameters.asinh(pensionIncMonth);
+    }
+
+
+    /*
+    public double getPensionLumpSum() {
+
+        return (privatePension!=null) ? privatePension.getLumpSumPayment() : 0.0;
+    }
+
+     */
 
 
     /***************************************************************

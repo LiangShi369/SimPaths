@@ -1057,10 +1057,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             return;
         }
 
-        // Must be current since investment/pension enter originalIncomePerMonth in IO branch,
-        // and may matter for regressors; keep consistent with existing method.
-        setNonLabourIncome();
-
         boolean cacheValid =
                 labourChoiceCacheYear != null
                         && labourChoiceCacheYear == model.getYear()
@@ -1629,8 +1625,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 dlltsdF = female.getDisability();
             }
 
-            setNonLabourIncome();
-
             // evaluate original income
             double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * (labourIncomeWeeklyM + labourIncomeWeeklyF) +
                     yInvestAnnual /12.0;
@@ -1649,8 +1643,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             setReceivedLegacyBenefits(evaluatedTransfers.getReceivedLegacyBenefit());
         } else {
             // intertemporal optimisations disabled
-
-            setNonLabourIncome();
 
             // prepare temporary storage variables
             MultiKey<? extends Labour> labourSupplyChoice = null;
@@ -4727,12 +4719,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             Person male = getMale();
             Person female = getFemale();
             if (male != null) {
+                yPensionAnnual += Math.sinh(male.updatePrivatePensionIncome()) * 12.0;
                 male.setNonLabourIncome();
-                yPensionAnnual += Math.sinh(male.getYPensPersGrossMonth()) * 12.0;
             }
             if (female != null) {
+                yPensionAnnual += Math.sinh(female.updatePrivatePensionIncome()) * 12.0;
                 female.setNonLabourIncome();
-                yPensionAnnual += Math.sinh(female.getYPensPersGrossMonth()) * 12.0;
             }
         } else {
 
