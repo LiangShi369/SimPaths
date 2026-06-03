@@ -588,6 +588,13 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         // Assign benefit status to individuals in benefit units, from donors. Based on donor tax unit status.
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
 
+        // Accumulate pension wealth stocks after final income is settled.
+        if (Parameters.projectPensionWealth) {
+
+            yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdatePensionWealth);
+            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdatePensionWealth);
+        }
+
         // CONSUMPTION AND SAVINGS MODULE
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ProjectDiscretionaryConsumption);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.ProjectEquivConsumption);
@@ -621,6 +628,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.HealthMCS2);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.HealthPCS2);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.LifeSatisfaction2);
+
+        yearlySchedule.addCollectionEvent(persons, Person.Processes.Test);
 
         // mortality (migration) and population alignment at year's end
         addCollectionEventToAllYears(persons, Person.Processes.ConsiderMortality);

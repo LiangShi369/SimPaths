@@ -83,7 +83,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Enumerated(EnumType.STRING) private Indicator eduSpellFlag;          // in continuous education
     @Lag(field="eduSpellFlag") @Enumerated(EnumType.STRING) private Indicator eduSpellFlagL1;          // in continuous education
     @Enumerated(EnumType.STRING) private Indicator eduReturnFlag;          // return to education
-    @Enumerated(EnumType.STRING) private Les_c4 labC4;      //Activity (employment) status
+    @NullInitialised  @Enumerated(EnumType.STRING) private Les_c4 labC4;      //Activity (employment) status
     @Enumerated(EnumType.STRING) private Les_c7_covid labC7Covid; //Activity (employment) status used in the Covid-19 models
     @Lag(field="labC4") @Transient private Les_c4 labC4L1;		//Lag(1) of activity_status
     @Lag(field="labC7Covid") @Transient private Les_c7_covid labC7CovidL1;     //Lag(1) of 7-category activity status
@@ -309,6 +309,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         eduHighestC4 = Education.InEducation;
         demEthnC6 = mother.getDemEthnC6();
         labC4 = Les_c4.Student;				//Set lag activity status as Student, i.e. in education from birth
+        labC4L1 = Les_c4.Student;
         eduLeftEduFlag = false;
         labC7Covid = Les_c7_covid.Student;
         labHrsWorkEnumWeek = Labour.ZERO;			//Will be updated in Labour Market Module when the person stops being a student
@@ -324,7 +325,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yBenNonUCReceivedFlag = false;
         yBenUCReceivedFlag = false;
         yFinDstrssFlag = mother.getYFinDstrssFlag();
-        updateAttributes();
     }
 
     // a "copy constructor" for persons: used by the cloneBenefitUnit method of the SimPathsModel object
@@ -585,6 +585,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         if (demAge > MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
             labC4 = Les_c4.Retired;
+        else if (demAge < MIN_AGE_TO_LEAVE_EDUCATION)
+            labC4 = Les_c4.Student;
     }
 
     // used by other constructors
@@ -819,12 +821,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Unemployment,
         Update,
         UpdateOutputVariables,
-        UpdatePotentialHourlyEarnings,	//Needed to union matching and labour supply
+        UpdatePotentialHourlyEarnings,      //Needed to union matching and labour supply
+        Test,
     }
 
     @Override
     public void onEvent(Enum<?> type) {
         switch ((Processes) type) {
+            case Test -> {
+                test();
+            }
             case Aging -> {
                 aging();
             }
@@ -940,6 +946,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     // Processes
     // ---------------------------------------------------------------------
 
+    public void test() {
+        if (labC4 == null)
+            throw new RuntimeException("labC4 is null for person " + key.getId());
+    }
     public void fertility() {
         fertility(model.getFertilityAdjustment());
     }
