@@ -229,11 +229,10 @@ public class Parameters {
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
 
     // parameters to manage simulation of optimised decisions
-    public static boolean projectPensionWealth = false;
+    public static boolean projectPensionWealth = true;
     public static boolean projectNonPensionWealth = false;
     public static boolean enableIntertemporalOptimisations = false;
 
-    public static double pensionWealthAnnualGrowthRate  = 0.05;
     public static Grids grids = null;
 
     static {

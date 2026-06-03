@@ -383,6 +383,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             case UpdateNonPensionWealth -> {
                 updateNonPensionWealth();
             }
+            case UpdatePensionWealth -> {
+                updatePensionWealth();
+            }
             case UpdateStates -> {
                 setStates();
             }
@@ -429,6 +432,22 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
     protected void updateWealth() {
         wealthTotValue += yDispMonth * 12.0 - xDiscConsumptionAnnual - getNonDiscretionaryConsumptionPerYear();
+    }
+
+    public void updatePensionWealth() {
+
+        if (!Parameters.projectPensionWealth)
+            return;
+
+        wealthPensValue = 0.;
+        Person male = getMale();
+        if (male != null) {
+            wealthPensValue += male.getWealthPensValue();
+        }
+        Person female = getFemale();
+        if (female != null) {
+            wealthPensValue += female.getWealthPensValue();
+        }
     }
 
     public void updateNonPensionWealth() {
@@ -1113,8 +1132,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double maleIncome = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
-                double femaleIncome = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
+                double maleIncome = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth()) - pensionContributionPerMonth(male, maleEmpPerMonth);
+                double femaleIncome = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth()) - pensionContributionPerMonth(female, femaleEmpPerMonth);
                 double originalIncomePerMonth = maleIncome + femaleIncome;
                 double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
@@ -1129,7 +1148,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
-                double originalIncomePerMonth = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
+                double originalIncomePerMonth = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth()) - pensionContributionPerMonth(male, maleEmpPerMonth);
                 TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1141,7 +1160,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double originalIncomePerMonth = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
+                double originalIncomePerMonth = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth()) - pensionContributionPerMonth(female, femaleEmpPerMonth);
                 TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1696,7 +1715,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     maleWorkHoursWeekly = male.getLabourSupplyHoursWeekly();
                     maleDisability = male.getDisability();
                     maleAtRiskOfWork = male.atRiskOfWork();
-                    maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
+                    if (maleAtRiskOfWork) {
+                        male.updatePensionContributionStatus();
+                        maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() * (1.0 - male.getPrivatePensionContributionRate()) + Math.sinh(male.getYMiscPersGrossMonth());
+                    } else {
+                        maleIncome = Math.sinh(male.getYMiscPersGrossMonth());
+                    }
                 }
                 if (female != null) {
 
@@ -1704,7 +1728,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     femaleWorkHoursWeekly = female.getLabourSupplyHoursWeekly();
                     femaleDisability = female.getDisability();
                     femaleAtRiskOfWork = female.atRiskOfWork();
-                    femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
+                    if (femaleAtRiskOfWork) {
+                        female.updatePensionContributionStatus();
+                        femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() * (1.0 - female.getPrivatePensionContributionRate()) + Math.sinh(female.getYMiscPersGrossMonth());
+                    } else {
+                        femaleIncome = Math.sinh(female.getYMiscPersGrossMonth());
+                    }
                 }
 
                 // Earnings are composed of the labour income and non-benefit non-employment income Yptciihs_dv() (this is monthly, so no need to multiply by WEEKS_PER_MONTH_RATIO)
@@ -1817,10 +1846,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             if (maleAtRiskOfWork) {
 
                 male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
+                male.updatePensionContributionStatus();
             }
             if (femaleAtRiskOfWork) {
 
                 female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
+                female.updatePensionContributionStatus();
             }
 
             // allow for formal childcare costs
@@ -4875,19 +4906,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         } else {
             val = Parameters.asinh(incomeAnnual / 12.0);
             female.setyCapitalPersMonth(val);
-        }
-    }
-
-
-    public void setNonLabourIncome() {
-
-        Person male = getMale();
-        Person female = getFemale();
-        if (male != null) {
-            male.setNonLabourIncome();
-        }
-        if (female != null) {
-            female.setNonLabourIncome();
         }
     }
 

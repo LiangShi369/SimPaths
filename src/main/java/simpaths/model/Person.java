@@ -1012,7 +1012,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             if (privatePension != null) {
                 if (privatePension.getPensionIncomeAnnual() > 0.0)
-                    throw new RuntimeException("privatePension is not null");
+                    throw new RuntimeException("pension contribution update requested for retiree");
             }
 
             privatePension = new PrivatePension();
