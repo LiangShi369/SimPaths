@@ -950,6 +950,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (labC4 == null)
             throw new RuntimeException("labC4 is null for person " + key.getId());
     }
+
     public void fertility() {
         fertility(model.getFertilityAdjustment());
     }

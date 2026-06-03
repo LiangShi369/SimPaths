@@ -441,12 +441,30 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         else
             throw new RuntimeException("ERROR - wealthNonPension already set for this BenefitUnit");
 
-        double wealthL1 = wealthNonPensionL1.getWealthTotalValue();
+        double wealthL1 = wealthNonPensionL1.getWealthTotalValue() + pensionLumpSum();
         wealthNonPension.projectWealth(wealthL1, yDispMonth * 12.0, xDiscConsumptionAnnual);
         wealthTotValue = wealthNonPension.getWealthTotalValue();
         wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
         wealthMortgageDebtValue = wealthNonPension.getWealthMortgageDebtValue();
         wealthPrptyFlag = wealthNonPension.isHomeOwner();
+    }
+
+
+    private double pensionLumpSum() {
+
+        if (!Parameters.projectPensionWealth)
+            return 0.;
+
+        double val = 0.;
+        Person male = getMale();
+        if (male != null) {
+            val += male.getPensionLumpSum();
+        }
+        Person female = getFemale();
+        if (female != null) {
+            val += female.getPensionLumpSum();
+        }
+        return val;
     }
 
 
@@ -457,6 +475,18 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         } else {
             return wealthNonPension.getInYearAccrualTotal();
         }
+    }
+
+
+    /**
+     * Returns the pension contribution per month to deduct from gross employment earnings
+     * before tax evaluation, for a given person and their employment earnings per month.
+     * Returns zero when pension wealth projection is disabled or the person is not a contributor.
+     */
+    double pensionContributionPerMonth(Person person, double earningsPerMonth) {
+        if (!Parameters.projectPensionWealth)
+            return 0.0;
+        return (person.getPrivatePension().getContRateOPEe() + person.getPrivatePension().getContRatePP()) * earningsPerMonth;
     }
 
 
