@@ -1627,7 +1627,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
             // evaluate original income
             double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * (labourIncomeWeeklyM + labourIncomeWeeklyF) +
-                    yInvestAnnual /12.0;
+                    yInvestAnnual / 12.0 + yPensionAnnual / 12.0;
             double secondIncomePerMonth = 0.0;
             if (Occupancy.Couple.equals(occupancy))
                 secondIncomePerMonth = Math.min(labourIncomeWeeklyM, labourIncomeWeeklyF) * Parameters.WEEKS_PER_MONTH;

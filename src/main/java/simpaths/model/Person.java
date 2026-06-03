@@ -24,6 +24,7 @@ import simpaths.model.decisions.DecisionParams;
 import simpaths.model.enums.*;
 import simpaths.model.lifetime_incomes.AnnualIncome;
 import simpaths.model.lifetime_incomes.Individual;
+import simpaths.model.person.PrivatePension;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -165,15 +166,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Transient private Series.Double xEquivYearL1;
     private Integer demPartnerNYear; //Number of years in partnership
     @Transient private Integer demPartnerNYearL1; //Lag(1) of number of years in partnership
+
+    // capital and pension income
     private Double yNonBenPersGrossMonth; // asinh of personal non-benefit income per month
     @Lag(getter="getYNonBenPersGrossMonth") @Transient private Double yNonBenPersGrossMonthL1; //Lag(1) of gross personal non-benefit income
     private Double yMiscPersGrossMonth; // asinh of non-employment non-benefit income per month (capital and pension)
     private Double yCapitalPersMonth; // asinh of capital income per month
-    private Double yPensPersGrossMonth; // asinh of pension income per month
     @Lag(field="yCapitalPersMonthL1") @Transient private Double yCapitalPersMonthL2; //Lag(2) of capital income
     @Lag(getter="getYCapitalPersMonth") @Transient private Double yCapitalPersMonthL1; //Lag(1) of ypncp
-    @Lag(field="yPensPersGrossMonthL1") @Transient private Double yPensPersGrossMonthL2; //Lag(2) of pension income
-    @Lag(getter="getYPensPersGrossMonth") @Transient private Double yPensPersGrossMonthL1; //Lag(1) of pension income
     @Lag(field="yMiscPersGrossMonthL2") @Transient private Double yMiscPersGrossMonthL3; //Lag(3) of gross personal non-benefit non-employment income
     @Lag(field="yMiscPersGrossMonthL1") @Transient private Double yMiscPersGrossMonthL2; //Lag(2) of gross personal non-benefit non-employment income
     @Lag(getter="getYMiscPersGrossMonth") @Transient private Double yMiscPersGrossMonthL1; //Lag(1) of gross personal non-benefit non-employment income
@@ -181,6 +181,17 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(field="yEmpPersGrossMonthL2") @Transient private Double yEmpPersGrossMonthL3; //Lag(3) of gross personal employment income
     @Lag(field="yEmpPersGrossMonthL1") @Transient private Double yEmpPersGrossMonthL2; //Lag(2) of gross personal employment income
     @Lag(getter="getYEmpPersGrossMonth") @Transient private Double yEmpPersGrossMonthL1; //Lag(1) of gross personal employment income
+
+    // pension wealth
+    @NullInitialised @Transient private PrivatePension privatePension;
+    @Lag(getter="getPrivatePension") @Transient private PrivatePension privatePensionL1;
+    private Double yPensPersGrossMonth; // asinh of pension income per month
+    @Lag(getter="getYPensPersGrossMonth") @Transient private Double yPensPersGrossMonthL1; //Lag(1) of pension income
+    @Lag(field="yPensPersGrossMonthL1") @Transient private Double yPensPersGrossMonthL2; //Lag(2) of pension income
+    @NullInitialised private Double wealthPensValue;
+    @NullInitialised private Double contRateOPEe;           //employee contribution rate to occupation pension
+    @NullInitialised private Double contRateOPEr;           //employer contribution rate to occupation pension
+    @NullInitialised private Double contRatePP;             //employee contribution rate to personal pension
 
     // non-pension wealth
     @NullInitialised private Double wealthNonPensValue;
@@ -216,6 +227,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @NullInitialised @Transient private Integer i_demNchild0to17;
     @NullInitialised @Transient private Indicator i_demNChild0to2;
     @NullInitialised @Transient private Dcpst i_demPartnerStatus;
+    @NullInitialised @Transient private Quintiles i_yEarningsQuintileC5;
 
     // innovations
     @Transient Innovations statInnovations;
@@ -422,7 +434,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yPensPersGrossMonth = Objects.requireNonNullElse(originalPerson.yPensPersGrossMonth, 0.0);
         yPensPersGrossMonthL1 = originalPerson.yPensPersGrossMonthL1;
         yPensPersGrossMonthL2 = originalPerson.yPensPersGrossMonthL2;
+
         wealthNonPensValue = originalPerson.wealthNonPensValue;
+        wealthPensValue = originalPerson.wealthPensValue;
+        contRateOPEe = originalPerson.contRateOPEe;
+        contRateOPEr = originalPerson.contRateOPEr;
+        contRatePP = originalPerson.contRatePP;
+        if (originalPerson.privatePension != null)
+            privatePension = new PrivatePension(originalPerson.privatePension);
+        if (originalPerson.privatePensionL1 != null)
+            privatePensionL1 = new PrivatePension(originalPerson.privatePensionL1);
 
         labEmpNyear = Objects.requireNonNullElseGet(originalPerson.labEmpNyear, () -> ((Les_c4.EmployedOrSelfEmployed.equals(labC4)) ? 12 : 0));
         healthDsblLongtermFlag = originalPerson.healthDsblLongtermFlag;
@@ -543,16 +564,26 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yBenUCReceivedFlagL1 = originalPerson.yBenUCReceivedFlagL1;
         yFinDstrssFlag = originalPerson.yFinDstrssFlag;
 
-        if (originalPerson.labWageFullTimeHrly > Parameters.MIN_HOURLY_WAGE_RATE) {
+        if (originalPerson.labWageFullTimeHrly >= Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrly = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrly));
         } else {
-            labWageFullTimeHrly = -9.0;
+            labWageFullTimeHrly = 0.0;
+            labHrsWorkWeek = 0;
+            labC4 = Les_c4.NotEmployed;
         }
-        if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >Parameters.MIN_HOURLY_WAGE_RATE) {
+        if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >= Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrlyL1 = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrlyL1));
-        } else {
-            labWageFullTimeHrlyL1 = labWageFullTimeHrly;
+        } else  {
+            if (originalPerson.labWageFullTimeHrlyL1 == null)
+                labWageFullTimeHrlyL1 = labWageFullTimeHrly;
+            if (labWageFullTimeHrlyL1 == null || labWageFullTimeHrlyL1 < Parameters.MIN_HOURLY_WAGE_RATE) {
+                labWageFullTimeHrlyL1 = 0.0;
+                labHrsWorkWeekL1 = 0;
+                labC4L1 = Les_c4.NotEmployed;
+            }
         }
+        if (demAge > MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
+            labC4 = Les_c4.Retired;
     }
 
     // used by other constructors
@@ -8161,6 +8192,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             return partner.getId();
         }
+    }
+
+    public PrivatePension getPrivatePension() {
+        if (privatePension != null)
+            return new PrivatePension(privatePension);
+        else
+            return new PrivatePension();
     }
 
     public Double getWealthNonPensValue() {
