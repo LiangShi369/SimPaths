@@ -153,7 +153,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Enumerated(EnumType.STRING) private Labour labHrsWorkEnumWeek;			//Number of hours of labour supplied each week
     @Lag(getter="getLabourSupplyWeekly") @Transient private Labour labHrsWorkEnumWeekL1; // Lag(1) (previous year's value) of weekly labour supply
     @Column(name = "HOURS_WORKED_WEEKLY") private Integer labHrsWorkWeek;
-    private Integer labHrsWorkWeekL1; // Lag(1) of hours worked weekly - use to initialise labour supply weekly_L1 (TODO)
+    @Lag(field="labHrsWorkWeek") @Transient private Integer labHrsWorkWeekL1; // Lag(1) of hours worked weekly - use to initialise labour supply weekly_L1 (TODO)
 
 //	Potential earnings is the gross hourly wage an individual can earn while working
 //	and is estimated, for each individual, on the basis of observable characteristics as
@@ -161,7 +161,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 //	is a separate process in the simulation, and it is computed for every adult
 //	individual in the simulated population, in each simulated period.
     @Column(name="labWageHrly") private Double labWageFullTimeHrly;		//Is hourly rate.  Initialised with value: ils_earns / (4.34 * lhw), where lhw is the weekly hours a person worked in EUROMOD input data
-    @Lag(field="labWageFullTimeHrly") @Column(name="labWageFullTimeHrlyL1") private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
+    @Lag(field="labWageFullTimeHrly") @Transient private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
     @Transient private Series.Double yDispEquivYear;
     @NullInitialised private Double xEquivYear;
     @Transient private Series.Double xEquivYearL1;
@@ -388,17 +388,21 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demPartnerNYearL1 = Objects.requireNonNullElseGet(originalPerson.demPartnerNYearL1, () -> Math.max(0, this.demPartnerNYear - 1));
         demAgePartnerDiffL1 = originalPerson.demAgePartnerDiffL1;
         demStatusHhL1 = originalPerson.demStatusHhL1;
-        if (originalPerson.labC4 != null) {
-            labC4 = originalPerson.labC4;
-        } else if (originalPerson.demAge < Parameters.MIN_AGE_TO_LEAVE_EDUCATION) {
-            labC4 = Les_c4.Student;
-        } else if (originalPerson.demAge > (int)Parameters.getTimeSeriesValue(model.getYear(), originalPerson.getDemMaleFlag().toString(), TimeSeriesVariable.FixedRetirementAge)) {
+        if (demAge > MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
             labC4 = Les_c4.Retired;
-        } else if (originalPerson.getLabourSupplyWeekly() != null && originalPerson.getLabourSupplyWeekly().getHours(originalPerson) > 0) {
+        else if (originalPerson.yPensPersGrossMonth > 0. && originalPerson.demAge >= MIN_AGE_TO_RETIRE)
+            labC4 = Les_c4.Retired;
+        else if (originalPerson.demAge < Parameters.MIN_AGE_TO_LEAVE_EDUCATION)
+            labC4 = Les_c4.Student;
+        else if (originalPerson.labC4 != null)
+            labC4 = originalPerson.labC4;
+        else if (originalPerson.demAge > (int)Parameters.getTimeSeriesValue(model.getYear(), originalPerson.getDemMaleFlag().toString(), TimeSeriesVariable.FixedRetirementAge))
+            labC4 = Les_c4.Retired;
+        else if (originalPerson.getLabourSupplyWeekly() != null && originalPerson.getLabourSupplyWeekly().getHours(originalPerson) > 0)
             labC4 = Les_c4.EmployedOrSelfEmployed;
-        } else {
+        else
             labC4 = Les_c4.NotEmployed;
-        }
+        labC4L1 = labC4;
         if (demAge < Parameters.MIN_AGE_TO_LEAVE_EDUCATION)
             eduLeftEduFlag = false;
         else if (demAge > Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION)
@@ -406,17 +410,15 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         else
             eduLeftEduFlag = (!Les_c4.Student.equals(labC4) || (Les_c4.Student.equals(labC4) && eduSpellFlag.equals(Indicator.False))) ;
 
-        if (originalPerson.labC4L1 != null) { //If original persons misses lagged activity status, assign current activity status
-            labC4L1 = originalPerson.labC4L1;
-        } else {
-            labC4L1 = labC4;
-        }
-        labC7Covid = originalPerson.labC7Covid;
-        if (originalPerson.labC7CovidL1 != null) { //If original persons misses lagged activity status, assign current activity status
-            labC7CovidL1 = originalPerson.labC7CovidL1;
-        } else {
-            labC7CovidL1 = labC7Covid;
-        }
+        if (labC4.equals(Les_c4.Student))
+            labC7Covid = Les_c7_covid.Student;
+        else if (labC4.equals(Les_c4.Retired))
+            labC7Covid = Les_c7_covid.Retired;
+        else if (originalPerson.labC7Covid != null)
+            labC7Covid = originalPerson.labC7Covid;
+        else
+            labC7Covid = Les_c7_covid.NotEmployed;
+        labC7CovidL1 = labC7Covid;
 
         labStatusPartnerAndOwnC4L1 = originalPerson.labStatusPartnerAndOwnC4L1;
         demPartnerStatusL1 = originalPerson.demPartnerStatusL1;
@@ -570,7 +572,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
             labWageFullTimeHrly = 0.0;
             labHrsWorkWeek = 0;
-            labC4 = Les_c4.NotEmployed;
+            if (!Les_c4.Student.equals(labC4) && !Les_c4.Retired.equals(labC4)) {
+                labC4 = Les_c4.NotEmployed;
+            }
         }
         if (originalPerson.labWageFullTimeHrlyL1 !=null && originalPerson.labWageFullTimeHrlyL1 >= Parameters.MIN_HOURLY_WAGE_RATE) {
             labWageFullTimeHrlyL1 = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.labWageFullTimeHrlyL1));
@@ -580,13 +584,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (labWageFullTimeHrlyL1 == null || labWageFullTimeHrlyL1 < Parameters.MIN_HOURLY_WAGE_RATE) {
                 labWageFullTimeHrlyL1 = 0.0;
                 labHrsWorkWeekL1 = 0;
-                labC4L1 = Les_c4.NotEmployed;
+                if (!Les_c4.Student.equals(labC4L1) && !Les_c4.Retired.equals(labC4L1)) {
+                    labC4L1 = Les_c4.NotEmployed;
+                }
             }
         }
-        if (demAge > MAX_AGE_FLEXIBLE_LABOUR_SUPPLY)
-            labC4 = Les_c4.Retired;
-        else if (demAge < MIN_AGE_TO_LEAVE_EDUCATION)
-            labC4 = Les_c4.Student;
     }
 
     // used by other constructors
