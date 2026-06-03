@@ -2146,15 +2146,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double pensionIncMonth = 0.0;
         if (Parameters.projectPensionWealth) {
 
-            /*
             if (privatePension == null)
                 privatePension = new PrivatePension();
             else
                 throw new RuntimeException("privatePension should be null");
 
             pensionIncMonth = privatePension.projectInPaymentPension(model.getYear(), privatePensionL1.getPensionIncomeAnnual());
-
-             */
         } else {
 
             double score = Parameters.getRegIncomeI2b().getScore(this, Person.DoublesVariables.class);
@@ -2172,15 +2169,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double pensionIncMonth = 0.0;
         if (Parameters.projectPensionWealth) {
 
-            /*
             if (privatePension == null)
                 privatePension = new PrivatePension();
             else
                 throw new RuntimeException("privatePension should be null");
 
             pensionIncMonth = privatePension.projectPensionAccess(demAge, demMaleFlag, benefitUnit.getYear(), privatePensionL1.getWealth());
-
-             */
         } else {
 
             // 1. SELECTION (Process I3a - Logit)
@@ -2203,13 +2197,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
 
-    /*
     public double getPensionLumpSum() {
 
         return (privatePension!=null) ? privatePension.getLumpSumPayment() : 0.0;
     }
-
-     */
 
 
     /***************************************************************
@@ -4659,7 +4650,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 else
                     return 0.;
             }
-            /*
             case Current_op_memb -> {
                 return (privatePension.isMemberOP()) ? 1.0 : 0.0;
             }
@@ -4690,7 +4680,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Asinhop_empee -> {
                 return Parameters.asinh(privatePension.getContRateOPEe() * 100.0);
             }
-            */
             case Dhhtp_c8_4_L1 -> {
                 // Couple with children, spouse employed
                 Person partner = getPartner();
