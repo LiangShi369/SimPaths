@@ -17,6 +17,11 @@ import org.junit.jupiter.api.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class RunSimPathsIntegrationTest {
+    /** Absolute epsilon for numeric comparison. */
+    private static final double ABS_EPSILON = 1e-9;
+    /** Relative epsilon for numeric comparison. */
+    private static final double REL_EPSILON = 1e-6;
+
     @Test
     @DisplayName("Initial database setup runs successfully")
     @Order(1)
@@ -77,11 +82,11 @@ public class RunSimPathsIntegrationTest {
         );
         }
         @Test
-        public void compareStatistics31() throws IOException {
-        compareFiles(
-            latestOutputDir.resolve("csv/Statistics31.csv"),
-            Paths.get("src/test/java/simpaths/integrationtest/expected/Statistics31.csv")
-        );
+        public void verifyAlignmentAdjustmentFactorsExported() {
+            assertTrue(
+                    Files.exists(latestOutputDir.resolve("csv/AlignmentAdjustmentFactors1.csv")),
+                    "Expected output file is missing: " + latestOutputDir.resolve("csv/AlignmentAdjustmentFactors1.csv")
+            );
         }
         @Test
         public void compareHealthStatistics1() throws IOException {
@@ -185,7 +190,20 @@ public class RunSimPathsIntegrationTest {
         Double actualNumber = tryParseDouble(actualTrimmed);
 
         if (expectedNumber != null && actualNumber != null) {
-            return true;
+            double e = expectedNumber;
+            double a = actualNumber;
+            if (Double.isNaN(e) && Double.isNaN(a)) {
+                return true;
+            }
+            if (Double.isNaN(e) || Double.isNaN(a)) {
+                return false;
+            }
+            if (Double.isInfinite(e) || Double.isInfinite(a)) {
+                return Double.compare(e, a) == 0;
+            }
+            double diff = Math.abs(e - a);
+            double tolerance = Math.max(ABS_EPSILON, REL_EPSILON * Math.max(Math.abs(e), Math.abs(a)));
+            return diff <= tolerance;
         }
 
         return expectedToken.equals(actualToken);

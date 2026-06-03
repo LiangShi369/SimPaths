@@ -11,6 +11,8 @@ import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.io.FileUtils;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.AnnuityRates;
+import simpaths.model.BenefitUnit;
+import simpaths.model.Person;
 import simpaths.model.enums.*;
 import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.LinkedMap;
@@ -558,9 +560,6 @@ public class Parameters {
     // private static MultiKeyCoefficientMap coeffCovariancePartnershipU1b; //Probit enter partnership if not in continuous education
     private static MultiKeyCoefficientMap coeffCovariancePartnershipU2; //Probit exit partnership (females)
 
-    //Partnership for Italy
-    private static MultiKeyCoefficientMap coeffCovariancePartnershipITU1; //Probit enter partnership for Italy
-    private static MultiKeyCoefficientMap coeffCovariancePartnershipITU2; //Probit exit partnership for Italy
 
     //Fertility
     private static MultiKeyCoefficientMap coeffCovarianceFertilityF1; //Probit fertility if in continuous education
@@ -794,8 +793,6 @@ public class Parameters {
     private static BinomialRegression regPartnershipU1b;
     private static BinomialRegression regPartnershipU2;
 
-    private static BinomialRegression regPartnershipITU1;
-    private static BinomialRegression regPartnershipITU2;
 
     //Fertility
     private static BinomialRegression regFertilityF1;
@@ -884,6 +881,7 @@ public class Parameters {
     public static boolean flagSuppressChildcareCosts;
     public static boolean flagSuppressSocialCareCosts;
     public static boolean donorPoolAveraging;
+    public static boolean taxDonorUpratingByWage;
     public static boolean lifetimeIncomeImpute;
 
     public static double realInterestRateInnov;
@@ -913,10 +911,11 @@ public class Parameters {
      */
     public static void loadParameters(Country country, int maxAgeModel, boolean enableIntertemporalOptimisations,
                                       boolean projectFormalChildcare, boolean projectSocialCare, boolean donorPoolAveraging1,
-                                      boolean fixTimeTrend, boolean defaultToTimeSeriesAverages, boolean taxDBMatches,
-                                      Integer timeTrendStops, int startYearModel, int endYearModel, double interestRateInnov1,
-                                      double disposableIncomeFromLabourInnov1, boolean flagSuppressChildcareCosts1,
-                                      boolean flagSuppressSocialCareCosts1, boolean lifetimeIncomeImpute1) {
+                                      boolean taxDonorUpratingByWage1, boolean fixTimeTrend, boolean defaultToTimeSeriesAverages,
+                                      boolean taxDBMatches, Integer timeTrendStops, int startYearModel, int endYearModel,
+                                      double interestRateInnov1, double disposableIncomeFromLabourInnov1,
+                                      boolean flagSuppressChildcareCosts1, boolean flagSuppressSocialCareCosts1,
+                                      boolean lifetimeIncomeImpute1) {
 
         // display a dialog box to let the user know what is happening
         System.out.println("Loading model parameters");
@@ -936,12 +935,7 @@ public class Parameters {
         loadTimeSeriesFactorMaps(country);
         instantiateAlignmentMaps();
 
-        // scenario parameters
-        if (country.equals(Country.IT)) {
-            SAVINGS_RATE = 0.056;
-        } else {
-            SAVINGS_RATE = 0.056;
-        }
+        SAVINGS_RATE = 0.056;
         saveImperfectTaxDBMatches = taxDBMatches;
 
         flagDefaultToTimeSeriesAverages = defaultToTimeSeriesAverages;
@@ -952,6 +946,7 @@ public class Parameters {
         flagSuppressChildcareCosts = flagSuppressChildcareCosts1;
         flagSuppressSocialCareCosts = flagSuppressSocialCareCosts1;
         donorPoolAveraging = donorPoolAveraging1;
+        taxDonorUpratingByWage = taxDonorUpratingByWage1;
         realInterestRateInnov = interestRateInnov1;
         disposableIncomeFromLabourInnov = disposableIncomeFromLabourInnov1;
         lifetimeIncomeImpute = lifetimeIncomeImpute1;
@@ -1157,6 +1152,8 @@ public class Parameters {
         coeffCovarianceHM2CaseMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Males_C", 1);
         coeffCovarianceHM2CaseFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Females_C", 1);
 
+        validateRegressors(coeffCovarianceHM2CaseMales, "reg_health_mental.xlsx", "HM2_Males_C");
+
         //Health
         coeffCovarianceDHE_MCS1 = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS1", 1);
         coeffCovarianceDHE_MCS2Males = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS2_Males", 1);
@@ -1287,8 +1284,6 @@ public class Parameters {
                     {"coeffCovarianceChildcareC1b", coeffCovarianceChildcareC1b},
                     {"coeffCovariancePartnershipU1", coeffCovariancePartnershipU1},
                     {"coeffCovariancePartnershipU2", coeffCovariancePartnershipU2},
-                    //{"coeffCovariancePartnershipITU1", coeffCovariancePartnershipITU1},
-                    //{"coeffCovariancePartnershipITU2", coeffCovariancePartnershipITU2},
                     {"coeffCovarianceFertilityF1", coeffCovarianceFertilityF1},
                 });
             }
@@ -1408,16 +1403,10 @@ public class Parameters {
             coeffCovarianceChildcareC1b = bootstrapWithTrace("coeffCovarianceChildcareC1b", coeffCovarianceChildcareC1b);
 
             //Specification of some processes depends on the country:
-            if (country.equals(Country.UK)) {
-                coeffCovariancePartnershipU1 = bootstrapWithTrace("coeffCovariancePartnershipU1", coeffCovariancePartnershipU1);
-                // coeffCovariancePartnershipU1b = RegressionUtils.bootstrap(coeffCovariancePartnershipU1b);
-                coeffCovariancePartnershipU2 = bootstrapWithTrace("coeffCovariancePartnershipU2", coeffCovariancePartnershipU2);
-                coeffCovarianceFertilityF1 = bootstrapWithTrace("coeffCovarianceFertilityF1", coeffCovarianceFertilityF1);
-            } else if (country.equals(Country.IT)) {
-                coeffCovariancePartnershipITU1 = bootstrapWithTrace("coeffCovariancePartnershipITU1", coeffCovariancePartnershipITU1);
-                coeffCovariancePartnershipITU2 = bootstrapWithTrace("coeffCovariancePartnershipITU2", coeffCovariancePartnershipITU2);
-                coeffCovarianceFertilityF1 = bootstrapWithTrace("coeffCovarianceFertilityF1", coeffCovarianceFertilityF1);
-            }
+            coeffCovariancePartnershipU1 = bootstrapWithTrace("coeffCovariancePartnershipU1", coeffCovariancePartnershipU1);
+            // coeffCovariancePartnershipU1b = RegressionUtils.bootstrap(coeffCovariancePartnershipU1b);
+            coeffCovariancePartnershipU2 = bootstrapWithTrace("coeffCovariancePartnershipU2", coeffCovariancePartnershipU2);
+            coeffCovarianceFertilityF1 = bootstrapWithTrace("coeffCovarianceFertilityF1", coeffCovarianceFertilityF1);
 
         }
 
@@ -1498,25 +1487,16 @@ public class Parameters {
         regEducationE2 = new GeneralisedOrderedRegression<>(RegressionType.GenOrderedLogit, EducationLevel.class, coeffCovarianceEducationE2);
 
         //Partnership
-        if (country.equals(Country.UK)) {
-            MultiKeyCoefficientMap coeffPartnershipU1Appended = appendCoefficientMaps(coeffCovariancePartnershipU1, partnershipTimeAdjustment, "Year");
-            // MultiKeyCoefficientMap coeffPartnershipU1bAppended = appendCoefficientMaps(coeffCovariancePartnershipU1b, partnershipTimeAdjustment, "Year");
-            MultiKeyCoefficientMap coeffPartnershipU2Appended = appendCoefficientMaps(coeffCovariancePartnershipU2, partnershipTimeAdjustment, "Year", true);
-            regPartnershipU1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1Appended);
-            // regPartnershipU1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1bAppended);
-            regPartnershipU2 = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2Appended);
-        } else if (country.equals(Country.IT)) {
-            regPartnershipITU1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovariancePartnershipITU1);
-            regPartnershipITU2 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovariancePartnershipITU2);
-        }
+        MultiKeyCoefficientMap coeffPartnershipU1Appended = appendCoefficientMaps(coeffCovariancePartnershipU1, partnershipTimeAdjustment, "Year");
+        // MultiKeyCoefficientMap coeffPartnershipU1bAppended = appendCoefficientMaps(coeffCovariancePartnershipU1b, partnershipTimeAdjustment, "Year");
+        MultiKeyCoefficientMap coeffPartnershipU2Appended = appendCoefficientMaps(coeffCovariancePartnershipU2, partnershipTimeAdjustment, "Year", true);
+        regPartnershipU1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1Appended);
+        // regPartnershipU1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1bAppended);
+        regPartnershipU2 = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2Appended);
 
         //Fertility
-        if (country.equals(Country.UK)) {
-            MultiKeyCoefficientMap coeffFertilityF1aAppended = appendCoefficientMaps(coeffCovarianceFertilityF1, fertilityTimeAdjustment, "Year");
-            regFertilityF1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
-        } else if (country.equals(Country.IT)) {
-            regFertilityF1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceFertilityF1);
-        }
+        MultiKeyCoefficientMap coeffFertilityF1aAppended = appendCoefficientMaps(coeffCovarianceFertilityF1, fertilityTimeAdjustment, "Year");
+        regFertilityF1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
 
         //Income
         regIncomeI1a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI1a);
@@ -1920,10 +1900,8 @@ public class Parameters {
 
     public static void setCountryRegions(Country country) {
         countryRegions = new LinkedHashSet<Region>();
-        for(Region demRgn : Region.values()) {			//TODO: restrict this to only regions in the simulated country
-            if(demRgn.toString().startsWith(country.toString())) {			//Only assess the relevant regions for the country
-                countryRegions.add(demRgn);				//Create a set of only relevant regions that we can use below TODO: This should be done in the Parameters class, once and for all!
-            }
+        for(Region demRgn : Region.values()) {
+            countryRegions.add(demRgn);
         }
     }
 
@@ -2038,8 +2016,6 @@ public class Parameters {
     public static BinomialRegression getRegPartnershipU1() {return regPartnershipU1;}
     // public static BinomialRegression getRegPartnershipU1b() {return regPartnershipU1b;}
     public static BinomialRegression getRegPartnershipU2() {return regPartnershipU2;}
-    public static BinomialRegression getRegPartnershipITU1() {return regPartnershipITU1;}
-    public static BinomialRegression getRegPartnershipITU2() {return regPartnershipITU2;}
 
     public static BinomialRegression getRegFertilityF1() {return regFertilityF1;}
 
@@ -3088,11 +3064,25 @@ public class Parameters {
     public static double normaliseWeeklyIncome(int priceYear, double weeklyFinancial) {
         return normaliseMonthlyIncome(priceYear, weeklyFinancial * WEEKS_PER_MONTH);
     }
-    public static double normaliseMonthlyIncome(int priceYear, double monthlyFinancial) {
+    public static double normaliseWeeklyIncome(int currentPriceYear, int targetWagesYear, double weeklyFinancial) {
+        return normaliseMonthlyIncome(currentPriceYear, targetWagesYear, weeklyFinancial * WEEKS_PER_MONTH);
+    }
+    public static double normaliseMonthlyIncome(int currentPriceYear, double monthlyFinancial) {
+        return normaliseMonthlyIncome(currentPriceYear, BASE_PRICE_YEAR, currentPriceYear, currentPriceYear, monthlyFinancial);
+    }
+    public static double normaliseMonthlyIncome(int currentPriceYear, int targetWagesYear, double monthlyFinancial) {
+        return normaliseMonthlyIncome(currentPriceYear, BASE_PRICE_YEAR, currentPriceYear, targetWagesYear, monthlyFinancial);
+    }
+    public static double normaliseWeeklyIncome(int currentPriceYear, int targetPriceYear, int currentWagesYear, int targetWagesYear, double weeklyFinancial) {
+        return normaliseMonthlyIncome(currentPriceYear, targetPriceYear, currentWagesYear, targetWagesYear, weeklyFinancial * WEEKS_PER_MONTH);
+    }
+    public static double normaliseMonthlyIncome(int currentPriceYear, int targetPriceYear, int currentWagesYear, int targetWagesYear, double monthlyFinancial) {
         double infAdj = 1.0;
-        if (priceYear != BASE_PRICE_YEAR)
-            infAdj = getTimeSeriesValue(BASE_PRICE_YEAR, TimeSeriesVariable.Inflation) / getTimeSeriesValue(priceYear, TimeSeriesVariable.Inflation);
-        return Parameters.asinh(monthlyFinancial * infAdj);
+        if (currentPriceYear != targetPriceYear)
+            infAdj = getTimeSeriesValue(targetPriceYear, TimeSeriesVariable.Inflation) / getTimeSeriesValue(currentPriceYear, TimeSeriesVariable.Inflation);
+        if (currentWagesYear != targetWagesYear)
+            infAdj *= getTimeSeriesValue(targetWagesYear, TimeSeriesVariable.WageGrowth) / getTimeSeriesValue(currentWagesYear, TimeSeriesVariable.WageGrowth);
+        return asinh(monthlyFinancial * infAdj);
     }
     public static void setTrainingFlag(boolean flag) {
         trainingFlag = flag;
@@ -3419,6 +3409,55 @@ public class Parameters {
             EUROMOD_OUTPUT_DIRECTORY = WORKING_DIRECTORY + File.separator + euromodOutputDirectory + File.separator;
         }
         EUROMOD_TRAINING_DIRECTORY = EUROMOD_OUTPUT_DIRECTORY + "training" + File.separator;
+    }
+
+    public static void validateRegressors(MultiKeyCoefficientMap map, String excelFileName, String sheetName) {
+        if (map == null) return;
+
+        // Get the values read from the REGRESSOR column by ExcelAssistant (excludes 'Constant')
+        Set<Object> regressorNames = map.keySet();
+
+        // Check across all
+        for (Object regressor : regressorNames) {
+            if (regressor instanceof MultiKey mk) {
+                String keyName = mk.getKey(0).toString();
+
+                // Test if a Person Enum
+                try {
+                    Person.DoublesVariables.valueOf(keyName);
+                } catch (IllegalArgumentException e) {
+                    try {
+                        BenefitUnit.Regressors.valueOf(keyName);
+                    } catch (IllegalArgumentException e2) {
+
+                        // This fires if the string isn't in the Enum
+                        throw new RuntimeException("Validation failed for " + excelFileName + " in " + sheetName +
+                                ": Regressor '" + keyName + "' not found in Person.DoublesVariables. " +
+                                "Check for typos in Excel or missing Enums in Person.java.");
+                    }
+                }
+            }
+        }
+    }
+
+    public static MultiKeyCoefficientMap safeReadExcel(String excelFileName, String sheetName, int keyColumns) {
+
+        MultiKeyCoefficientMap map = ExcelAssistant.loadCoefficientMap(excelFileName, sheetName, keyColumns);
+
+        validateRegressors(map, excelFileName,  sheetName);
+
+        return map;
+
+    }
+
+    public static MultiKeyCoefficientMap safeReadExcel(String excelFileName, String sheetName, int keyColumns, int valueColumns) {
+
+        MultiKeyCoefficientMap map = ExcelAssistant.loadCoefficientMap(excelFileName, sheetName, keyColumns, valueColumns);
+
+        validateRegressors(map, excelFileName, sheetName);
+
+        return map;
+
     }
 
     public static String getInputDirectory() {
