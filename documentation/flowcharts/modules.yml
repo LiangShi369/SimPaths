@@ -302,6 +302,63 @@ modules:
       - same-region/no-region fallback changes
       - matched-pair state updates change
 
+  - id: labour_supply_consumption
+    title: Labour Supply and Consumption
+    status: active
+    review_state: up_to_date
+    update_mode: assisted
+    last_verified_commit: null
+    last_trigger_commit: null
+    flowchart:
+      source_md: documentation/flowcharts/modules/labour_supply_consumption.md
+    code_refs:
+      files:
+        - src/main/java/simpaths/model/SimPathsModel.java
+        - src/main/java/simpaths/model/LabourMarket.java
+        - src/main/java/simpaths/model/BenefitUnit.java
+        - src/main/java/simpaths/model/Person.java
+        - src/main/java/simpaths/model/enums/Labour.java
+        - src/main/java/simpaths/model/decisions/ManagerPopulateGrids.java
+        - src/main/java/simpaths/model/decisions/ManagerSolveGrids.java
+        - src/main/java/simpaths/model/decisions/ManagerSolveState.java
+        - src/main/java/simpaths/model/decisions/UtilityMaximisation.java
+        - src/main/java/simpaths/model/decisions/CESUtility.java
+        - src/main/java/simpaths/model/decisions/Expectations.java
+        - src/main/java/simpaths/model/decisions/Grids.java
+        - src/main/java/simpaths/model/decisions/DecisionParams.java
+      methods:
+        - SimPathsModel.buildSchedule
+        - SimPathsModel.onEvent
+        - LabourMarket.update
+        - BenefitUnit.setStates
+        - BenefitUnit.updateLabourChoices
+        - BenefitUnit.updateUtilityRegressionScoresWithoutFC
+        - BenefitUnit.updateFixedCostsAndLabour
+        - BenefitUnit.updateLabourSupplyAndIncome
+        - BenefitUnit.updateDiscretionaryConsumption
+        - Person.projectEquivConsumption
+        - Labour.getHours
+        - Labour.convertHoursToLabour
+        - ManagerPopulateGrids.run
+        - ManagerSolveGrids.run
+        - ManagerSolveState.run
+        - UtilityMaximisation.UtilityMaximisation
+        - CESUtility.evaluate
+        - Expectations.updateForDiscreteControls
+        - Grids.populate
+    wiki_links:
+      - documentation/wiki/overview/simulated-modules.md
+    update_triggers:
+      - labour-market schedule or branch ordering changes
+      - at-risk-of-work filtering changes
+      - employment alignment setup or fixed-cost adjustment changes
+      - feasible Labour combinations or hours-category mapping changes
+      - labour utility regressions or score-to-probability sampling changes
+      - IO grid creation, reading, or interpolation changes
+      - IO employment controls or consumption-share logic changes
+      - CES consumption-leisure utility or expected-value logic changes
+      - ProjectDiscretionaryConsumption or ProjectEquivConsumption rules change
+
   - id: inschool
     title: InSchool
     status: active
