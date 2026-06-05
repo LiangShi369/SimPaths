@@ -230,7 +230,7 @@ public class Parameters {
 
     // parameters to manage simulation of optimised decisions
     public static boolean projectPensionWealth = true;
-    public static boolean projectNonPensionWealth = false;
+    public static boolean projectNonPensionWealth = true;
     public static boolean enableIntertemporalOptimisations = false;
 
     public static Grids grids = null;

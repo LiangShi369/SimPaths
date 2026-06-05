@@ -603,6 +603,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateNonPensionWealth);
             yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdateNonPensionWealth);
         }
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateTotalWealth);
+
 
         // equivalised disposable income
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.CalculateChangeInEDI);

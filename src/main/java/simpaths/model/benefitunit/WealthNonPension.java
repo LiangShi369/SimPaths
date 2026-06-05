@@ -1,7 +1,6 @@
 package simpaths.model.benefitunit;
 
 import simpaths.data.Parameters;
-import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.TimeVaryingRate;
 
 public class WealthNonPension {
@@ -66,7 +65,7 @@ public class WealthNonPension {
         return inYearAccrualPty - inYearAccrualMtg + inYearAccrualOth;
     }
 
-    public double getWealthTotalValue() {
+    public double getWealthNonPensionTotalValue() {
         return wealthPrptyValue - wealthMortgageDebtValue + wealthOtherValue;
     }
 

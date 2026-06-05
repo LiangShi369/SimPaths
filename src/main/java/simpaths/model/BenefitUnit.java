@@ -345,6 +345,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         ReceivesBenefits,
         UpdatePensionWealth,
         UpdateNonPensionWealth,
+        UpdateTotalWealth,
         UpdateStates,
         UpdateInvestmentIncome,
         UpdatePrivatePensionIncome,
@@ -385,6 +386,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case UpdatePensionWealth -> {
                 updatePensionWealth();
+            }
+            case UpdateTotalWealth -> {
+                updateTotalWealth();
             }
             case UpdateStates -> {
                 setStates();
@@ -460,12 +464,20 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         else
             throw new RuntimeException("ERROR - wealthNonPension already set for this BenefitUnit");
 
-        double wealthL1 = wealthNonPensionL1.getWealthTotalValue() + pensionLumpSum();
+        double wealthL1 = wealthNonPensionL1.getWealthNonPensionTotalValue() + pensionLumpSum();
         wealthNonPension.projectWealth(wealthL1, yDispMonth * 12.0, xDiscConsumptionAnnual);
-        wealthTotValue = wealthNonPension.getWealthTotalValue();
         wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
         wealthMortgageDebtValue = wealthNonPension.getWealthMortgageDebtValue();
         wealthPrptyFlag = wealthNonPension.isHomeOwner();
+    }
+
+
+    public void updateTotalWealth() {
+
+        wealthTotValue = 0.0;
+        if (wealthNonPension != null)
+            wealthTotValue += wealthNonPension.getWealthNonPensionTotalValue();
+        wealthTotValue += Objects.requireNonNullElse(wealthPensValue, 0.0);
     }
 
 

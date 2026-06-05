@@ -70,7 +70,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     // person level variables
     private Integer demAge; //Age
-    @Column(name = "demAgeSq") private Integer demAgeSq; //Age squared
+    @Transient private Integer demAgeSq; //Age squared
     private Dcpst demPartnerStatus;
     @Enumerated(EnumType.STRING) private Indicator demAdultChildFlag;
     @Transient private Boolean demIoFlag = false;                           // true if a dummy person instantiated for IO decision solution
@@ -1053,7 +1053,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (privatePension == null)
             privatePension = new PrivatePension();
 
-        if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE && !Les_c4.Retired.equals(labC4L1))
+        if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE && !Les_c4.Retired.equals(labC4))
             privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturns), labC4);
 
         wealthPensValue = privatePension.getWealth();
@@ -8316,8 +8316,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return wealthNonPensValue;
     }
 
-    public void setWealthNonPensValue(Double wealthNonPension) {
-        this.wealthNonPensValue = wealthNonPension;
+    public double getWealthNonPensValue(boolean throwError) {
+        if (!Parameters.isFinite(wealthNonPensValue)) {
+            if (throwError)
+                throw new IllegalArgumentException("wealthNonPensValue is not finite");
+            else
+                return 0.0;
+        }
+        return wealthNonPensValue;
+    }
+
+    public void setWealthNonPensValue(Double v) {
+        wealthNonPensValue = v;
     }
 
     public Double getWealthNonPensValueL1() {

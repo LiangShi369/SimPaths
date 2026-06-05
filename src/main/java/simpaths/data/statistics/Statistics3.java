@@ -56,12 +56,46 @@ public class Statistics3 {
     @Column(name = "av_pens_wealth_55_74")
     private double yWealthPensValue55to74Avg;
 
+    //non-pension wealth by age group
+    @Column(name = "av_nonpens_wealth_18_29")
+    private double yWealthNonPensValue18to29Avg;
+
+    @Column(name = "av_nonpens_wealth_30_54")
+    private double yWealthNonPensValue30to54Avg;
+
+    @Column(name = "av_nonpens_wealth_55_74")
+    private double yWealthNonPensValue55to74Avg;
+
     public PanelEntityKey getKey() {
         return key;
     }
 
     public void setKey(PanelEntityKey key) {
         this.key = key;
+    }
+
+    public double getyWealthNonPensValue18to29Avg() {
+        return yWealthNonPensValue18to29Avg;
+    }
+
+    public void setyWealthNonPensValue18to29Avg(double yWealthNonPensValue18to29Avg) {
+        this.yWealthNonPensValue18to29Avg = yWealthNonPensValue18to29Avg;
+    }
+
+    public double getyWealthNonPensValue30to54Avg() {
+        return yWealthNonPensValue30to54Avg;
+    }
+
+    public void setyWealthNonPensValue30to54Avg(double yWealthNonPensValue30to54Avg) {
+        this.yWealthNonPensValue30to54Avg = yWealthNonPensValue30to54Avg;
+    }
+
+    public double getyWealthNonPensValue55to74Avg() {
+        return yWealthNonPensValue55to74Avg;
+    }
+
+    public void setyWealthNonPensValue55to74Avg(double yWealthNonPensValue55to74Avg) {
+        this.yWealthNonPensValue55to74Avg = yWealthNonPensValue55to74Avg;
     }
 
     public double getyOPMember18to29Share() {
@@ -168,7 +202,8 @@ public class Statistics3 {
         double avContRateOPEe = 0.;
         double avContRateOPEr = 0.;
         double avContRatePP = 0.;
-        double[] avValue = {0.,0.,0.};
+        double[] avPensWealth = {0.,0.,0.};
+        double[] avNonPensWealth = {0.,0.,0.};
         double[] popula = {0.,0.,0.};
 
         // calculate statistics
@@ -189,13 +224,15 @@ public class Statistics3 {
                 double crOPEr = person.getContRateOPEr(false);
                 double crPP = person.getContRatePP(false);
                 double pw = person.getWealthPensValue(false);
+                double npw = person.getWealthNonPensValue(false);
 
                 prOPMemb[ii] += (crOPEe + crOPEr > 0.0) ? 1.0: 0.0;
                 prPPMemb[ii] += (crPP > 0.0) ? 1.0: 0.0;
                 avContRateOPEe += crOPEe;
                 avContRateOPEr += crOPEr;
                 avContRatePP += crPP;
-                avValue[ii] += pw;
+                avPensWealth[ii] += pw;
+                avNonPensWealth[ii] += npw;
                 popula[ii] += 1.0;
             }
         }
@@ -212,7 +249,8 @@ public class Statistics3 {
 
                 prOPMemb[ii] /= popula[ii];
                 prPPMemb[ii] /= popula[ii];
-                avValue[ii] /= popula[ii];
+                avPensWealth[ii] /= popula[ii];
+                avNonPensWealth[ii] /= popula[ii];
             }
         }
 
@@ -226,8 +264,11 @@ public class Statistics3 {
         setyContRateOPEeAvg(avContRateOPEe);
         setyContRateOPErAvg(avContRateOPEr);
         setyContRatePPAvg(avContRatePP);
-        setyWealthPensValue18to29Avg(avValue[0]);
-        setyWealthPensValue30to54Avg(avValue[1]);
-        setyWealthPensValue55to74Avg(avValue[2]);
+        setyWealthPensValue18to29Avg(avPensWealth[0]);
+        setyWealthPensValue30to54Avg(avPensWealth[1]);
+        setyWealthPensValue55to74Avg(avPensWealth[2]);
+        setyWealthNonPensValue18to29Avg(avNonPensWealth[0]);
+        setyWealthNonPensValue30to54Avg(avNonPensWealth[1]);
+        setyWealthNonPensValue55to74Avg(avNonPensWealth[2]);
     }
 }
