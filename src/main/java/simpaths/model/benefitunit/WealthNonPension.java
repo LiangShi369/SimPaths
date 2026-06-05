@@ -6,8 +6,8 @@ import simpaths.model.enums.TimeVaryingRate;
 public class WealthNonPension {
 
     WealthHousing wealthHousing;                // object to manage housing wealth
-    private double wealthFinancialValue;            // placeholder for other wealth
     private double inYearAccrualOth;            // accrued other wealth in the year
+    WealthFinancial wealthFinancial;            // object to manage financial wealth
 
 
     /******************************************************
@@ -16,20 +16,21 @@ public class WealthNonPension {
 
     public WealthNonPension() {
         wealthHousing = new WealthHousing();
-        wealthFinancialValue = 0.0;
+        wealthFinancial = new WealthFinancial();
         inYearAccrualOth = 0.0;
     }
 
     public WealthNonPension(WealthNonPension original) {
         wealthHousing = new WealthHousing(original.wealthHousing);
-        wealthFinancialValue = original.wealthFinancialValue;
+        wealthFinancial = new WealthFinancial(original.wealthFinancial);
         inYearAccrualOth = original.inYearAccrualOth;
     }
 
     public WealthNonPension(double wealthTotValue, double wealthPrptyValue, double wealthMortgageDebtValue, double wealthPensValue) {
 
         wealthHousing = new WealthHousing(wealthPrptyValue,  wealthMortgageDebtValue);
-        this.wealthFinancialValue = wealthTotValue - wealthPrptyValue + wealthMortgageDebtValue - wealthPensValue;
+        wealthFinancial = new WealthFinancial(wealthTotValue - wealthPrptyValue + wealthMortgageDebtValue - wealthPensValue);
+        inYearAccrualOth = 0.0;
     }
 
 
@@ -38,7 +39,7 @@ public class WealthNonPension {
      ******************************************************/
 
     public double projectFinancialWealthIncomeAnnual(int year) {
-        return wealthFinancialValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
+        return wealthFinancial.projectIncomeAnnual(year);
     }
 
     public double projectHousingWealthReturnAnnual(int year) {
@@ -48,7 +49,7 @@ public class WealthNonPension {
     public void projectNonPensionWealth(WealthNonPension wealthL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
 
         inYearAccrualOth = disposableIncomeAnnual - xConsumptionAnnual;
-        wealthFinancialValue = wealthL1.getWealthNonPensionValue() + inYearAccrualOth;
+        wealthFinancial.setValue(wealthL1.getWealthNonPensionValue() + inYearAccrualOth);
     }
 
 
@@ -62,15 +63,15 @@ public class WealthNonPension {
     }
 
     public double getWealthNonPensionValue() {
-        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancialValue;
+        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancial.getValue();
     }
 
     public double getNonPensionValue() {
-        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancialValue;
+        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancial.getValue();
     }
 
     public double getOtherValue() {
-        return wealthFinancialValue;
+        return wealthFinancial.getValue();
     }
 
     public double getInYearAccrualOth() {
@@ -82,11 +83,11 @@ public class WealthNonPension {
     }
 
     public double getWealthFinancialValue() {
-        return wealthFinancialValue;
+        return wealthFinancial.getValue();
     }
 
     public void setWealthFinancialValue(double wealthFinancialValue) {
-        this.wealthFinancialValue = wealthFinancialValue;
+        wealthFinancial.setValue(wealthFinancialValue);
     }
 
     public double getWealthPrptyValue() {
