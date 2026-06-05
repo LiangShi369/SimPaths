@@ -136,6 +136,18 @@ public class ManagerRegressions {
             throw new RuntimeException("requested Binomial regression is not recognised: " + regression.name());
 
         switch (regression) {
+            case WealthHousingHW1a -> {
+                return Parameters.getRegHW1a();
+            }
+            case WealthHousingHW1b -> {
+                return Parameters.getRegHW1b();
+            }
+            case WealthHousingHW2a -> {
+                return Parameters.getRegHW2a();
+            }
+            case WealthHousingHW2b -> {
+                return Parameters.getRegHW2b();
+            }
             case WealthPensionPW1a -> {
                 return Parameters.getRegPW1a();
             }

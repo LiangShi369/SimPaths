@@ -534,6 +534,17 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW2b;
     private static MultiKeyCoefficientMap coeffCovariancePensionWealthPW2c;
 
+    //Housing wealth
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW1a;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW1b;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW1c;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW1d;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2a;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2b;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2c;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2d;
+    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2e;
+
     //Financial wealth
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW1a;
 
@@ -780,6 +791,16 @@ public class Parameters {
     private static LinearRegression regPW1d;
     private static LinearRegression regPW1f;
     private static LinearRegression regPW2c;
+
+    //Housing wealth
+    private static BinomialRegression regHW1a;
+    private static BinomialRegression regHW1b;
+    private static LinearRegression regHW1c;
+    private static LinearRegression regHW1d;
+    private static BinomialRegression regHW2a;
+    private static BinomialRegression regHW2b;
+    private static LinearRegression regHW2c;
+    private static LinearRegression regHW2d;
 
     //Financial wealth
     private static LinearRegression regFW1a;
@@ -1179,6 +1200,17 @@ public class Parameters {
         coeffCovariancePensionWealthPW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW2b", 1);
         coeffCovariancePensionWealthPW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_pensions.xlsx", "PW2c", 1);
 
+        //Housing wealth
+        coeffCovariancePensionWealthHW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW1a", 1);
+        coeffCovariancePensionWealthHW1b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW1b", 1);
+        coeffCovariancePensionWealthHW1c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW1c", 1);
+        coeffCovariancePensionWealthHW1d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW1d", 1);
+        coeffCovariancePensionWealthHW2a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2a", 1);
+        coeffCovariancePensionWealthHW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2b", 1);
+        coeffCovariancePensionWealthHW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2c", 1);
+        coeffCovariancePensionWealthHW2d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2d", 1);
+        coeffCovariancePensionWealthHW2e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2e", 1);
+
         //Financial wealth
         coeffCovarianceFinancialWealthFW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW1a", 1);
 
@@ -1318,6 +1350,11 @@ public class Parameters {
                     {"coeffCovariancePensionWealthPW2a", coeffCovariancePensionWealthPW2a},
                     {"coeffCovariancePensionWealthPW2b", coeffCovariancePensionWealthPW2b},
                     {"coeffCovariancePensionWealthPW2c", coeffCovariancePensionWealthPW2c},
+                    {"coeffCovariancePensionWealthHW1a", coeffCovariancePensionWealthHW1a},
+                    {"coeffCovariancePensionWealthHW1b", coeffCovariancePensionWealthHW1b},
+                    {"coeffCovariancePensionWealthHW1c", coeffCovariancePensionWealthHW1c},
+                    {"coeffCovariancePensionWealthHW1d", coeffCovariancePensionWealthHW1d},
+                    {"coeffCovariancePensionWealthHW2a", coeffCovariancePensionWealthHW2a},
                     {"coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a},
                     // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
                     {"coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales},
@@ -1428,6 +1465,17 @@ public class Parameters {
             coeffCovariancePensionWealthPW2b = bootstrapWithTrace("coeffCovariancePensionWealthPW2b", coeffCovariancePensionWealthPW2b);
             coeffCovariancePensionWealthPW2c = bootstrapWithTrace("coeffCovariancePensionWealthPW2c", coeffCovariancePensionWealthPW2c);
 
+            //Housing wealth
+            coeffCovariancePensionWealthHW1a = bootstrapWithTrace("coeffCovariancePensionWealthHW1a", coeffCovariancePensionWealthHW1a);
+            coeffCovariancePensionWealthHW1b = bootstrapWithTrace("coeffCovariancePensionWealthHW1b", coeffCovariancePensionWealthHW1b);
+            coeffCovariancePensionWealthHW1c = bootstrapWithTrace("coeffCovariancePensionWealthHW1c", coeffCovariancePensionWealthHW1c);
+            coeffCovariancePensionWealthHW1d = bootstrapWithTrace("coeffCovariancePensionWealthHW1d", coeffCovariancePensionWealthHW1d);
+            coeffCovariancePensionWealthHW2a = bootstrapWithTrace("coeffCovariancePensionWealthHW2a", coeffCovariancePensionWealthHW2a);
+            coeffCovariancePensionWealthHW2b = bootstrapWithTrace("coeffCovariancePensionWealthHW2b", coeffCovariancePensionWealthHW2b);
+            coeffCovariancePensionWealthHW2c = bootstrapWithTrace("coeffCovariancePensionWealthHW2c", coeffCovariancePensionWealthHW2c);
+            coeffCovariancePensionWealthHW2d = bootstrapWithTrace("coeffCovariancePensionWealthHW2d", coeffCovariancePensionWealthHW2d);
+            coeffCovariancePensionWealthHW2e = bootstrapWithTrace("coeffCovariancePensionWealthHW2e", coeffCovariancePensionWealthHW2e);
+
             //Financial wealth
             coeffCovarianceFinancialWealthFW1a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a);
 
@@ -1527,6 +1575,16 @@ public class Parameters {
         regPW2a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW2a);
         regPW2b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthPW2b);
         regPW2c = new LinearRegression(coeffCovariancePensionWealthPW2c);
+
+        //Housing wealth
+        regHW1a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthHW1a);
+        regHW1b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthHW1b);
+        regHW1c = new LinearRegression(coeffCovariancePensionWealthHW1c);
+        regHW1d = new LinearRegression(coeffCovariancePensionWealthHW1d);
+        regHW2a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthHW2a);
+        regHW2b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovariancePensionWealthHW2b);
+        regHW2c = new LinearRegression(coeffCovariancePensionWealthHW2c);
+        regHW2d = new LinearRegression(coeffCovariancePensionWealthHW2d);
 
         //Financial wealth
         regFW1a = new LinearRegression(coeffCovarianceFinancialWealthFW1a);
@@ -2081,6 +2139,15 @@ public class Parameters {
     public static LinearRegression getRegPW1d() { return regPW1d; }
     public static LinearRegression getRegPW1f() { return regPW1f; }
     public static LinearRegression getRegPW2c() { return regPW2c; }
+
+    public static BinomialRegression getRegHW1a() { return regHW1a; }
+    public static BinomialRegression getRegHW1b() { return regHW1b; }
+    public static LinearRegression getRegHW1c() { return regHW1c; }
+    public static LinearRegression getRegHW1d() { return regHW1d; }
+    public static BinomialRegression getRegHW2a() { return regHW2a; }
+    public static BinomialRegression getRegHW2b() { return regHW2b; }
+    public static LinearRegression getRegHW2c() { return regHW2c; }
+    public static LinearRegression getRegHW2d() { return regHW2d; }
 
     public static LinearRegression getRegFW1a() { return regFW1a; }
 

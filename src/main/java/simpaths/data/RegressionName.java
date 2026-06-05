@@ -73,6 +73,15 @@ public enum RegressionName {
     WealthPensionPW2b(RegressionType.Logit),
     WealthPensionPW2c(RegressionType.Linear),
 
+    WealthHousingHW1a(RegressionType.Logit),
+    WealthHousingHW1b(RegressionType.Logit),
+    WealthHousingHW1c(RegressionType.Linear),
+    WealthHousingHW1d(RegressionType.Linear),
+    WealthHousingHW2a(RegressionType.Logit),
+    WealthHousingHW2b(RegressionType.Logit),
+    WealthHousingHW2c(RegressionType.Linear),
+    WealthHousingHW2d(RegressionType.Linear),
+
     UnemploymentU1a(RegressionType.Probit),
     UnemploymentU1b(RegressionType.Probit),
     UnemploymentU1c(RegressionType.Probit),
