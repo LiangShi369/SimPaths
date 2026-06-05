@@ -1,5 +1,8 @@
 package simpaths.model.benefitunit;
 
+import simpaths.data.Parameters;
+import simpaths.model.enums.TimeVaryingRate;
+
 public class WealthHousing {
 
     private boolean isHomeOwner;                // indicator of whether the person is a homeowner
@@ -9,6 +12,10 @@ public class WealthHousing {
     private double inYearAccrualMtg;            // accrued mortgage debt in the year
     private double wealthMortgageDebtValue;     // value of outstanding mortgage debt
 
+
+    /******************************************************
+     * CONSTRUCTORS
+     ******************************************************/
 
     public WealthHousing() {
         isHomeOwner = false;
@@ -34,6 +41,30 @@ public class WealthHousing {
         this.wealthMortgageDebtValue = wealthMortgageDebtValue;
         isHomeOwner = (wealthPrptyValue > 0.0);
         isMortgageHolder = (wealthMortgageDebtValue > 0.0);
+    }
+
+
+    /******************************************************
+     * UTILITY METHODS
+     ******************************************************/
+
+    public double projectReturnAnnual(int year) {
+
+        if (isHomeOwner) {
+            inYearAccrualPty = wealthPrptyValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealHousingReturn);
+            if (isMortgageHolder)
+                inYearAccrualMtg = wealthMortgageDebtValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealMortgageRate);
+        }
+        return inYearAccrualPty - inYearAccrualMtg;
+    }
+
+
+    /**************************************************************
+     * GETTERS AND SETTERS
+     **************************************************************/
+
+    public double getInYearAccrualNet() {
+        return inYearAccrualPty - inYearAccrualMtg;
     }
 
     public double getInYearAccrualMtg() {
@@ -82,5 +113,9 @@ public class WealthHousing {
 
     public void setWealthPrptyValue(double wealthPrptyValue) {
         this.wealthPrptyValue = wealthPrptyValue;
+    }
+
+    public double getWealthNetHousing() {
+        return wealthPrptyValue - wealthMortgageDebtValue;
     }
 }

@@ -9,6 +9,11 @@ public class WealthNonPension {
     private double wealthFinancialValue;            // placeholder for other wealth
     private double inYearAccrualOth;            // accrued other wealth in the year
 
+
+    /******************************************************
+     * CONSTRUCTORS
+     ******************************************************/
+
     public WealthNonPension() {
         wealthHousing = new WealthHousing();
         wealthFinancialValue = 0.0;
@@ -26,6 +31,11 @@ public class WealthNonPension {
         wealthHousing = new WealthHousing(wealthPrptyValue,  wealthMortgageDebtValue);
         this.wealthFinancialValue = wealthTotValue - wealthPrptyValue + wealthMortgageDebtValue - wealthPensValue;
     }
+
+
+    /******************************************************
+     * UTILITY METHODS
+     ******************************************************/
 
     public double projectFinancialWealthIncomeAnnual(int year) {
         return wealthFinancialValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
