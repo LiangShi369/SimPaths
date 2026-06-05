@@ -1,7 +1,6 @@
 package simpaths.model.decisions;
 
 import simpaths.data.Parameters;
-import simpaths.model.utilities.AnnuityRates;
 import simpaths.model.enums.*;
 
 import java.io.File;
@@ -152,7 +151,7 @@ public class DecisionParams {
         }
 
         // asset returns
-        rSafeAssets = Parameters.getSampleAverageRate(TimeVaryingRate.RealSavingReturns) + Parameters.realInterestRateInnov;
+        rSafeAssets = Parameters.getSampleAverageRate(TimeVaryingRate.RealSavingReturn) + Parameters.realInterestRateInnov;
         rDebtLow = Parameters.getSampleAverageRate(TimeVaryingRate.RealDebtCostLow) + Parameters.realInterestRateInnov;
         rDebtHi = Parameters.getSampleAverageRate(TimeVaryingRate.RealDebtCostHigh) + Parameters.realInterestRateInnov;
 

@@ -4881,7 +4881,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                         Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealDebtCostHigh)*phi +
                         Parameters.realInterestRateInnov) * wealthTotValue;
             } else {
-                yInvestAnnual = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealSavingReturns) +
+                yInvestAnnual = (Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealSavingReturn) +
                         Parameters.realInterestRateInnov) * wealthTotValue;
             }
             if ((yInvestAnnual < -20000000.0) || (yInvestAnnual > 200000000.0))

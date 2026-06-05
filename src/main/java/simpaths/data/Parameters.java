@@ -418,7 +418,7 @@ public class Parameters {
             utilityTimeAdjustmentSingleMales, utilityTimeAdjustmentACMales, utilityTimeAdjustmentSingleFemales, utilityTimeAdjustmentACFemales,
             utilityTimeAdjustmentCouples, utilityTimeAdjustmentSingleDepMen, utilityTimeAdjustmentSingleDepWomen,
             upratingIndexMapRealWageGrowth, priceMapRealSavingReturns, priceMapRealPensionReturns, priceMapRealDebtCostLow, priceMapRealDebtCostHigh,
-            wageRateFormalSocialCare, socialCarePolicy, partneredShare,
+            wageRateFormalSocialCare, socialCarePolicy, partneredShare, priceMapRealHousingReturns, priceMapRealMortgageRates,
             employedShareACMales, employedShareACFemales, employedShareSingleDepMales, employedShareSingleDepFemales,
             employedShareSingleMales, employedShareSingleFemales, employedShareCouples, studentShare;
     public static Map<Integer, Double> partnershipAlignAdjustment, fertilityAlignAdjustment;
@@ -2642,6 +2642,8 @@ public class Parameters {
         // load demYear varying rates
         priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
         priceMapRealPensionReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_pension_returns", 1, 1);
+        priceMapRealHousingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_housing_returns", 1, 1);
+        priceMapRealMortgageRates = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_mortgage_rates", 1, 1);
         priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
         priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
 
@@ -2983,11 +2985,17 @@ public class Parameters {
 
         MultiKeyCoefficientMap map = null;
         switch (rateType) {
-            case RealSavingReturns -> {
+            case RealSavingReturn -> {
                 map = priceMapRealSavingReturns;
             }
-            case RealPensionReturns -> {
+            case RealPensionReturn -> {
                 map = priceMapRealPensionReturns;
+            }
+            case RealHousingReturn -> {
+                map = priceMapRealHousingReturns;
+            }
+            case RealMortgageRate -> {
+                map = priceMapRealMortgageRates;
             }
             case RealDebtCostLow -> {
                 map = priceMapRealDebtCostLow;
@@ -3003,7 +3011,7 @@ public class Parameters {
     private static Double getTimeSeriesRateParameter(TimeVaryingRate rateType) {
 
         switch (rateType) {
-            case RealSavingReturns -> {
+            case RealSavingReturn -> {
                 return averageSavingReturns;
             }
             case RealDebtCostLow -> {
@@ -3019,7 +3027,7 @@ public class Parameters {
     private static void setTimeSeriesRateParameter(TimeVaryingRate rateType, double val) {
 
         switch (rateType) {
-            case RealSavingReturns -> {
+            case RealSavingReturn -> {
                 averageSavingReturns = val;
                 return;
             }

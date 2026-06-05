@@ -1054,7 +1054,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             privatePension = new PrivatePension();
 
         if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE && !Les_c4.Retired.equals(labC4))
-            privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturns), labC4);
+            privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturn), labC4);
 
         wealthPensValue = privatePension.getWealth();
         contRateOPEe = privatePension.getContRateOPEe();

@@ -28,7 +28,7 @@ public class WealthNonPension {
     }
 
     public double projectWealthOtherIncomeAnnual(int year) {
-        return wealthOtherValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturns);
+        return wealthOtherValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
     }
 
     public void projectWealth(double wealthL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
