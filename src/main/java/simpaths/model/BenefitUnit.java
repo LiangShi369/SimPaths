@@ -69,6 +69,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
     @NullInitialised @Transient private States labStatesContObject;
     @NullInitialised private Double yInvestAnnual;                                                      // annual investment income
+    @NullInitialised private Double yHousingReturnAnnual;                                               // annual return on housing wealth
     @NullInitialised private Double yPensionAnnual;                                                     // annual private pension income
     @NullInitialised private Double xDiscConsumptionAnnual;                                             // annual discretionary consumption
     @NullInitialised @Transient private WealthNonPension wealthNonPension;
@@ -231,7 +232,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         if (Parameters.projectNonPensionWealth) {
 
             wealthNonPensionL1 = new WealthNonPension();
-            wealthNonPensionL1.setWealthOtherValue(person.getWealthNonPensValueL1());
+            wealthNonPensionL1.setWealthFinancialValue(person.getWealthNonPensValueL1());
         }
 
         // finalise
@@ -254,7 +255,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         if (Parameters.projectNonPensionWealth) {
 
             wealthNonPensionL1 = new WealthNonPension();
-            wealthNonPensionL1.setWealthOtherValue(p1.getWealthNonPensValueL1() + p2.getWealthNonPensValueL1());
+            wealthNonPensionL1.setWealthFinancialValue(p1.getWealthNonPensValueL1() + p2.getWealthNonPensValueL1());
         }
 
         // finalise
@@ -464,8 +465,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         else
             throw new RuntimeException("ERROR - wealthNonPension already set for this BenefitUnit");
 
-        double wealthL1 = wealthNonPensionL1.getWealthNonPensionTotalValue() + pensionLumpSum();
-        wealthNonPension.projectWealth(wealthL1, yDispMonth * 12.0, xDiscConsumptionAnnual);
+        wealthNonPension.projectNonPensionWealth(wealthNonPensionL1, yDispMonth * 12.0 + pensionLumpSum(), xDiscConsumptionAnnual);
         wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
         wealthMortgageDebtValue = wealthNonPension.getWealthMortgageDebtValue();
         wealthPrptyFlag = wealthNonPension.isHomeOwner();
@@ -476,7 +476,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
         wealthTotValue = 0.0;
         if (wealthNonPension != null)
-            wealthTotValue += wealthNonPension.getWealthNonPensionTotalValue();
+            wealthTotValue = wealthNonPension.getWealthNonPensionValue();
         wealthTotValue += Objects.requireNonNullElse(wealthPensValue, 0.0);
     }
 
@@ -4276,7 +4276,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     public void setNonPensionWealth(Person person) {
 
         wealthNonPensionL1 = new WealthNonPension();
-        wealthNonPensionL1.setOtherValue(person.getWealthNonPensValueL1());
+        wealthNonPensionL1.setWealthFinancialValue(person.getWealthNonPensValueL1());
     }
 
     public double getWealthNonPensValue(boolean throwError) {
@@ -4286,7 +4286,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             else
                 return 0.0;
         }
-        return wealthNonPension.getNonPensionValue();
+        return wealthNonPension.getWealthNonPensionValue();
     }
 
     public void setWealthTotValue(Double wealthTotValue) {
@@ -4894,7 +4894,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
             if (wealthNonPensionL1 == null)
                 throw new RuntimeException("wealthNonPensionL1 not initialised");
-            yInvestAnnual = wealthNonPensionL1.projectWealthOtherIncomeAnnual(model.getYear());
+            yInvestAnnual = wealthNonPensionL1.projectFinancialWealthIncomeAnnual(model.getYear());
+            yHousingReturnAnnual = wealthNonPensionL1.projectHousingWealthReturnAnnual(model.getYear());
 
             // update person level variables
             allocateInvestmentIncome(yInvestAnnual);
