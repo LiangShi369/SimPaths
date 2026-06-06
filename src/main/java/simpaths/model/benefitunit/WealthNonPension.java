@@ -46,6 +46,7 @@ public class WealthNonPension {
      ******************************************************/
 
     public double projectFinancialWealthIncomeAnnual(int year) {
+        // used to evaluate taxable income - see BenefitUnit.setInvestmentIncomeAnnual()
         return wealthFinancial.projectIncomeAnnual(year);
     }
 
@@ -55,7 +56,9 @@ public class WealthNonPension {
 
     public void projectNonPensionWealth(WealthNonPension wealthL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
 
+        // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
+        //wealthNonPensionValue = wealthL1.getWealthNonPensionValue() + inYearSavings; // + wealthNonPensionL1.getWealthHousing().getInYearAccrualNet();
         wealthFinancial.setValue(wealthL1.getWealthNonPensionValue() + inYearSavings);
     }
 
@@ -69,32 +72,23 @@ public class WealthNonPension {
         return wealthHousing.getInYearAccrualPty() - wealthHousing.getInYearAccrualMtg() + inYearSavings;
     }
 
+    public WealthHousing getWealthHousing() {return wealthHousing;}
+
     public double getWealthNonPensionValue() {
+        //return wealthNonPensionValue;
         return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancial.getValue();
-    }
-
-    public double getNonPensionValue() {
-        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancial.getValue();
-    }
-
-    public double getOtherValue() {
-        return wealthFinancial.getValue();
     }
 
     public double getInYearSavings() {
         return inYearSavings;
     }
 
-    public void setInYearSavings(double inYearSavings) {
-        this.inYearSavings = inYearSavings;
+    public void setInYearSavings(double val) {
+        inYearSavings = val;
     }
 
-    public double getWealthFinancialValue() {
-        return wealthFinancial.getValue();
-    }
-
-    public void setWealthFinancialValue(double wealthFinancialValue) {
-        wealthFinancial.setValue(wealthFinancialValue);
+    public void setWealthFinancialValue(double val) {
+        wealthFinancial.setValue(val);
     }
 
     public double getWealthPrptyValue() {
