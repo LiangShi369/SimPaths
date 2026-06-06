@@ -35,13 +35,15 @@ public class WealthFinancial {
      ******************************************************/
 
     public double projectIncomeAnnual(int year) {
-        // PLACEHOLDER - NEEDS TO BE ADAPTED TO REPORT NET INCOME FROM ALL NON-PENSION SOURCES
+        // projects returns - see BenefitUnit.setInvestmentIncomeAnnual()
+        // PLACEHOLDER - NEEDS TO BE ADAPTED TO REPORT NET INCOME FROM ALL FINANCIAL ASSETS/DEBTS
         yWealthFinancialReturnYear = wealthFinancialValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
         return yWealthFinancialReturnYear;
     }
 
     public void projectWealthValue(double inYearAccrual) {
-        // PLACEHOLDER - NEEDS TO BE ADAPTED TO PROJECT FINANCIAL WEALTH COMPONENTS
+        // projects values - see BenefitUnit.updateNonPensionWealth()
+        // PLACEHOLDER - NEEDS TO BE ADAPTED TO PROJECT FINANCIAL WEALTH COMPONENT VALUES
         wealthFinancialValue += inYearAccrual;
     }
 

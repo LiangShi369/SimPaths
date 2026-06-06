@@ -26,7 +26,7 @@ public class WealthNonPension {
         // used to generate lag objects
         inYearSavings = original.inYearSavings;
         inYearHousingAccrual = original.inYearHousingAccrual;
-        wealthNonPensionValue = original.wealthNonPensionValue;
+        wealthNonPensionValue = original.getWealthNonPensionValue();
         wealthHousing = new WealthHousing(original.wealthHousing);
         wealthFinancial = new WealthFinancial(original.wealthFinancial);
     }
@@ -51,15 +51,20 @@ public class WealthNonPension {
     }
 
     public double projectHousingWealthReturnAnnual(int year) {
-        return 0.0;
+        return wealthHousing.projectReturnAnnual(year);
     }
 
-    public void projectNonPensionWealth(WealthNonPension wealthL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
+    public void projectNonPensionWealth(WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
 
         // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
-        //wealthNonPensionValue = wealthL1.getWealthNonPensionValue() + inYearSavings; // + wealthNonPensionL1.getWealthHousing().getInYearAccrualNet();
-        wealthFinancial.setValue(wealthL1.getWealthNonPensionValue() + inYearSavings);
+        wealthNonPensionValue = wealthNonPensionL1.getWealthNonPensionValue() + inYearSavings + wealthNonPensionL1.getWealthHousing().getInYearAccrualNet();
+
+        // allocate share of non-pension wealth to housing
+        wealthHousing.projectValues();
+
+        // allocate remaining share of non-pension wealth to financial
+        wealthFinancial.setValue(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
     }
 
 
@@ -75,8 +80,7 @@ public class WealthNonPension {
     public WealthHousing getWealthHousing() {return wealthHousing;}
 
     public double getWealthNonPensionValue() {
-        //return wealthNonPensionValue;
-        return wealthHousing.getWealthPrptyValue() - wealthHousing.getWealthMortgageDebtValue() + wealthFinancial.getValue();
+        return updateWealthNonPensionValue();
     }
 
     public double getInYearSavings() {
@@ -89,6 +93,11 @@ public class WealthNonPension {
 
     public void setWealthFinancialValue(double val) {
         wealthFinancial.setValue(val);
+        updateWealthNonPensionValue();
+    }
+
+    public double updateWealthNonPensionValue() {
+        return wealthNonPensionValue = wealthHousing.getWealthNetHousing() + wealthFinancial.getValue();
     }
 
     public double getWealthPrptyValue() {
