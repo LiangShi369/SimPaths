@@ -74,7 +74,7 @@ public class WealthNonPension {
 
     public double getInYearAccrualTotal() {
 
-        return wealthHousing.getInYearAccrualPty() - wealthHousing.getInYearAccrualMtg() + inYearSavings;
+        return wealthHousing.getInYearAccrualNet() + inYearSavings;
     }
 
     public WealthHousing getWealthHousing() {return wealthHousing;}
