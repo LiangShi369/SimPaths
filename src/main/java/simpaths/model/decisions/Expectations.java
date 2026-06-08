@@ -466,8 +466,8 @@ public class Expectations {
         double childcareCostWeekly = 0.0;
         if (Parameters.flagFormalChildcare && !Parameters.flagSuppressChildcareCosts && currentStates.hasChildrenEligibleForCare()) {
 
-            double probFormalChildCare = Parameters.getRegChildcareC1a().getProbability(benefitUnitProxyThisPeriod, BenefitUnit.Regressors.class);
-            double logChildcareCostScore = Parameters.getRegChildcareC1b().getScore(benefitUnitProxyThisPeriod, BenefitUnit.Regressors.class);
+            double probFormalChildCare = Parameters.getRegChildcareC1a().getProbability(benefitUnitProxyThisPeriod, BenefitUnit.Variables.class);
+            double logChildcareCostScore = Parameters.getRegChildcareC1b().getScore(benefitUnitProxyThisPeriod, BenefitUnit.Variables.class);
             childcareCostWeekly = Math.exp(logChildcareCostScore) * probFormalChildCare;
         }
         return childcareCostWeekly;
@@ -481,7 +481,7 @@ public class Expectations {
             SocialCareReceiptState market = currentStates.getSocialCareReceiptStateCode();
             if (SocialCareReceiptState.Mixed.equals(market) || SocialCareReceiptState.Formal.equals(market)) {
 
-                double score = Parameters.getRegFormalCareHoursS2e().getScore(personProxyThisPeriod,Person.DoublesVariables.class);
+                double score = Parameters.getRegFormalCareHoursS2e().getScore(personProxyThisPeriod, Person.Variables.class);
                 double rmse = Parameters.getRMSEForRegression("S2e");
                 double hours = Math.min(Parameters.MAX_HOURS_WEEKLY_FORMAL_CARE, Math.exp(score + rmse*rmse/2.0));
                 socialCareCostWeekly = hours * Parameters.getTimeSeriesValue(currentStates.getYear(), TimeSeriesVariable.CarerWageRate);
@@ -504,10 +504,10 @@ public class Expectations {
 
                 double score, rmse;
                 if (cohabitation) {
-                    score = Parameters.getRegCareHoursProvS3d().getScore(personProxyThisPeriod,Person.DoublesVariables.class);
+                    score = Parameters.getRegCareHoursProvS3d().getScore(personProxyThisPeriod, Person.Variables.class);
                     rmse = Parameters.getRMSEForRegression("S3d");
                 } else {
-                    score = Parameters.getRegCareHoursProvS3c().getScore(personProxyThisPeriod,Person.DoublesVariables.class);
+                    score = Parameters.getRegCareHoursProvS3c().getScore(personProxyThisPeriod, Person.Variables.class);
                     rmse = Parameters.getRMSEForRegression("S3c");
                 }
                 socialCareHoursProvidedWeekly = Math.min(80.0, Math.exp(score + rmse*rmse/2.0));

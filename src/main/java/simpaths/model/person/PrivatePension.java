@@ -73,7 +73,7 @@ public class PrivatePension {
 
                 Double val;
                 double score, rmse, gauss;
-                score = Parameters.getRegPW1d().getScore(person, Person.DoublesVariables.class);
+                score = Parameters.getRegPW1d().getScore(person, Person.Variables.class);
                 rmse = Parameters.getRMSEForRegression("PW1d");
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov2);
                 val = Math.sinh(score + gauss * rmse);
@@ -107,7 +107,7 @@ public class PrivatePension {
 
                 Double val;
                 double score, rmse, gauss;
-                score = Parameters.getRegPW1f().getScore(person, Person.DoublesVariables.class);
+                score = Parameters.getRegPW1f().getScore(person, Person.Variables.class);
                 rmse = Parameters.getRMSEForRegression("PW1f");
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov4);
                 val = Math.sinh(score + gauss * rmse);
@@ -142,7 +142,7 @@ public class PrivatePension {
         if (memberPP) {
 
             double score, rmse, gauss;
-            score = Parameters.getRegPW2c().getScore(person, Person.DoublesVariables.class);
+            score = Parameters.getRegPW2c().getScore(person, Person.Variables.class);
             rmse = Parameters.getRMSEForRegression("PW2c");
             gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov5);
             contRatePP = Math.exp(score + gauss * rmse);

@@ -3,7 +3,6 @@ package simpaths.data.statistics;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
 import microsim.data.db.PanelEntityKey;
 import microsim.statistics.CrossSection;
 import microsim.statistics.IDoubleSource;
@@ -238,7 +237,7 @@ public class HealthStatistics {
         setGender(gender_s);
 
         // dhm score
-        CrossSection.Double personsDhm = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhm); // Get cross section of simulated individuals and their mental health using the IDoubleSource interface implemented by Person class.
+        CrossSection.Double personsDhm = new CrossSection.Double(model.getPersons(), Person.Variables.Dhm); // Get cross section of simulated individuals and their mental health using the IDoubleSource interface implemented by Person class.
         personsDhm.setFilter(ageGenderCSfilter);
 
 
@@ -256,7 +255,7 @@ public class HealthStatistics {
         setHealthWbScore0to36P90(percDhm_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
 
         // mcs score
-        CrossSection.Double personsMCS = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhe_mcs);
+        CrossSection.Double personsMCS = new CrossSection.Double(model.getPersons(), Person.Variables.Dhe_mcs);
         personsMCS.setFilter(ageGenderCSfilter);
 
 
@@ -274,7 +273,7 @@ public class HealthStatistics {
         setHealthMentalMcsP90(perc_dhe_mcs_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
 
         // pcs score
-        CrossSection.Double personsPCS = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dhe_pcs);
+        CrossSection.Double personsPCS = new CrossSection.Double(model.getPersons(), Person.Variables.Dhe_pcs);
         personsPCS.setFilter(ageGenderCSfilter);
 
 
@@ -292,7 +291,7 @@ public class HealthStatistics {
         setHealthPhysicalPcsP90(perc_dhe_pcs_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
 
         // Life Satisfaction score
-        CrossSection.Double personsDls = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.Dls);
+        CrossSection.Double personsDls = new CrossSection.Double(model.getPersons(), Person.Variables.Dls);
         personsDls.setFilter(ageGenderCSfilter);
 
 
@@ -310,7 +309,7 @@ public class HealthStatistics {
         setDemLifeSatScore0to10P90(perc_dls_f.getDoubleValue(PercentileArrayFunction.Variables.P90));
 
         // QALYS as sum of EQ5D
-        CrossSection.Double personEQ5D = new CrossSection.Double(model.getPersons(), Person.DoublesVariables.He_eq5d);
+        CrossSection.Double personEQ5D = new CrossSection.Double(model.getPersons(), Person.Variables.He_eq5d);
         personEQ5D.setFilter(ageGenderCSfilter);
 
         SumArrayFunction.Double qalys = new SumArrayFunction.Double(personEQ5D);

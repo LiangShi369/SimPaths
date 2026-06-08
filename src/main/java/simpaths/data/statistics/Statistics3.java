@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 
 import microsim.data.db.PanelEntityKey;
 import simpaths.data.Parameters;
+import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Education;
@@ -65,6 +66,176 @@ public class Statistics3 {
 
     @Column(name = "av_nonpens_wealth_55_74")
     private double yWealthNonPensValue55to74Avg;
+
+    //benefit unit non-pension wealth by age group of reference person
+    @Column(name = "av_bu_nonpens_wealth_18_29")
+    private double yWealthBUNonPensValue18to29Avg;
+
+    @Column(name = "av_bu_nonpens_wealth_30_54")
+    private double yWealthBUNonPensValue30to54Avg;
+
+    @Column(name = "av_bu_nonpens_wealth_55_74")
+    private double yWealthBUNonPensValue55to74Avg;
+
+    //benefit unit housing wealth by age group of reference person
+    @Column(name = "av_bu_housing_wealth_18_29")
+    private double yWealthBUHousingValue18to29Avg;
+
+    @Column(name = "av_bu_housing_wealth_30_54")
+    private double yWealthBUHousingValue30to54Avg;
+
+    @Column(name = "av_bu_housing_wealth_55_74")
+    private double yWealthBUHousingValue55to74Avg;
+
+    //benefit unit mortgage by age group of reference person
+    @Column(name = "av_bu_mortgage_wealth_18_29")
+    private double yWealthBUMortgageValue18to29Avg;
+
+    @Column(name = "av_bu_mortgage_wealth_30_54")
+    private double yWealthBUMortgageValue30to54Avg;
+
+    @Column(name = "av_bu_mortgage_wealth_55_74")
+    private double yWealthBUMortgageValue55to74Avg;
+
+    //benefit unit incidence of housing by age group of reference person
+    @Column(name = "av_bu_home_owner_18_29")
+    private double yWealthBUHomeOwner18to29Avg;
+
+    @Column(name = "av_bu_home_owner_30_54")
+    private double yWealthBUHomeOwner30to54Avg;
+
+    @Column(name = "av_bu_home_owner_55_74")
+    private double yWealthBUHomeOwner55to74Avg;
+
+    //benefit unit incidence of mortgages by age group of reference person
+    @Column(name = "av_bu_mortgage_holder_18_29")
+    private double yWealthBUMortgageHolder18to29Avg;
+
+    @Column(name = "av_bu_mortgage_holder_30_54")
+    private double yWealthBUMortgageHolder30to54Avg;
+
+    @Column(name = "av_bu_mortgage_holder_55_74")
+    private double yWealthBUMortgageHolder55to74Avg;
+
+    public double getyWealthBUMortgageHolder18to29Avg() {
+        return yWealthBUMortgageHolder18to29Avg;
+    }
+
+    public void setyWealthBUMortgageHolder18to29Avg(double yWealthBUMortgageHolder18to29Avg) {
+        this.yWealthBUMortgageHolder18to29Avg = yWealthBUMortgageHolder18to29Avg;
+    }
+
+    public double getyWealthBUMortgageHolder30to54Avg() {
+        return yWealthBUMortgageHolder30to54Avg;
+    }
+
+    public void setyWealthBUMortgageHolder30to54Avg(double yWealthBUMortgageHolder30to54Avg) {
+        this.yWealthBUMortgageHolder30to54Avg = yWealthBUMortgageHolder30to54Avg;
+    }
+
+    public double getyWealthBUMortgageHolder55to74Avg() {
+        return yWealthBUMortgageHolder55to74Avg;
+    }
+
+    public void setyWealthBUMortgageHolder55to74Avg(double yWealthBUMortgageHolder55to74Avg) {
+        this.yWealthBUMortgageHolder55to74Avg = yWealthBUMortgageHolder55to74Avg;
+    }
+
+    public double getyWealthBUHomeOwner18to29Avg() {
+        return yWealthBUHomeOwner18to29Avg;
+    }
+
+    public void setyWealthBUHomeOwner18to29Avg(double yWealthBUHomeOwner18to29Avg) {
+        this.yWealthBUHomeOwner18to29Avg = yWealthBUHomeOwner18to29Avg;
+    }
+
+    public double getyWealthBUHomeOwner30to54Avg() {
+        return yWealthBUHomeOwner30to54Avg;
+    }
+
+    public void setyWealthBUHomeOwner30to54Avg(double yWealthBUHomeOwner30to54Avg) {
+        this.yWealthBUHomeOwner30to54Avg = yWealthBUHomeOwner30to54Avg;
+    }
+
+    public double getyWealthBUHomeOwner55to74Avg() {
+        return yWealthBUHomeOwner55to74Avg;
+    }
+
+    public void setyWealthBUHomeOwner55to74Avg(double yWealthBUHomeOwner55to74Avg) {
+        this.yWealthBUHomeOwner55to74Avg = yWealthBUHomeOwner55to74Avg;
+    }
+
+    public double getyWealthBUHousingValue18to29Avg() {
+        return yWealthBUHousingValue18to29Avg;
+    }
+
+    public void setyWealthBUHousingValue18to29Avg(double yWealthBUHousingValue18to29Avg) {
+        this.yWealthBUHousingValue18to29Avg = yWealthBUHousingValue18to29Avg;
+    }
+
+    public double getyWealthBUHousingValue30to54Avg() {
+        return yWealthBUHousingValue30to54Avg;
+    }
+
+    public void setyWealthBUHousingValue30to54Avg(double yWealthBUHousingValue30to54Avg) {
+        this.yWealthBUHousingValue30to54Avg = yWealthBUHousingValue30to54Avg;
+    }
+
+    public double getyWealthBUHousingValue55to74Avg() {
+        return yWealthBUHousingValue55to74Avg;
+    }
+
+    public void setyWealthBUHousingValue55to74Avg(double yWealthBUHousingValue55to74Avg) {
+        this.yWealthBUHousingValue55to74Avg = yWealthBUHousingValue55to74Avg;
+    }
+
+    public double getyWealthBUMortgageValue18to29Avg() {
+        return yWealthBUMortgageValue18to29Avg;
+    }
+
+    public void setyWealthBUMortgageValue18to29Avg(double yWealthBUMortgageValue18to29Avg) {
+        this.yWealthBUMortgageValue18to29Avg = yWealthBUMortgageValue18to29Avg;
+    }
+
+    public double getyWealthBUMortgageValue30to54Avg() {
+        return yWealthBUMortgageValue30to54Avg;
+    }
+
+    public void setyWealthBUMortgageValue30to54Avg(double yWealthBUMortgageValue30to54Avg) {
+        this.yWealthBUMortgageValue30to54Avg = yWealthBUMortgageValue30to54Avg;
+    }
+
+    public double getyWealthBUMortgageValue55to74Avg() {
+        return yWealthBUMortgageValue55to74Avg;
+    }
+
+    public void setyWealthBUMortgageValue55to74Avg(double yWealthBUMortgageValue55to74Avg) {
+        this.yWealthBUMortgageValue55to74Avg = yWealthBUMortgageValue55to74Avg;
+    }
+
+    public double getyWealthBUNonPensValue18to29Avg() {
+        return yWealthBUNonPensValue18to29Avg;
+    }
+
+    public void setyWealthBUNonPensValue18to29Avg(double yWealthBUNonPensValue18to29Avg) {
+        this.yWealthBUNonPensValue18to29Avg = yWealthBUNonPensValue18to29Avg;
+    }
+
+    public double getyWealthBUNonPensValue30to54Avg() {
+        return yWealthBUNonPensValue30to54Avg;
+    }
+
+    public void setyWealthBUNonPensValue30to54Avg(double yWealthBUNonPensValue30to54Avg) {
+        this.yWealthBUNonPensValue30to54Avg = yWealthBUNonPensValue30to54Avg;
+    }
+
+    public double getyWealthBUNonPensValue55to74Avg() {
+        return yWealthBUNonPensValue55to74Avg;
+    }
+
+    public void setyWealthBUNonPensValue55to74Avg(double yWealthBUNonPensValue55to74Avg) {
+        this.yWealthBUNonPensValue55to74Avg = yWealthBUNonPensValue55to74Avg;
+    }
 
     public PanelEntityKey getKey() {
         return key;
@@ -254,6 +425,44 @@ public class Statistics3 {
             }
         }
 
+        double[] avBUNPV = {0.,0.,0.};
+        double[] avBUHgV = {0.,0.,0.};
+        double[] avBUMgV = {0.,0.,0.};
+        double[] prBUHgV = {0.,0.,0.};
+        double[] prBUMgV = {0.,0.,0.};
+        double[] popBU = {0.,0.,0.};
+        for (BenefitUnit bu : model.getBenefitUnits()) {
+
+            int ii = -1;
+            if (bu.getRefPerson().getDemAge()>=18 && bu.getRefPerson().getDemAge()<=29) {
+                ii = 0;
+            } else if (bu.getRefPerson().getDemAge()>=30 && bu.getRefPerson().getDemAge()<=54) {
+                ii = 1;
+            } else if (bu.getRefPerson().getDemAge()>=55 && bu.getRefPerson().getDemAge()<=74) {
+                ii = 2;
+            }
+            if (ii>=0) {
+
+                avBUNPV[ii] += bu.getWealthNonPensValue();
+                avBUHgV[ii] += bu.getWealthPrptyValue();
+                avBUMgV[ii] += bu.getWealthNonPension().getWealthMortgageDebtValue();
+                prBUHgV[ii] += bu.getWealthPrptyValue() > 0.0 ? 1.0: 0.0;
+                prBUMgV[ii] += bu.getWealthNonPension().getWealthMortgageDebtValue() > 0.0 ? 1.0: 0.0;
+                popBU[ii] += 1.0;
+            }
+        }
+        for (int ii=0; ii<=2; ii++) {
+
+            if (popBU[ii] > 0) {
+
+                avBUNPV[ii] /= popBU[ii];
+                avBUHgV[ii] /= popBU[ii];
+                avBUMgV[ii] /= popBU[ii];
+                prBUHgV[ii] /= popBU[ii];
+                prBUMgV[ii] /= popBU[ii];
+            }
+        }
+
         // populate outputs
         setyOPMember18to29Share(prOPMemb[0]);
         setyOPMember30to54Share(prOPMemb[1]);
@@ -270,5 +479,20 @@ public class Statistics3 {
         setyWealthNonPensValue18to29Avg(avNonPensWealth[0]);
         setyWealthNonPensValue30to54Avg(avNonPensWealth[1]);
         setyWealthNonPensValue55to74Avg(avNonPensWealth[2]);
+        setyWealthBUNonPensValue18to29Avg(avBUNPV[0]);
+        setyWealthBUNonPensValue30to54Avg(avBUNPV[1]);
+        setyWealthBUNonPensValue55to74Avg(avBUNPV[2]);
+        setyWealthBUHousingValue18to29Avg(avBUHgV[0]);
+        setyWealthBUHousingValue30to54Avg(avBUHgV[1]);
+        setyWealthBUHousingValue55to74Avg(avBUHgV[2]);
+        setyWealthBUMortgageValue18to29Avg(avBUMgV[0]);
+        setyWealthBUMortgageValue30to54Avg(avBUMgV[1]);
+        setyWealthBUMortgageValue55to74Avg(avBUMgV[2]);
+        setyWealthBUHomeOwner18to29Avg(prBUHgV[0]);
+        setyWealthBUHomeOwner30to54Avg(prBUHgV[1]);
+        setyWealthBUHomeOwner55to74Avg(prBUHgV[2]);
+        setyWealthBUMortgageHolder18to29Avg(prBUMgV[0]);
+        setyWealthBUMortgageHolder30to54Avg(prBUMgV[1]);
+        setyWealthBUMortgageHolder55to74Avg(prBUMgV[2]);
     }
 }

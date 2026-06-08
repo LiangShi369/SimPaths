@@ -1,5 +1,7 @@
 package simpaths.model.benefitunit;
 
+import simpaths.model.BenefitUnit;
+
 public class WealthNonPension {
 
     private double inYearSavings;               // excess of disposable income to consumption in the year
@@ -32,7 +34,7 @@ public class WealthNonPension {
     }
 
     public WealthNonPension(double wealthTotValue, double wealthPrptyValue, double wealthMortgageDebtValue, double wealthPensValue) {
-        // used to set for initial population
+        // used for initial population
         inYearSavings = 0.0;
         inYearHousingAccrual = 0.0;
         wealthNonPensionValue = wealthTotValue - wealthPensValue;
@@ -54,14 +56,15 @@ public class WealthNonPension {
         return wealthHousing.projectReturnAnnual(year);
     }
 
-    public void projectNonPensionWealth(WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual, double xConsumptionAnnual) {
+    public void projectNonPensionWealth(BenefitUnit benefitUnit, WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual,
+                                        double xConsumptionAnnual, double innovHousingIncidence, double innovHousingNetValue) {
 
         // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
         wealthNonPensionValue = wealthNonPensionL1.getWealthNonPensionValue() + inYearSavings + wealthNonPensionL1.getWealthHousing().getInYearAccrualNet();
 
         // allocate share of non-pension wealth to housing
-        wealthHousing.projectValues();
+        wealthHousing.projectValues(benefitUnit, wealthNonPensionL1.getWealthHousing(), innovHousingIncidence, innovHousingNetValue);
 
         // allocate remaining share of non-pension wealth to financial
         wealthFinancial.setValue(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
@@ -81,6 +84,10 @@ public class WealthNonPension {
 
     public double getWealthNonPensionValue() {
         return updateWealthNonPensionValue();
+    }
+
+    public double getWealthNonPensionValueDirect() {
+        return wealthNonPensionValue;
     }
 
     public double getInYearSavings() {

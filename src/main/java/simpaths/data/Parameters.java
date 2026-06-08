@@ -3571,10 +3571,10 @@ public class Parameters {
 
                 // Test if a Person Enum
                 try {
-                    Person.DoublesVariables.valueOf(keyName);
+                    Person.Variables.valueOf(keyName);
                 } catch (IllegalArgumentException e) {
                     try {
-                        BenefitUnit.Regressors.valueOf(keyName);
+                        BenefitUnit.Variables.valueOf(keyName);
                     } catch (IllegalArgumentException e2) {
 
                         // This fires if the string isn't in the Enum

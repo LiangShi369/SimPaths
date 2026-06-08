@@ -316,8 +316,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labHrsWorkWeek = getLabourSupplyWeekly().getHours(this);
         idHh = mother.getBenefitUnit().getHousehold().getId();
 //		setDeviationFromMeanRetirementAge();			//This would normally be done within initialisation, but the line above has been commented out for reasons given...
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
+        yDispEquivYear = new Series.Double(this, Variables.EquivalisedIncomeYearly);
+        xEquivYearL1 = new Series.Double(this, Variables.EquivalisedConsumptionYearly);
         xEquivYear = 0.;
         yLifeTime = 0.;
         demBornInSimFlag = true;
@@ -555,8 +555,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         statInverseMillsRatioMinF = originalPerson.statInverseMillsRatioMinF;
 
         demAdultChildFlag = originalPerson.demAdultChildFlag;
-        yDispEquivYear = new Series.Double(this, DoublesVariables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, DoublesVariables.EquivalisedConsumptionYearly);
+        yDispEquivYear = new Series.Double(this, Variables.EquivalisedIncomeYearly);
+        xEquivYearL1 = new Series.Double(this, Variables.EquivalisedConsumptionYearly);
         xEquivYear = originalPerson.xEquivYear;
         demEthnC6 = originalPerson.demEthnC6;
         yBenReceivedFlag = originalPerson.yBenReceivedFlag;
@@ -969,7 +969,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (model.getCountry().equals(Country.UK)) {
 
                 //If age below or equal to 29 and in continuous education follow process F1a
-                double score = Parameters.getRegFertilityF1().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegFertilityF1().getScore(this, Variables.class);
                 if (!Parameters.isFinite(score))
                     throw new ArithmeticException("Failure to evaluate score for fertility rate");
                 prob = Parameters.getRegFertilityF1().getProbability(score + probitAdjustment);
@@ -1072,15 +1072,15 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 double prob;
                 if (demMaleFlag.equals(Gender.Male)) {
                     if (eduHighestC4.equals(Education.High)) {
-                        prob = Parameters.getRegUnemploymentMaleGraduateU1a().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegUnemploymentMaleGraduateU1a().getProbability(this, Variables.class);
                     } else {
-                        prob = Parameters.getRegUnemploymentMaleNonGraduateU1b().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegUnemploymentMaleNonGraduateU1b().getProbability(this, Variables.class);
                     }
                 } else {
                     if (eduHighestC4.equals(Education.High)) {
-                        prob = Parameters.getRegUnemploymentFemaleGraduateU1c().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegUnemploymentFemaleGraduateU1c().getProbability(this, Variables.class);
                     } else {
-                        prob = Parameters.getRegUnemploymentFemaleNonGraduateU1d().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegUnemploymentFemaleNonGraduateU1d().getProbability(this, Variables.class);
                     }
                 }
                 labWageOfferLowFlag = (statInnovations.getDoubleDraw(22) < prob);
@@ -1145,7 +1145,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         //For those who are moving out, evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
 
-        double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Person.DoublesVariables.class);
+        double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Variables.class);
         boolean toLeaveHome = (statInnovations.getDoubleDraw(21) < prob);
         if (Les_c4.Student.equals(labC4)) {
 
@@ -1183,9 +1183,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
                     double prob;
                     if (getPartner() != null) {
-                        prob = Parameters.getRegRetirementR1b().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegRetirementR1b().getProbability(this, Variables.class);
                     } else {
-                        prob = Parameters.getRegRetirementR1a().getProbability(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegRetirementR1a().getProbability(this, Variables.class);
                     }
                     toRetire = (statInnovations.getDoubleDraw(23) < prob);
                 } else {
@@ -1205,7 +1205,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE) {
 
-            double prob = Parameters.getRegFinancialDistress().getProbability(this, Person.DoublesVariables.class);
+            double prob = Parameters.getRegFinancialDistress().getProbability(this, Variables.class);
             yFinDstrssFlag = statInnovations.getDoubleDraw(32) < prob;
         } else {
             yFinDstrssFlag = false;
@@ -1226,7 +1226,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
      */
     protected void healthMentalHM1Level() {
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
-            double score = Parameters.getRegHealthHM1Level().getScore(this, Person.DoublesVariables.class);
+            double score = Parameters.getRegHealthHM1Level().getScore(this, Variables.class);
             if (!Parameters.isFinite(score))
                 throw new ArithmeticException("Failure to evaluate score for mental health level");
             double rmse = Parameters.getRMSEForRegression("HM1_L");
@@ -1253,12 +1253,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double dhmPrediction;
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
-                dhmPrediction = Parameters.getRegHealthHM2LevelMales().getScore(this, Person.DoublesVariables.class);
+                dhmPrediction = Parameters.getRegHealthHM2LevelMales().getScore(this, Variables.class);
                 if (!Parameters.isFinite(dhmPrediction))
                     throw new ArithmeticException("Failure to evaluate score for mental health level (HM2)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
-                dhmPrediction = Parameters.getRegHealthHM2LevelFemales().getScore(this, Person.DoublesVariables.class);
+                dhmPrediction = Parameters.getRegHealthHM2LevelFemales().getScore(this, Variables.class);
                 if (!Parameters.isFinite(dhmPrediction))
                     throw new ArithmeticException("Failure to evaluate score for mental health level (HM2b)");
                 healthWbScore0to36 = constrainDhmEstimate(dhmPrediction+ healthWbScore0to36);
@@ -1302,10 +1302,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double dhmGhqPrediction;
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
-                dhmGhqPrediction = Parameters.getRegHealthHM2CaseMales().getScore(this, Person.DoublesVariables.class);
+                dhmGhqPrediction = Parameters.getRegHealthHM2CaseMales().getScore(this, Variables.class);
                 healthPsyDstrss0to12 = constrainhealthPsyDstrssEstimate(dhmGhqPrediction+ healthPsyDstrss0to12);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
-                dhmGhqPrediction = Parameters.getRegHealthHM2CaseFemales().getScore(this, Person.DoublesVariables.class);
+                dhmGhqPrediction = Parameters.getRegHealthHM2CaseFemales().getScore(this, Variables.class);
                 healthPsyDstrss0to12 = constrainhealthPsyDstrssEstimate(dhmGhqPrediction+ healthPsyDstrss0to12);
             } else System.out.println("healthMentalHM2 method in Person class: Person has no gender!");
         } else if (healthPsyDstrss0to12 != null) {
@@ -1326,7 +1326,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthMCS1() {
 
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
-            double mcsPrediction = Parameters.getRegHealthMCS1().getScore(this, Person.DoublesVariables.class);
+            double mcsPrediction = Parameters.getRegHealthMCS1().getScore(this, Variables.class);
             double rmse = Parameters.getRMSEForRegression("DHE_MCS1");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(33));
             healthMentalMcs = mcsPrediction + rmse * gauss;
@@ -1349,10 +1349,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double mcsPrediction;
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
-                mcsPrediction = Parameters.getRegHealthMCS2Males().getScore(this, Person.DoublesVariables.class);
+                mcsPrediction = Parameters.getRegHealthMCS2Males().getScore(this, Variables.class);
                 healthMentalMcs = constrainSF12Estimate(mcsPrediction + healthMentalMcs);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
-                mcsPrediction = Parameters.getRegHealthMCS2Females().getScore(this, Person.DoublesVariables.class);
+                mcsPrediction = Parameters.getRegHealthMCS2Females().getScore(this, Variables.class);
                 healthMentalMcs = constrainSF12Estimate(mcsPrediction + healthMentalMcs);
             }
         } else if (healthMentalMcs != null) {
@@ -1373,7 +1373,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void healthPCS1() {
 
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
-            double pcsPrediction = Parameters.getRegHealthPCS1().getScore(this, Person.DoublesVariables.class);
+            double pcsPrediction = Parameters.getRegHealthPCS1().getScore(this, Variables.class);
             double rmse = Parameters.getRMSEForRegression("DHE_PCS1");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(34));
             healthPhysicalPcs = pcsPrediction + rmse * gauss;
@@ -1396,10 +1396,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double pcsPrediction;
         if (demAge >= 25 && demAge < MIN_AGE_SOCIAL_CARE) {
             if (Gender.Male.equals(getDemMaleFlag())) {
-                pcsPrediction = Parameters.getRegHealthPCS2Males().getScore(this, Person.DoublesVariables.class);
+                pcsPrediction = Parameters.getRegHealthPCS2Males().getScore(this, Variables.class);
                 healthPhysicalPcs = constrainSF12Estimate(pcsPrediction + healthPhysicalPcs);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
-                pcsPrediction = Parameters.getRegHealthPCS2Females().getScore(this, Person.DoublesVariables.class);
+                pcsPrediction = Parameters.getRegHealthPCS2Females().getScore(this, Variables.class);
                 healthPhysicalPcs = constrainSF12Estimate(pcsPrediction + healthPhysicalPcs);
             }
         } else if (healthPhysicalPcs != null) {
@@ -1421,7 +1421,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     protected void lifeSatisfaction1() {
 
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
-            double dlsPrediction = Parameters.getRegLifeSatisfaction1().getScore(this, Person.DoublesVariables.class);
+            double dlsPrediction = Parameters.getRegLifeSatisfaction1().getScore(this, Variables.class);
             double rmse = Parameters.getRMSEForRegression("DLS1");
             double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(35));
             demLifeSatScore0to10 = dlsPrediction + rmse*gauss;
@@ -1446,10 +1446,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             double dlsPrediction;
             if (Gender.Male.equals(getDemMaleFlag())) {
-                dlsPrediction = Parameters.getRegLifeSatisfaction2Males().getScore(this, Person.DoublesVariables.class);
+                dlsPrediction = Parameters.getRegLifeSatisfaction2Males().getScore(this, Variables.class);
                 demLifeSatScore0to10 = constrainLifeSatisfactionEstimate(dlsPrediction + demLifeSatScore0to10);
             } else if (Gender.Female.equals(getDemMaleFlag())) {
-                dlsPrediction = Parameters.getRegLifeSatisfaction2Females().getScore(this, Person.DoublesVariables.class);
+                dlsPrediction = Parameters.getRegLifeSatisfaction2Females().getScore(this, Variables.class);
                 demLifeSatScore0to10 = constrainLifeSatisfactionEstimate(dlsPrediction + demLifeSatScore0to10);
             }
         } else if (demLifeSatScore0to10 != null) {
@@ -1475,7 +1475,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double eq5dPrediction;
         if (demAge >= MIN_AGE_TO_HAVE_INCOME) {
 
-            eq5dPrediction = Parameters.getRegEQ5D().getScore(this, Person.DoublesVariables.class);
+            eq5dPrediction = Parameters.getRegEQ5D().getScore(this, Variables.class);
             if (eq5dPrediction > 1) {
                 demLifeSatEQ5D = 1.0;
             }
@@ -1571,7 +1571,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (Indicator.False.equals(getEduSpellFlag())) {
                 boolean becomeLTSickDisabled = false;
                 if (!Parameters.enableIntertemporalOptimisations || DecisionParams.flagDisability) {
-                    double prob = Parameters.getRegHealthH2().getProbability(this, Person.DoublesVariables.class);
+                    double prob = Parameters.getRegHealthH2().getProbability(this, Variables.class);
                     becomeLTSickDisabled = (healthInnov2 < prob);
                 }
                 if (becomeLTSickDisabled) {
@@ -1603,19 +1603,19 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // need care only projected for 65 and over due to limitations of data used for parameterisation
 
             double recCareInnov = statInnovations.getDoubleDraw(7);
-            double probNeedCare = Parameters.getRegNeedCareS2a().getProbability(this, Person.DoublesVariables.class);
+            double probNeedCare = Parameters.getRegNeedCareS2a().getProbability(this, Variables.class);
             if (recCareInnov < probNeedCare) {
                 careNeedFlag = Indicator.True;
             } else {
                 careNeedFlag = Indicator.False;
             }
 
-            double probRecCare = Parameters.getRegReceiveCareS2b().getProbability(this, Person.DoublesVariables.class);
+            double probRecCare = Parameters.getRegReceiveCareS2b().getProbability(this, Variables.class);
             if (recCareInnov < probRecCare) {
             // receive care
             // if probNeedCare > probRecCare, then code here implies that anyone who receives care will also need care
 
-                Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Person.DoublesVariables.class);
+                Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Variables.class);
                 MultiValEvent event = new MultiValEvent(probs1, statInnovations.getDoubleDraw(8));
                 SocialCareReceiptS2c socialCareReceiptS2c = (SocialCareReceiptS2c) event.eval();
                 careReceivedFlag = SocialCareReceipt.getCode(socialCareReceiptS2c);
@@ -1626,7 +1626,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     // informal care received
 
                     // S2d: hours of informal care received (conditional on receiving informal care)
-                    double score = Parameters.getRegInformalCareHoursS2d().getScore(this,Person.DoublesVariables.class);
+                    double score = Parameters.getRegInformalCareHoursS2d().getScore(this, Variables.class);
                     double rmse = Parameters.getRMSEForRegression("S2d");
                     double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(12));
                     double informalHours = Math.min(Parameters.MAX_HOURS_WEEKLY_INFORMAL_CARE, Math.sinh(score + rmse * gauss));
@@ -1699,7 +1699,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 if (careFormalFlag) {
 
                     // S2e: hours of formal care received (conditional on receiving formal care)
-                    double score = Parameters.getRegFormalCareHoursS2e().getScore(this,Person.DoublesVariables.class);
+                    double score = Parameters.getRegFormalCareHoursS2e().getScore(this, Variables.class);
                     double rmse = Parameters.getRMSEForRegression("S2e");
                     double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(13));
                     careHrsFormalWeek = Math.min(Parameters.MAX_HOURS_WEEKLY_FORMAL_CARE, Math.sinh(score + rmse * gauss));
@@ -1737,12 +1737,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (partner == null) {
 
                 // S3a: probability of providing care, singles.
-                double score = Parameters.getRegCarePartnerProvCareToOtherS3a().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegCarePartnerProvCareToOtherS3a().getScore(this, Variables.class);
                 probProvideAny = Parameters.getRegCarePartnerProvCareToOtherS3a().getProbability(score + probitAdjustment);
             } else {
 
                 // S3b: probability of providing care, partnered.
-                double score = Parameters.getRegNoCarePartnerProvCareToOtherS3b().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegNoCarePartnerProvCareToOtherS3b().getScore(this, Variables.class);
                 probProvideAny = Parameters.getRegNoCarePartnerProvCareToOtherS3b().getProbability(score + probitAdjustment);
             }
             boolean provideCare = (statInnovations.getDoubleDraw(37) < probProvideAny);
@@ -1753,12 +1753,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 if (partner == null) {
 
                     // S3c: informal care hours provided, singles (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3c().getScore(this, Person.DoublesVariables.class);
+                    score = Parameters.getRegCareHoursProvS3c().getScore(this, Variables.class);
                     rmse = Parameters.getRMSEForRegression("S3c");
                 } else {
 
                     // S3d: informal care hours provided, partnered (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3d().getScore(this, Person.DoublesVariables.class);
+                    score = Parameters.getRegCareHoursProvS3d().getScore(this, Variables.class);
                     rmse = Parameters.getRMSEForRegression("S3d");
                 }
                 double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(14));
@@ -1790,7 +1790,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (partner == null) {
                 // partnership formation
 
-                double score = Parameters.getRegPartnershipU1().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegPartnershipU1().getScore(this, Variables.class);
                 prob = Parameters.getRegPartnershipU1().getProbability(score + probitAdjustment);
                 demBePartnerFlag = (cohabitInnov < prob);
                 if (demBePartnerFlag)
@@ -1798,7 +1798,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             } else if (demMaleFlag == Gender.Female) {
                 // partnership dissolution
 
-                double score = Parameters.getRegPartnershipU2().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegPartnershipU2().getScore(this, Variables.class);
                 prob = Parameters.getRegPartnershipU2().getProbability(score - probitAdjustment);
                 if (cohabitInnov < prob) {
                     demLeavePartnerFlag = true;
@@ -1861,7 +1861,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     // Yes
                     if (demAge <= MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION) {
                         // --> process E1a
-                        double score = Parameters.getRegEducationE1a().getScore(this, Person.DoublesVariables.class);
+                        double score = Parameters.getRegEducationE1a().getScore(this, Variables.class);
                         double prob = Parameters.getRegEducationE1a().getProbability(score + probitAdjustment);
 
                         if (labourInnov < prob) {
@@ -1898,7 +1898,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 // No --> Process E1b
                 else {
 
-                    double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
+                    double score = Parameters.getRegEducationE1b().getScore(this, Variables.class);
                     double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
                     if (labourInnov < prob) {
                         // Become a student *OUTCOME E*
@@ -1998,10 +1998,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(15));
         double logPotentialHourlyEarnings, score, rmse;
         if (demMaleFlag.equals(Gender.Male)) {
-            score = Parameters.getRegWagesMales().getScore(this, Person.DoublesVariables.class);
+            score = Parameters.getRegWagesMales().getScore(this, Variables.class);
             rmse = Parameters.getRMSEForRegression("Wages_Males");
         } else {
-            score = Parameters.getRegWagesFemales().getScore(this, Person.DoublesVariables.class);
+            score = Parameters.getRegWagesFemales().getScore(this, Variables.class);
             rmse = Parameters.getRMSEForRegression("Wages_Females");
         }
         logPotentialHourlyEarnings = score + rmse * gauss;
@@ -2042,15 +2042,15 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double logFullTimeHourlyEarnings;
         if(Gender.Male.equals(demMaleFlag)) {
             if (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) {
-                logFullTimeHourlyEarnings = Parameters.getRegWagesMalesE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentEmp;
+                logFullTimeHourlyEarnings = Parameters.getRegWagesMalesE().getScore(this, Variables.class) + labWageRegressRandomCompoponentEmp;
             } else {
-                logFullTimeHourlyEarnings = Parameters.getRegWagesMalesNE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentNotEmp;
+                logFullTimeHourlyEarnings = Parameters.getRegWagesMalesNE().getScore(this, Variables.class) + labWageRegressRandomCompoponentNotEmp;
             }
         } else {
             if (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) {
-                logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentEmp;
+                logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesE().getScore(this, Variables.class) + labWageRegressRandomCompoponentEmp;
             } else {
-                logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesNE().getScore(this, Person.DoublesVariables.class) + labWageRegressRandomCompoponentNotEmp;
+                logFullTimeHourlyEarnings = Parameters.getRegWagesFemalesNE().getScore(this, Variables.class) + labWageRegressRandomCompoponentNotEmp;
             }
         }
         if (!Parameters.isFinite(logFullTimeHourlyEarnings))
@@ -2167,7 +2167,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             pensionIncMonth = privatePension.projectInPaymentPension(model.getYear(), privatePensionL1.getPensionIncomeAnnual());
         } else {
 
-            double score = Parameters.getRegIncomeI2b().getScore(this, Person.DoublesVariables.class);
+            double score = Parameters.getRegIncomeI2b().getScore(this, Variables.class);
             double rmse = Parameters.getRMSEForRegression("I2b");
 
             // "ihs" in instructions -> Use Asinh
@@ -2191,14 +2191,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         } else {
 
             // 1. SELECTION (Process I3a - Logit)
-            double probPens = Parameters.getRegIncomeI3a().getProbability(this, Person.DoublesVariables.class);
+            double probPens = Parameters.getRegIncomeI3a().getProbability(this, Variables.class);
 
             // Using the same random draw index (19) as your previous pension logic
             boolean hasPrivatePensionIncome = (statInnovations.getDoubleDraw(19) < probPens);
             if (hasPrivatePensionIncome) {
 
                 // 2. AMOUNT (Process I3b - OLS)
-                double score = Parameters.getRegIncomeI3b().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegIncomeI3b().getScore(this, Variables.class);
                 double rmse = Parameters.getRMSEForRegression("I3b");
 
                 // "ihs" in instructions -> Use Asinh
@@ -2237,14 +2237,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             double capitalInnov = statInnovations.getDoubleDraw(18);
             // 1. SELECTION STEP (Process 1a - Binomial)
             // Use I1a purely to determine the Probability of having income
-            double probCap = Parameters.getRegIncomeI1a().getProbability(this, Person.DoublesVariables.class);
+            double probCap = Parameters.getRegIncomeI1a().getProbability(this, Variables.class);
 
             boolean hasCapitalIncome = (capitalInnov < probCap);
 
             if (hasCapitalIncome) {
                 // 2. AMOUNT STEP (Process 1b - Linear)
                 // Use I1b to calculate the Score (magnitude)
-                double score = Parameters.getRegIncomeI1b().getScore(this, Person.DoublesVariables.class);
+                double score = Parameters.getRegIncomeI1b().getScore(this, Variables.class);
 
                 // Ensure you fetch the RMSE for the linear process (I1b)
                 double rmse = Parameters.getRMSEForRegression("I1b");
@@ -2316,7 +2316,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         // --- Step 1: Regression Result ---
         // The regression determines the highest possible qualification achieved this spell.
-        Map<EducationLevel,Double> probs = Parameters.getRegEducationE2().getProbabilities(this, Person.DoublesVariables.class);
+        Map<EducationLevel,Double> probs = Parameters.getRegEducationE2().getProbabilities(this, Variables.class);
         MultiValEvent event = new MultiValEvent(probs, statInnovations.getDoubleDraw(30));
         EducationLevel regressionEducationLevel = (EducationLevel) event.eval();
         Education newEducationLevel = Education.valueOf(regressionEducationLevel.name());
@@ -2625,7 +2625,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     // implements IDoubleSource for use with Regression classes
     // ---------------------------------------------------------------------
 
-    public enum DoublesVariables {
+    public enum Variables {
         // ORGANISED ALPHABETICALLY TO ASSIST IDENTIFICATION
 
         demAge_Sq,
@@ -3984,7 +3984,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public double getDoubleValue(Enum<?> variableID) {
 
-        switch ((DoublesVariables) variableID) {
+        switch ((Variables) variableID) {
 
             case Age80plus -> {
                 return (demAge >= 80) ? 1. : 0.;
@@ -4516,43 +4516,43 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Indicator.True.equals(eduSpellFlag)) ? (double) getDemAgeSq() : 0.0;
             }
             case Ded_Dhe_pcs_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Dhe_pcs_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Dhe_pcs_L1) : 0.0;
             }
             case Ded_Dhe_mcs_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Dhe_mcs_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Dhe_mcs_L1) : 0.0;
             }
             case Ded_Ypncp_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ypncp_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ypncp_L1) : 0.0;
             }
             case Ded_Yplgrs_dv_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Yplgrs_dv_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Yplgrs_dv_L1) : 0.0;
             }
             case Ded_Yplgrs_dv_L2 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Yplgrs_dv_L2) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Yplgrs_dv_L2) : 0.0;
             }
             case Ded_Ypncp_L2 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ypncp_L2) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ypncp_L2) : 0.0;
             }
             case Ded_Ydses_c5_Q2_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ydses_c5_Q2_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ydses_c5_Q2_L1) : 0.0;
             }
             case Ded_Ydses_c5_Q3_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ydses_c5_Q3_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ydses_c5_Q3_L1) : 0.0;
             }
             case Ded_Ydses_c5_Q4_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ydses_c5_Q4_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ydses_c5_Q4_L1) : 0.0;
             }
             case Ded_Ydses_c5_Q5_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Ydses_c5_Q5_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Ydses_c5_Q5_L1) : 0.0;
             }
             case Ded_Dnc_L1_ -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Dnc_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Dnc_L1) : 0.0;
             }
             case Ded_Dnc02_L1 -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Dnc02_L1) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Dnc02_L1) : 0.0;
             }
             case Ded_Dcpst_Single -> {
-                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(DoublesVariables.Dcpst_Single) : 0.0;
+                return (Indicator.True.equals(eduSpellFlag)) ? getDoubleValue(Variables.Dcpst_Single) : 0.0;
             }
             case Ded_L1 -> {
                 return (double) eduSpellFlagL1.getValue() ;
@@ -5736,190 +5736,190 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
 
             case Dag_c -> {
-                return getDoubleValue(DoublesVariables.Dag);
+                return getDoubleValue(Variables.Dag);
             }
 
             case Ded_Dcpst_Single_L1 -> {
-                return getDoubleValue(DoublesVariables.Ded_Dcpst_Single);
+                return getDoubleValue(Variables.Ded_Dcpst_Single);
             }
 
             case Dhe_1 -> {
-                return getDoubleValue(DoublesVariables.Dhe);
+                return getDoubleValue(Variables.Dhe);
             }
 
             case careMarketFormalL1 -> {
-                return getDoubleValue(DoublesVariables.CareMarketFormal_L1);
+                return getDoubleValue(Variables.CareMarketFormal_L1);
             }
 
             case careMarketFormalPartner -> {
-                return getDoubleValue(DoublesVariables.CareMarketFormalPartner);
+                return getDoubleValue(Variables.CareMarketFormalPartner);
             }
 
             case careMarketInformalL1 -> {
-                return getDoubleValue(DoublesVariables.CareMarketInformal_L1);
+                return getDoubleValue(Variables.CareMarketInformal_L1);
             }
 
             case careMarketInformalPartner -> {
-                return getDoubleValue(DoublesVariables.CareMarketInformalPartner);
+                return getDoubleValue(Variables.CareMarketInformalPartner);
             }
 
             case careMarketMixed -> {
-                return getDoubleValue(DoublesVariables.CareMarketMixed);
+                return getDoubleValue(Variables.CareMarketMixed);
             }
 
             case careMarketMixedL1 -> {
-                return getDoubleValue(DoublesVariables.CareMarketMixed_L1);
+                return getDoubleValue(Variables.CareMarketMixed_L1);
             }
 
             case demAge20to24 -> {
-                return getDoubleValue(DoublesVariables.Age20to24);
+                return getDoubleValue(Variables.Age20to24);
             }
 
             case demAge25to29 -> {
-                return getDoubleValue(DoublesVariables.Age25to29);
+                return getDoubleValue(Variables.Age25to29);
             }
 
             case demAge30to34 -> {
-                return getDoubleValue(DoublesVariables.Age30to34);
+                return getDoubleValue(Variables.Age30to34);
             }
 
             case demAge35to39 -> {
-                return getDoubleValue(DoublesVariables.Age35to39);
+                return getDoubleValue(Variables.Age35to39);
             }
 
             case demAge40to44 -> {
-                return getDoubleValue(DoublesVariables.Age40to44);
+                return getDoubleValue(Variables.Age40to44);
             }
 
             case demAge45to49 -> {
-                return getDoubleValue(DoublesVariables.Age45to49);
+                return getDoubleValue(Variables.Age45to49);
             }
 
             case demAge50to54 -> {
-                return getDoubleValue(DoublesVariables.Age50to54);
+                return getDoubleValue(Variables.Age50to54);
             }
 
             case demAge55to59 -> {
-                return getDoubleValue(DoublesVariables.Age55to59);
+                return getDoubleValue(Variables.Age55to59);
             }
 
             case demAge60to64 -> {
-                return getDoubleValue(DoublesVariables.Age60to64);
+                return getDoubleValue(Variables.Age60to64);
             }
 
             case demAge65to69 -> {
-                return getDoubleValue(DoublesVariables.Age65to69);
+                return getDoubleValue(Variables.Age65to69);
             }
 
             case demAge67to68 -> {
-                return getDoubleValue(DoublesVariables.Age67to68);
+                return getDoubleValue(Variables.Age67to68);
             }
 
             case demAge69to70 -> {
-                return getDoubleValue(DoublesVariables.Age69to70);
+                return getDoubleValue(Variables.Age69to70);
             }
 
             case demAge70to74 -> {
-                return getDoubleValue(DoublesVariables.Age70to74);
+                return getDoubleValue(Variables.Age70to74);
             }
 
             case demAge71to72 -> {
-                return getDoubleValue(DoublesVariables.Age71to72);
+                return getDoubleValue(Variables.Age71to72);
             }
 
             case demAge73to74 -> {
-                return getDoubleValue(DoublesVariables.Age73to74);
+                return getDoubleValue(Variables.Age73to74);
             }
 
             case demAge75to76 -> {
-                return getDoubleValue(DoublesVariables.Age75to76);
+                return getDoubleValue(Variables.Age75to76);
             }
 
             case demAge75to79 -> {
-                return getDoubleValue(DoublesVariables.Age75to79);
+                return getDoubleValue(Variables.Age75to79);
             }
 
             case demAge77to78 -> {
-                return getDoubleValue(DoublesVariables.Age77to78);
+                return getDoubleValue(Variables.Age77to78);
             }
 
             case demAge79to80 -> {
-                return getDoubleValue(DoublesVariables.Age79to80);
+                return getDoubleValue(Variables.Age79to80);
             }
 
             case demAge80to84 -> {
-                return getDoubleValue(DoublesVariables.Age80to84);
+                return getDoubleValue(Variables.Age80to84);
             }
 
             case demAge81to82 -> {
-                return getDoubleValue(DoublesVariables.Age81to82);
+                return getDoubleValue(Variables.Age81to82);
             }
 
             case demAge83to84 -> {
-                return getDoubleValue(DoublesVariables.Age83to84);
+                return getDoubleValue(Variables.Age83to84);
             }
 
             case demAge85plus -> {
-                return getDoubleValue(DoublesVariables.Age85plus);
+                return getDoubleValue(Variables.Age85plus);
             }
 
             case fertilityRate -> {
-                return getDoubleValue(DoublesVariables.FertilityRate);
+                return getDoubleValue(Variables.FertilityRate);
             }
 
             case need_care -> {
-                return getDoubleValue(DoublesVariables.NeedCare);
+                return getDoubleValue(Variables.NeedCare);
             }
 
             case receive_care -> {
-                return getDoubleValue(DoublesVariables.ReceiveCare);
+                return getDoubleValue(Variables.ReceiveCare);
             }
 
             // -----------------------------------------------------------------------
             // social care age interaction variants
             // -----------------------------------------------------------------------
             case demAge67to68_Formal, demAge67to68_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge67to68);
+                return getDoubleValue(Variables.demAge67to68);
             }
             case demAge69to70_Formal, demAge69to70_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge69to70);
+                return getDoubleValue(Variables.demAge69to70);
             }
             case demAge71to72_Formal, demAge71to72_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge71to72);
+                return getDoubleValue(Variables.demAge71to72);
             }
             case demAge73to74_Formal, demAge73to74_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge73to74);
+                return getDoubleValue(Variables.demAge73to74);
             }
             case demAge75to76_Formal, demAge75to76_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge75to76);
+                return getDoubleValue(Variables.demAge75to76);
             }
             case demAge77to78_Formal, demAge77to78_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge77to78);
+                return getDoubleValue(Variables.demAge77to78);
             }
             case demAge79to80_Formal, demAge79to80_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge79to80);
+                return getDoubleValue(Variables.demAge79to80);
             }
             case demAge81to82_Formal, demAge81to82_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge81to82);
+                return getDoubleValue(Variables.demAge81to82);
             }
             case demAge83to84_Formal, demAge83to84_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge83to84);
+                return getDoubleValue(Variables.demAge83to84);
             }
             case demAge85plus_Formal, demAge85plus_Mixed -> {
-                return getDoubleValue(DoublesVariables.demAge85plus);
+                return getDoubleValue(Variables.demAge85plus);
             }
 
             // -----------------------------------------------------------------------
             // careMarket new-naming interaction variants
             // -----------------------------------------------------------------------
             case careMarketFormalL1_Formal, careMarketFormalL1_Mixed -> {
-                return getDoubleValue(DoublesVariables.CareMarketFormal_L1);
+                return getDoubleValue(Variables.CareMarketFormal_L1);
             }
             case careMarketInformalL1_Formal, careMarketInformalL1_Mixed -> {
-                return getDoubleValue(DoublesVariables.CareMarketInformal_L1);
+                return getDoubleValue(Variables.CareMarketInformal_L1);
             }
             case careMarketMixedL1_Formal, careMarketMixedL1_Mixed -> {
-                return getDoubleValue(DoublesVariables.CareMarketMixed_L1);
+                return getDoubleValue(Variables.CareMarketMixed_L1);
             }
 
             // -----------------------------------------------------------------------
@@ -6252,25 +6252,25 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     return 0.;
             }
             case demCompHhC82L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_2_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_2_L1);
             }
             case demCompHhC83L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_3_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_3_L1);
             }
             case demCompHhC84L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_4_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_4_L1);
             }
             case demCompHhC85L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_5_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_5_L1);
             }
             case demCompHhC86L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_6_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_6_L1);
             }
             case demCompHhC87L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_7_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_7_L1);
             }
             case demCompHhC88L1 -> {
-                return getDoubleValue(DoublesVariables.Dhhtp_c8_8_L1);
+                return getDoubleValue(Variables.Dhhtp_c8_8_L1);
             }
             case demEnterPartnerFlagL1 -> {
                 if (demPartnerStatusL1 != null && demPartnerStatusL2 != null)
@@ -6315,13 +6315,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (demPartnerStatusL1 != null && demPartnerStatusL1.equals(Dcpst.Single)) ? 1. : 0.;
             }
             case demPensAgeFlag -> {
-                return getDoubleValue(DoublesVariables.Reached_Retirement_Age);
+                return getDoubleValue(Variables.Reached_Retirement_Age);
             }
             case demPensAgeFlag_NotEmployedL1 -> {
-                return (getDoubleValue(DoublesVariables.Reached_Retirement_Age) > 0. && Les_c4.NotEmployed.equals(labC4L1)) ? 1. : 0.;
+                return (getDoubleValue(Variables.Reached_Retirement_Age) > 0. && Les_c4.NotEmployed.equals(labC4L1)) ? 1. : 0.;
             }
             case demPensPartnerAgeFlag -> {
-                return getDoubleValue(DoublesVariables.Reached_Retirement_Age_Sp);
+                return getDoubleValue(Variables.Reached_Retirement_Age_Sp);
             }
             case demRgnUKC -> {
                 return Region.UKC.equals(getRegion()) ? 1.0 : 0.0;
@@ -6432,28 +6432,28 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Indicator.True.equals(eduSpellFlag) && Gender.Male.equals(demMaleFlag)) ? 1.0 : 0.0;
             }
             case eduSampleFlag_McsL1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Dhe_mcs_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Dhe_mcs_L1) : 0.0;
             }
             case eduSampleFlag_PcsL1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Dhe_pcs_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Dhe_pcs_L1) : 0.0;
             }
             case eduSampleFlag_Q2L1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q2_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ydses_c5_Q2_L1) : 0.0;
             }
             case eduSampleFlag_Q3L1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q3_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ydses_c5_Q3_L1) : 0.0;
             }
             case eduSampleFlag_Q4L1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q4_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ydses_c5_Q4_L1) : 0.0;
             }
             case eduSampleFlag_Q5L1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ydses_c5_Q5_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ydses_c5_Q5_L1) : 0.0;
             }
             case eduSampleFlag_Single -> {
                 return (Indicator.True.equals(eduSpellFlag) && Dcpst.Single.equals(getDemPartnerStatus())) ? 1.0 : 0.0;
             }
             case eduSampleFlag_demMaleFlag -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.demMaleFlag) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.demMaleFlag) : 0.0;
             }
             case eduSampleFlag_demNChild0to2L1 -> {
                 return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildren02L1() : 0.0;
@@ -6462,10 +6462,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return Indicator.True.equals(eduSpellFlag) ? (double) getNumberChildrenAllL1() : 0.0;
             }
             case eduSampleFlag_yCapitalPersL1 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ypncp_L1) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ypncp_L1) : 0.0;
             }
             case eduSampleFlag_yCapitalPersL2 -> {
-                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(DoublesVariables.Ypncp_L2) : 0.0;
+                return Indicator.True.equals(eduSpellFlag) ? getDoubleValue(Variables.Ypncp_L2) : 0.0;
             }
             case exp_incchange -> {
                 return 0.; // approximate - income change transition not directly stored
@@ -6491,13 +6491,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (partner != null && Dhe.Excellent.equals(partner.getHealthSelfRated())) ? 1. : 0.;
             }
             case healthPartnerSelfRatedFair -> {
-                return getDoubleValue(DoublesVariables.Dhesp_Fair);
+                return getDoubleValue(Variables.Dhesp_Fair);
             }
             case healthPartnerSelfRatedGood -> {
-                return getDoubleValue(DoublesVariables.Dhesp_Good);
+                return getDoubleValue(Variables.Dhesp_Good);
             }
             case healthPartnerSelfRatedVeryGood -> {
-                return getDoubleValue(DoublesVariables.Dhesp_VeryGood);
+                return getDoubleValue(Variables.Dhesp_VeryGood);
             }
             case healthPhysicalPartnerPcsL1 -> {
                 Person partner = getPartner();
@@ -7764,16 +7764,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         double score;
         if(Gender.Male.equals(demMaleFlag)) {
             if (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) {
-                score = Parameters.getRegEmploymentSelectionMaleE().getScore(this, Person.DoublesVariables.class);
+                score = Parameters.getRegEmploymentSelectionMaleE().getScore(this, Variables.class);
             } else {
-                score = Parameters.getRegEmploymentSelectionMaleNE().getScore(this, Person.DoublesVariables.class);
+                score = Parameters.getRegEmploymentSelectionMaleNE().getScore(this, Variables.class);
             }
         } else {
             // for females
             if (Les_c4.EmployedOrSelfEmployed.equals(labC4L1)) {
-                score = Parameters.getRegEmploymentSelectionFemaleE().getScore(this, Person.DoublesVariables.class);
+                score = Parameters.getRegEmploymentSelectionFemaleE().getScore(this, Variables.class);
             } else {
-                score = Parameters.getRegEmploymentSelectionFemaleNE().getScore(this, Person.DoublesVariables.class);
+                score = Parameters.getRegEmploymentSelectionFemaleNE().getScore(this, Variables.class);
             }
         }
         Double inverseMillsRatio; //IMR is the PDF(x) / CDF(x) where x is score of probit of employment

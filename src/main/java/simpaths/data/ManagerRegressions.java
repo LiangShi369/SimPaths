@@ -314,7 +314,7 @@ public class ManagerRegressions {
     public static double getScore(IDoubleSource person, RegressionName regression) {
 
         if (RegressionType.Linear.equals(regression.getType()))
-            return getLinearRegression(regression).getScore(person, Person.DoublesVariables.class);
+            return getLinearRegression(regression).getScore(person, Person.Variables.class);
 
         throw new RuntimeException("unrecognised regression in getScore");
     }
@@ -396,12 +396,19 @@ public class ManagerRegressions {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static double getProbability(IDoubleSource obj, RegressionName regression) {
 
         if (!RegressionType.Logit.equals(regression.getType()) && !RegressionType.Probit.equals(regression.getType()))
             throw new InvalidParameterException("Failed to retrieve probability for unrecognised regression: " + regression.name());
 
-        return getBinomialRegression(regression).getProbability(obj, Person.DoublesVariables.class);
+        Class<? extends Enum<?>> regressorsClass = Arrays.stream(obj.getClass().getDeclaredClasses())
+                .filter(c -> c.isEnum() && c.getSimpleName().equals("Variables"))
+                .findFirst()
+                .map(c -> (Class<? extends Enum<?>>) c)
+                .orElseThrow(() -> new RuntimeException("No Variables enum found in class: " + obj.getClass().getName()));
+
+        return getBinomialRegression(regression).getProbability(obj, regressorsClass);
     }
 
     public static boolean getAnnualEventFromBiennial(IDoubleSource obj, boolean lagIncidence, double rand, RegressionName entryRegression, RegressionName persistRegression) {
@@ -428,12 +435,12 @@ public class ManagerRegressions {
 
     public static <E extends Enum<E> & IntegerValuedEnum> double getProbability(E event, IDoubleSource obj, RegressionName regression) {
 
-        return getDiscreteVariableRegression(regression).getProbability(event, obj, Person.DoublesVariables.class);
+        return getDiscreteVariableRegression(regression).getProbability(event, obj, Person.Variables.class);
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> Map<E, Double> getProbabilities(IDoubleSource obj, RegressionName regression) {
 
-        return getDiscreteVariableRegression(regression).getProbabilities(obj, Person.DoublesVariables.class);
+        return getDiscreteVariableRegression(regression).getProbabilities(obj, Person.Variables.class);
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> E getEvent(Map<E, Double> probs, double rand) {

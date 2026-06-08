@@ -38,8 +38,8 @@ import simpaths.data.statistics.Statistics3;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
 
-import static simpaths.model.Person.DoublesVariables.GrossEarningsYearly;
-import static simpaths.model.Person.DoublesVariables.GrossLabourIncomeMonthly;
+import static simpaths.model.Person.Variables.GrossEarningsYearly;
+import static simpaths.model.Person.Variables.GrossLabourIncomeMonthly;
 
 
 /**
