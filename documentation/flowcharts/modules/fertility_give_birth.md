@@ -60,7 +60,6 @@ In the household composition block, fertility and birth are scheduled after part
 - `fertilityAdjustment`: stored or frozen fertility alignment adjustment used by ordinary fertility.
 - `probitAdjustment`: trial adjustment used during fertility alignment.
 - `FertileFilter`: checks gender, region where relevant, maternity age range, and partner/single-mother eligibility.
-- `model.getCountry()`: current code recognises the UK fertility branch and throws otherwise.
 - `Parameters.getRegFertilityF1()`: fertility probit regression.
 - `statInnovations.getDoubleDraw(29)`: stochastic draw for fertility outcome.
 - `statInnovations.getDoubleDraw(27)`: stochastic draw for newborn sex.
@@ -94,7 +93,7 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 | `MIN_AGE_MATERNITY` / `MAX_AGE_MATERNITY` | Age range used by `FertileFilter`. |
 | `FLAG_SINGLE_MOTHERS` | Allows fertility eligibility without a partner when true. |
 | `probitAdjustment` | Fertility alignment adjustment added to the F1 regression score. |
-| `F1` | Fertility probit process used in the current UK branch. |
+| `F1` | Fertility probit process used for the UK case shown in this flowchart. |
 | `PROB_NEWBORN_IS_MALE` | Probability threshold for assigning newborn sex as male. |
 | `benefitUnit` | Mother's benefit unit. The newborn child is added to this unit. |
 
@@ -103,7 +102,6 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 - Fertility alignment enabled versus skipped.
 - Ordinary yearly fertility run versus alignment trial.
 - Fertile versus not fertile under `FertileFilter`.
-- UK country branch versus unrecognised country.
 - Fertility draw below versus above F1 probability.
 - Give-birth flag true versus false.
 - Newborn sex male versus female.
@@ -112,35 +110,33 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 
 ```mermaid
 flowchart TD
-    A["Fertility alignment event"] --> B{"Fertility alignment enabled?"}
+    A["Fertility alignment"] --> B{"Run alignment?"}
     B -- No --> C["Skip alignment"]
-    B -- Yes --> D["FertilityAlignment root search:<br/>test fertility with trial adjustment; <br/>compare simulated fertility rate to target; <br/>store adjustment if changed"]
+    B -- Yes --> D["Run fertility<br/>alignment search"]
 
-    C -- "schedule continues" --> E["Scheduled Fertility event<br/>(Person.fertility)"]
+    C -- "schedule continues" --> E["Fertility event<br/>(Person.fertility)"]
     D -- "schedule continues" --> E
-    E --> F["Use stored fertility adjustment<br/>(0 if alignment is off)"]
-    F --> G["For each person:<br/>reset demGiveBirthFlag = false"]
-    G --> H{"FertileFilter passes?"}
-    H -- No --> I["Remain not flagged<br/>for birth"]
-    H -- Yes --> J{"Country is UK?"}
-    J -- No --> K["Throw country-not-recognised<br/>runtime error"]
-    J -- Yes --> L["Apply F1 fertility probit:<br/>score + fertility adjustment"]
-    L --> M{"Fertility innovation below<br/>F1 probability?"}
+    E --> F["Use fertility<br/>adjustment"]
+    F --> G["For each person:<br/>set birth flag<br/>to false"]
+    G --> H{"FertileFilter passes?<br/>female; age ok;<br/>region ok;<br/>partner or single mother"}
+    H -- No --> I["Birth flag<br/>stays false"]
+    H -- Yes --> L["Apply UK F1<br/>fertility probit"]
+    L --> M{"Draw below<br/>F1 probability?"}
     M -- No --> I
-    M -- Yes --> N["Set demGiveBirthFlag = true"]
-    N --> N2[("Birth flag<br/>demGiveBirthFlag")]
+    M -- Yes --> N["Set birth flag<br/>to true"]
+    N --> N2[("Birth flag")]
 
-    I -- "schedule continues" --> O["Scheduled GiveBirth event<br/>(Person.giveBirth)"]
+    I -- "schedule continues" --> O["GiveBirth event<br/>(Person.giveBirth)"]
     N2 -- "schedule continues" --> O
-    O --> P{"demGiveBirthFlag true?"}
+    O --> P{"Birth flag<br/>true?"}
     P -- No --> Q["No birth update"]
     P -- Yes --> R["Draw newborn sex<br/>from stream 27"]
-    R --> S{"Draw below<br/>male-birth probability?"}
+    R --> S{"Male-birth<br/>draw?"}
     S -- Yes --> T["Create male child Person"]
     S -- No --> U["Create female child Person"]
-    T --> V["Birth updates:<br/>add child to model persons; <br/>add child to mother's benefit unit"]
+    T --> V["Add child to<br/>model persons and<br/>mother's benefit unit"]
     U --> V
-    V --> V2[("Updated persons and<br/>benefit-unit membership")]
+    V --> V2[("Updated persons<br/>and BU members")]
 ```
 
 ## Diagram Conventions
@@ -149,6 +145,10 @@ flowchart TD
 - Rounded state nodes show model state written by the process.
 - The `schedule continues` label marks separate scheduled events rather than direct method calls.
 - Multi-action boxes use separate lines so readers can distinguish state updates.
+- Node labels are intentionally short because Mermaid renderers can clip long text. Detailed conditions are documented in the surrounding sections.
+- `Birth flag` means `demGiveBirthFlag`.
+- `FertileFilter passes?` means female; region matches if a region filter was supplied; age is within `MIN_AGE_MATERNITY` and `MAX_AGE_MATERNITY`; and the person has a partner or `FLAG_SINGLE_MOTHERS` is true.
+- `Run fertility alignment search` means testing fertility under trial adjustments, comparing simulated fertility to the target, and storing the adjustment if changed.
 
 ## Alignment Context
 
@@ -160,7 +160,6 @@ The ordinary scheduled `fertility()` call later uses `model.getFertilityAdjustme
 
 - `fertility()` resets `demGiveBirthFlag` before checking eligibility.
 - `FertileFilter` currently requires `Gender.Female`, maternity age range, and either a current partner or `FLAG_SINGLE_MOTHERS`.
-- In the current active branch, fertility is implemented for `Country.UK`; other countries throw a runtime error in `fertility(double)`.
 - `giveBirth()` does not make a fertility decision. It only reads `demGiveBirthFlag`.
 - `giveBirth()` creates a new `Person` using newborn sex and the mother, adds it to the model persons collection, and adds it to the mother's benefit unit.
 - The newborn constructor uses the mother's fertility random stream for the child's seed; this is part of child creation rather than the fertility decision itself.
@@ -173,7 +172,7 @@ Update this flowchart when any of the following change:
 - fertility or give-birth schedule order changes;
 - fertility alignment timing or adjustment handling changes;
 - `FertileFilter` eligibility changes;
-- country-specific fertility branch logic changes;
+- UK fertility branch logic changes;
 - F1 regression, adjustment, or random stream handling changes;
 - `demGiveBirthFlag` is set, reset, or consumed differently;
 - newborn sex assignment changes;
