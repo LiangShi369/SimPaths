@@ -80,7 +80,7 @@ public class WealthHousing {
                 throw new RuntimeException("projection for net housing value is not finite");
 
             // consider mortgages
-            boolean mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isHomeOwner(), innovIncidence, RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
+            //boolean mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isHomeOwner(), innovIncidence, RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
             Double mortgageDebt;
             mortgageDebt = 0.0; // PLACEHOLDER
             wealthMortgageDebtValue = mortgageDebt;

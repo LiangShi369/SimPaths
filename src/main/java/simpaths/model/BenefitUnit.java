@@ -1153,8 +1153,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double maleIncome = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth()) - pensionContributionPerMonth(male, maleEmpPerMonth);
-                double femaleIncome = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth()) - pensionContributionPerMonth(female, femaleEmpPerMonth);
+                double maleIncome = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
+                double femaleIncome = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
                 double originalIncomePerMonth = maleIncome + femaleIncome;
                 double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
 
@@ -1162,26 +1162,24 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
             }
-
         } else if (Occupancy.Single_Male.equals(occupancy)) {
 
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 double maleEmpPerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly();
-                double originalIncomePerMonth = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth()) - pensionContributionPerMonth(male, maleEmpPerMonth);
+                double originalIncomePerMonth = maleEmpPerMonth + Math.sinh(male.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
             }
-
         } else if (Occupancy.Single_Female.equals(occupancy)) {
 
             for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
                 double femaleEmpPerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly();
-                double originalIncomePerMonth = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth()) - pensionContributionPerMonth(female, femaleEmpPerMonth);
+                double originalIncomePerMonth = femaleEmpPerMonth + Math.sinh(female.getYMiscPersGrossMonth());
                 TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
 
                 cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
@@ -1716,9 +1714,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
             // prepare temporary storage variables
             MultiKey<? extends Labour> labourSupplyChoice = null;
-            MultiKeyMap<Labour, Double> disposableIncomeMonthlyByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
-            MultiKeyMap<Labour, Double> benefitsReceivedMonthlyByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
-            MultiKeyMap<Labour, Double> grossIncomeMonthlyByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
             MultiKeyMap<Labour, Match> taxDbMatchByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
             LinkedHashSet<MultiKey<Labour>> possibleLabourCombinations = findPossibleLabourCombinations(); // Find possible labour combinations for this benefit unit
             MultiKeyMap<Labour, Double> labourSupplyUtilityRegressionScoresByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
@@ -1737,8 +1732,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     maleDisability = male.getDisability();
                     maleAtRiskOfWork = male.atRiskOfWork();
                     if (maleAtRiskOfWork) {
-                        male.updatePensionContributionStatus();
-                        maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() * (1.0 - male.getPrivatePensionContributionRate()) + Math.sinh(male.getYMiscPersGrossMonth());
+                        maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYMiscPersGrossMonth());
                     } else {
                         maleIncome = Math.sinh(male.getYMiscPersGrossMonth());
                     }
@@ -1750,8 +1744,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     femaleDisability = female.getDisability();
                     femaleAtRiskOfWork = female.atRiskOfWork();
                     if (femaleAtRiskOfWork) {
-                        female.updatePensionContributionStatus();
-                        femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() * (1.0 - female.getPrivatePensionContributionRate()) + Math.sinh(female.getYMiscPersGrossMonth());
+                        femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYMiscPersGrossMonth());
                     } else {
                         femaleIncome = Math.sinh(female.getYMiscPersGrossMonth());
                     }
@@ -1811,9 +1804,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     regressionScore = -700.0;
                 }
 
-                disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
-                benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
-                grossIncomeMonthlyByLabourPairs.put(labourKey, getGrossIncomeMonthly());
                 taxDbMatchByLabourPairs.put(labourKey, evaluatedTransfers.getMatch());
                 labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore); //XXX: Adult children could contribute their income to the hh, but then utility would have to be joint for a household with adult children, and they couldn't be treated separately as they are at the moment?
             }
@@ -1860,20 +1850,52 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 System.out.print("Could not determine labour supply choice for BU with ID: " + getKey().getId());
             }
 
-            // populate labour supply
-            if(model.debugCommentsOn && labourSupplyChoice!=null) {
+            if(model.debugCommentsOn && labourSupplyChoice!=null)
                 log.trace("labour supply choice " + labourSupplyChoice);
-            }
-            if (maleAtRiskOfWork) {
+
+            int maleWorkHoursWeekly = 0, femaleWorkHoursWeekly = 0, maleDisability = -1, femaleDisability = -1;
+            double maleIncome = 0.0, femaleIncome = 0.0, originalIncomePerMonth, secondIncomePerMonth = 0.0;
+            if (male != null) {
 
                 male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
-                male.updatePensionContributionStatus();
+                maleWorkHoursWeekly = male.getLabourSupplyHoursWeekly();
+                maleDisability = male.getDisability();
+                maleAtRiskOfWork = male.atRiskOfWork();
+                if (maleAtRiskOfWork) {
+                    male.updatePensionContributionStatus();
+                    maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() * (1.0 - male.getPrivatePensionContributionRate()) + Math.sinh(male.getYMiscPersGrossMonth());
+                } else {
+                    maleIncome = Math.sinh(male.getYMiscPersGrossMonth());
+                }
             }
-            if (femaleAtRiskOfWork) {
+            if (female != null) {
 
                 female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
-                female.updatePensionContributionStatus();
+                femaleWorkHoursWeekly = female.getLabourSupplyHoursWeekly();
+                femaleDisability = female.getDisability();
+                femaleAtRiskOfWork = female.atRiskOfWork();
+                if (femaleAtRiskOfWork) {
+                    female.updatePensionContributionStatus();
+                    femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() * (1.0 - female.getPrivatePensionContributionRate()) + Math.sinh(female.getYMiscPersGrossMonth());
+                } else {
+                    femaleIncome = Math.sinh(female.getYMiscPersGrossMonth());
+                }
             }
+
+            // Earnings are composed of the labour income and non-benefit non-employment income Yptciihs_dv() (this is monthly, so no need to multiply by WEEKS_PER_MONTH_RATIO)
+            originalIncomePerMonth = maleIncome + femaleIncome;
+            if (Occupancy.Couple.equals(occupancy))
+                secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
+
+            TaxEvaluation evaluatedTransfers = taxWrapper(maleWorkHoursWeekly, femaleWorkHoursWeekly, maleDisability, femaleDisability, originalIncomePerMonth, secondIncomePerMonth);
+
+            demDbMatchTax = taxDbMatchByLabourPairs.get(labourSupplyChoice);
+            idtaxDbDonor = demDbMatchTax.getCandidateID();
+            yDispMonth = evaluatedTransfers.getDisposableIncomePerMonth();
+            yBenAmountMonth = evaluatedTransfers.getBenefitsReceivedPerMonth();
+            yGrossMonth = evaluatedTransfers.getGrossIncomePerMonth();
+            yBenUCReceivedFlag = evaluatedTransfers.getReceivedUC();
+            yBenLegacyReceivedFlag = evaluatedTransfers.getReceivedLegacyBenefit();
 
             // allow for formal childcare costs
             if (Parameters.flagFormalChildcare && !Parameters.flagSuppressChildcareCosts) {
@@ -1882,14 +1904,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             if (Parameters.flagSocialCare && !Parameters.flagSuppressSocialCareCosts) {
                 updateSocialCareCostPerWeek();
             }
-
-            // populate disposable income
-            yDispMonth = disposableIncomeMonthlyByLabourPairs.get(labourSupplyChoice);
-            yBenAmountMonth = benefitsReceivedMonthlyByLabourPairs.get(labourSupplyChoice);
-            yGrossMonth = grossIncomeMonthlyByLabourPairs.get(labourSupplyChoice);
-            demDbMatchTax = taxDbMatchByLabourPairs.get(labourSupplyChoice);
-            idtaxDbDonor = demDbMatchTax.getCandidateID();
-        }
+       }
 
         //Update gross income variables for the household and all occupants:
         calculateBUIncome();
