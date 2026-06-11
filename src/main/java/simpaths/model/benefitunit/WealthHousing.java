@@ -13,6 +13,7 @@ public class WealthHousing {
     private double inYearAccrualMtg;            // accrued mortgage debt in the year
     private double wealthMortgageDebtValue;     // value of outstanding mortgage debt
     private double wealthNetInnovation;         // innovation used to project value of net housing wealth
+    private double wealthMortgageDebtInnovation; // innovation used to project value of mortgage debt
 
 
     /******************************************************
@@ -26,6 +27,7 @@ public class WealthHousing {
         inYearAccrualPty = 0.0;
         inYearAccrualMtg = 0.0;
         wealthNetInnovation = 0.0;
+        wealthMortgageDebtInnovation = 0.0;
     }
 
     public WealthHousing(WealthHousing original) {
@@ -35,12 +37,15 @@ public class WealthHousing {
         inYearAccrualPty = original.inYearAccrualPty;
         inYearAccrualMtg = original.inYearAccrualMtg;
         wealthNetInnovation = original.wealthNetInnovation;
+        wealthMortgageDebtInnovation = original.wealthMortgageDebtInnovation;
     }
 
     public WealthHousing(double wealthPrptyValue, double wealthMortgageDebtValue) {
         // used for initial population
         this.wealthPrptyValue = wealthPrptyValue;
         this.wealthMortgageDebtValue = wealthMortgageDebtValue;
+        wealthNetInnovation = 0.0;
+        wealthMortgageDebtInnovation = 0.0;
     }
 
 
@@ -58,13 +63,14 @@ public class WealthHousing {
         return inYearAccrualPty - inYearAccrualMtg;
     }
 
-    public void projectValues(BenefitUnit benefitUnit, WealthHousing wealthHousingL1, double innovIncidence, double innovNetValue) {
+    public void projectValues(BenefitUnit benefitUnit, WealthHousing wealthHousingL1, double innovHomeownership, double innovNetValue,
+                              double innovMortgageIncidence, double innovMortgageValue) {
         // projects values - see BenefitUnit.updateNonPensionWealth()
 
-        boolean homeOwner = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isHomeOwner(), innovIncidence, RegressionName.WealthHousingHW1a, RegressionName.WealthHousingHW1b);
+        boolean homeOwner = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isHomeOwner(), innovHomeownership, RegressionName.WealthHousingHW1a, RegressionName.WealthHousingHW1b);
         if (homeOwner) {
 
-            Double netHousing;
+            double netHousing;
             double score, rmse, gauss;
             if (wealthHousingL1.isHomeOwner()) {
                 score = Parameters.getRegHW1c().getScore(benefitUnit, BenefitUnit.Variables.class);
@@ -77,13 +83,35 @@ public class WealthHousing {
             wealthNetInnovation = gauss * rmse;
             netHousing = Math.sinh(score + wealthNetInnovation);
             if (!Parameters.isFinite(netHousing))
-                throw new RuntimeException("projection for net housing value is not finite");
+                throw new RuntimeException("projec" +
+                        "tion for net housing value is not finite");
+
+            wealthMortgageDebtValue = 0.0;
+            wealthPrptyValue = netHousing;
 
             // consider mortgages
-            //boolean mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isHomeOwner(), innovIncidence, RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
-            Double mortgageDebt;
-            mortgageDebt = 0.0; // PLACEHOLDER
-            wealthMortgageDebtValue = mortgageDebt;
+            boolean mortgageHolder;
+            boolean newHomeOwner = !wealthHousingL1.isHomeOwner();
+            if (newHomeOwner && !wealthHousingL1.isMortgageHolder()) {
+                mortgageHolder = innovMortgageIncidence < ManagerRegressions.getProbability(benefitUnit, RegressionName.WealthHousingHW2a);
+            } else {
+                mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isMortgageHolder(), innovMortgageIncidence, RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
+            }
+            if (mortgageHolder) {
+                if (wealthHousingL1.isMortgageHolder()) {
+                    score = Parameters.getRegHW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
+                    rmse = Parameters.getRMSEForRegression("HW2c");
+                } else {
+                    score = Parameters.getRegHW2d().getScore(benefitUnit, BenefitUnit.Variables.class);
+                    rmse = Parameters.getRMSEForRegression("HW2d");
+                }
+                gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovMortgageValue);
+                wealthMortgageDebtInnovation = gauss * rmse;
+                double mortgageDebt = Math.exp(score + wealthMortgageDebtInnovation);
+                if (!Parameters.isFinite(mortgageDebt))
+                    throw new RuntimeException("projection for mortgage debt value is not finite");
+                wealthMortgageDebtValue = mortgageDebt;
+            }
             wealthPrptyValue = netHousing + wealthMortgageDebtValue;
         }
     }
@@ -95,6 +123,10 @@ public class WealthHousing {
 
     public double getWealthNetInnovation() {
         return wealthNetInnovation;
+    }
+
+    public double getWealthMortgageDebtInnovation() {
+        return wealthMortgageDebtInnovation;
     }
 
     public void setWealthNetInnovation( double val ) {

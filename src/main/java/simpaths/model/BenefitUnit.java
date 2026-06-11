@@ -205,7 +205,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         key  = new PanelEntityKey(id);        //Sets up key
 
         this.statSeed = statSeed;
-        statInnovations = new Innovations(10, 1, statSeed);
+        statInnovations = new Innovations(12, 1, statSeed);
 
         numberChildrenAll_lag1 = 0;
         numberChildren02_lag1 = 0;
@@ -474,7 +474,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         ageRefPerson = (double)getRefPerson().getDemAge();
         wealthNonPension.projectNonPensionWealth(this, wealthNonPensionL1,
                 yDispMonth * 12.0 + pensionLumpSum(), xDiscConsumptionAnnual,
-                statInnovations.getDoubleDraw(7), statInnovations.getDoubleDraw(9));
+                statInnovations.getDoubleDraw(7), statInnovations.getDoubleDraw(9),
+                statInnovations.getDoubleDraw(10), statInnovations.getDoubleDraw(11));
         wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
         wealthMortgageDebtValue = wealthNonPension.getWealthMortgageDebtValue();
         wealthPrptyFlag = wealthNonPension.isHomeOwner();
@@ -2127,6 +2128,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         // Alignment-only regressors for single-dependent subgroups.
         AlignmentSingleDepMen,
         AlignmentSingleDepWomen,
+        AsinhLagMortgageDebtToAnnualPrivateIncome,
+        AsinhNetHousingWealth,
         AsinhNetNonPensionWealth,
         Constant,
         couple_emp_2ft,
@@ -2147,6 +2150,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         Cut8,
         Cut9,
         DualEarner,
+        Employed,
         FemaleEduH_1,
         FemaleEduH_10,
         FemaleEduH_2,
@@ -2518,6 +2522,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         NumberMembersUnder18,
         PrivatePensionIncome,
         MortgageHolder,
+        MortgagePersistence,
+        NewHomeowner,
         HomeOwnedOutright,
         NumberFullTimeWork,
         NumberPartTimeWork,
@@ -2540,6 +2546,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         UKL,
         UKM,
         UKN,
+        WASRound7,
+        WASRound8,
         YdsesC52,
         YdsesC53,
         YdsesC54,
@@ -2632,6 +2640,19 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             case NumberChildren04 -> {
                 return getNumberChildren(0,4);
             }
+            case AsinhLagMortgageDebtToAnnualPrivateIncome -> {
+                if (wealthNonPensionL1==null)
+                    throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for AsinhLagMortgageDebtToAnnualPrivateIncome");
+                double annualPrivateIncome = Math.max(1.0, Objects.requireNonNullElse(yGrossMonth, 0.0) * 12.0);
+                return Parameters.asinh(wealthNonPensionL1.getWealthMortgageDebtValue() / annualPrivateIncome);
+            }
+            case AsinhNetHousingWealth -> {
+                if (wealthNonPension != null) {
+                    return Parameters.asinh(wealthNonPension.getWealthHousing().getWealthNetHousing());
+                } else {
+                    return 0.0;
+                }
+            }
             case AsinhNetNonPensionWealth -> {
                 if (wealthNonPension != null) {
                     return Parameters.asinh(wealthNonPension.getWealthNonPensionValueDirect());
@@ -2644,6 +2665,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case DualEarner -> {
                 return (getNumberOfEarners() == 2) ? 1: 0;
+            }
+            case Employed -> {
+                return (getNumberOfEarners() > 0) ? 1. : 0.;
             }
             case Age20to24 -> {
                 Person ref = getRefPerson();
@@ -3193,6 +3217,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 if (wealthNonPensionL1==null)
                     throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for HousingPersistence");
                 return wealthNonPensionL1.getWealthHousing().getWealthNetInnovation();
+            }
+            case MortgagePersistence -> {
+                if (wealthNonPensionL1==null)
+                    throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for MortgagePersistence");
+                return wealthNonPensionL1.getWealthHousing().getWealthMortgageDebtInnovation();
             }
             case HoursMaleSquared -> {
                 return getMale().getLabourSupplyHoursWeekly() * getMale().getLabourSupplyHoursWeekly();
@@ -3951,6 +3980,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             case Constant -> {
                 return 1.0;
             }
+            case WASRound7 -> {
+                return (getYear() >= 2018 && getYear() < 2020) ? 1. : 0.;
+            }
+            case WASRound8 -> {
+                return (getYear() >= 2020) ? 1. : 0.;
+            }
             case YdsesC52 -> {
                 return (Ydses_c5.Q2.equals(yHhQuintilesMonthC5)) ? 1. : 0.;
             }
@@ -4080,6 +4115,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case MortgageHolder -> {
                 return (wealthNonPensionL1.getWealthMortgageDebtValue() > 0.0) ? 1. : 0.;
+            }
+            case NewHomeowner -> {
+                if (wealthNonPension == null || wealthNonPensionL1 == null)
+                    return 0.0;
+                return (wealthNonPension.isHomeOwner() && !wealthNonPensionL1.isHomeOwner()) ? 1. : 0.;
             }
             case HomeOwnedOutright -> {
                 return ((wealthNonPensionL1.getWealthPrptyValue() > 0.0) && (wealthNonPensionL1.getWealthMortgageDebtValue() == 0.0)) ? 1. : 0.;

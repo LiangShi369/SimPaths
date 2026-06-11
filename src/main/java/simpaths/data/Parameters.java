@@ -543,7 +543,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2b;
     private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2c;
     private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2d;
-    private static MultiKeyCoefficientMap coeffCovariancePensionWealthHW2e;
 
     //Financial wealth
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW1a;
@@ -1209,7 +1208,6 @@ public class Parameters {
         coeffCovariancePensionWealthHW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2b", 1);
         coeffCovariancePensionWealthHW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2c", 1);
         coeffCovariancePensionWealthHW2d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2d", 1);
-        coeffCovariancePensionWealthHW2e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_housing.xlsx", "HW2e", 1);
 
         //Financial wealth
         coeffCovarianceFinancialWealthFW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW1a", 1);
@@ -1474,7 +1472,6 @@ public class Parameters {
             coeffCovariancePensionWealthHW2b = bootstrapWithTrace("coeffCovariancePensionWealthHW2b", coeffCovariancePensionWealthHW2b);
             coeffCovariancePensionWealthHW2c = bootstrapWithTrace("coeffCovariancePensionWealthHW2c", coeffCovariancePensionWealthHW2c);
             coeffCovariancePensionWealthHW2d = bootstrapWithTrace("coeffCovariancePensionWealthHW2d", coeffCovariancePensionWealthHW2d);
-            coeffCovariancePensionWealthHW2e = bootstrapWithTrace("coeffCovariancePensionWealthHW2e", coeffCovariancePensionWealthHW2e);
 
             //Financial wealth
             coeffCovarianceFinancialWealthFW1a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a);

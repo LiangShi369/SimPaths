@@ -57,14 +57,16 @@ public class WealthNonPension {
     }
 
     public void projectNonPensionWealth(BenefitUnit benefitUnit, WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual,
-                                        double xConsumptionAnnual, double innovHousingIncidence, double innovHousingNetValue) {
+                                        double xConsumptionAnnual, double innovHousingIncidence, double innovHousingNetValue,
+                                        double innovMortgageIncidence, double innovMortgageValue) {
 
         // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
         wealthNonPensionValue = wealthNonPensionL1.getWealthNonPensionValue() + inYearSavings + wealthNonPensionL1.getWealthHousing().getInYearAccrualNet();
 
         // allocate share of non-pension wealth to housing
-        wealthHousing.projectValues(benefitUnit, wealthNonPensionL1.getWealthHousing(), innovHousingIncidence, innovHousingNetValue);
+        wealthHousing.projectValues(benefitUnit, wealthNonPensionL1.getWealthHousing(), innovHousingIncidence, innovHousingNetValue,
+                innovMortgageIncidence, innovMortgageValue);
 
         // allocate remaining share of non-pension wealth to financial
         wealthFinancial.setValue(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
