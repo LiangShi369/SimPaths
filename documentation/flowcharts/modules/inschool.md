@@ -14,7 +14,8 @@ The `inSchool()` process updates student status decisions before education-level
 - whether a lagged student is flagged to leave education;
 - whether a non-student enters or re-enters education;
 - whether a retired person is excluded from student status;
-- whether `leavingSchool()` later needs to assign an education level and remove student status.
+- whether `leavingSchool()` later needs to evaluate an education level and remove student status;
+- how the highest attained education level is preserved when a return-to-education spell ends.
 
 ## Code References
 
@@ -35,6 +36,9 @@ The `inSchool()` process updates student status decisions before education-level
   - `MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION`
   - `getRegEducationE1a()`
   - `getRegEducationE1b()`
+  - `getRegEducationE2()`
+- `src/main/java/simpaths/model/enums/Education.java`
+  - `Education.getRank()`
 
 ## Schedule Context
 
@@ -56,8 +60,10 @@ This matters because `inSchool()` mainly sets student status and the transient `
 - `statInnovations.getDoubleDraw(24)`: stochastic draw for the education decision.
 - `Parameters.getRegEducationE1a()`: regression for lagged students deciding whether to remain in education.
 - `Parameters.getRegEducationE1b()`: regression for non-students deciding whether to enter or re-enter education.
+- `Parameters.getRegEducationE2()`: regression used by `setEducationLevel()` when a student leaves education.
 - `Parameters.MIN_AGE_TO_LEAVE_EDUCATION`: minimum age at which lagged students may leave education.
 - `Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION`: maximum age for continuous education under the E1a branch and upper age used by the student-share alignment target.
+- `eduHighestC4`: highest education level already attained; retained while a person returns to education and used as the comparison baseline when that spell ends.
 
 ## State Changes
 
@@ -71,7 +77,8 @@ Within `inSchool()`:
 
 Within the later `leavingSchool()` process, if `eduLeaveSchoolFlag` is true:
 
-- `setEducationLevel()` assigns an education level through process E2.
+- `setEducationLevel()` draws a candidate education level through process E2.
+- `eduHighestC4` is updated only when the candidate E2 level has a higher rank than the existing level; otherwise the existing level is retained.
 - `sedex` is set to true.
 - `ded` and `der` are set to false.
 - `eduLeftEduFlag` is set to true.
@@ -94,11 +101,12 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 | `der` / `eduReturnFlag` | Indicator for returning to education. The `der` accessor maps to the Java field `eduReturnFlag`. |
 | `sedex` / `eduExitSampleFlag` | Indicator related to the year/person leaving education. The `sedex` accessor maps to the Java field `eduExitSampleFlag`. |
 | `eduLeftEduFlag` | Persistent flag indicating that the person has left education. Once set to true in `leavingSchool()`, it is not reset. |
+| `eduHighestC4` | Highest education level attained. Returning to education does not reset it, and a later E2 result can only raise it. |
 | `probitAdjustment` | Alignment adjustment added to the E1a/E1b regression score before converting the score to a probability. |
 | `labourInnov` | Stochastic draw from `statInnovations.getDoubleDraw(24)`. The person is assigned the positive education outcome when this draw is below the relevant probability. |
 | `E1a` | Education regression process for lagged students deciding whether to remain in continuous education. |
 | `E1b` | Education regression process for lagged non-students deciding whether to enter or re-enter education. |
-| `E2` | Education-level assignment process applied later by `setEducationLevel()` when a person leaves school. |
+| `E2` | Education-level draw applied by `setEducationLevel()` when a person leaves school. The draw replaces `eduHighestC4` only if it has a higher education rank. |
 
 ## Key Branches
 
@@ -108,6 +116,7 @@ This glossary is process-specific. For the full variable dictionary, see `docume
 - Lagged student above maximum continuous-education age.
 - Lagged retired person.
 - Non-student, non-retired person evaluated by E1b.
+- Candidate E2 education level higher than the existing highest level versus equal or lower.
 - Alignment run versus ordinary scheduled run.
 
 ## Flowchart
@@ -137,11 +146,20 @@ flowchart TD
     P -- Yes --> Q["Remain non-student"]
     P -- No --> R["Apply E1b:<br/>probability of entering or<br/>re-entering education"]
     R --> S{"Innovation below<br/>E1b probability?"}
-    S -- Yes --> T["Enter or re-enter education; <br/>set student status; <br/>set return-to-education flag"]
+    S -- Yes --> T["Enter or re-enter education;<br/>set student status;<br/>set return flag"]
     S -- No --> U["Remain non-student"]
 
     L -. "handled later in schedule" .-> V["LeavingSchool process"]
-    V --> W["LeavingSchool updates:<br/>assign education level; <br/>mark left education; <br/>remove student status; <br/>reset leave-school flag"]
+    V --> W["Run E2 education-level draw"]
+    X[("Existing highest qualification<br/>eduHighestC4")] -. "comparison baseline" .-> Y{"New E2 level has<br/>higher rank?"}
+    T -. "qualification unchanged" .-> X
+    W --> Y
+    Y -- Yes --> Z["Raise eduHighestC4<br/>to new E2 level"]
+    Y -- "No: equal or lower" --> AA["Retain existing<br/>eduHighestC4"]
+    Z --> AB["Set exit and<br/>ever-left flags"]
+    AA --> AB
+    AB --> AC["End continuous education;<br/>set status to NotEmployed"]
+    AC --> AD["Clear return and<br/>leave-school flags"]
 ```
 
 ## Alignment Context
@@ -164,7 +182,9 @@ The alignment target counts students aged between `MIN_AGE_TO_LEAVE_EDUCATION` a
 - A lagged student above `MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION` is forced to leave education.
 - A lagged retired person is not allowed to become a student through this method.
 - In the active E1b branch, the code does not impose an explicit age upper bound before evaluating entry or re-entry into education. The aggregate alignment count is narrower because it counts the target student share only within the education age range.
-- Mermaid structure is intentionally unchanged for commit `bac24c3a1`: the control flow is still the same lagged-student age-gate into E1a versus forced leaving; only the reverted threshold and regression labels changed.
+- E1b re-entry changes student and return-to-education state but does not reset `eduHighestC4`.
+- When that person later leaves education, `setEducationLevel()` applies E2 and updates `eduHighestC4` only if the candidate level has a higher rank. An equal or lower outcome is discarded, so the attained education level never diminishes after return to education.
+- The Mermaid diagram now includes the existing E2 rank comparison that preserves the highest attained qualification after a return-to-education spell.
 - If student counts look wrong, inspect the order of `InSchool`, `InSchoolAlignment`, and `LeavingSchool` in the yearly schedule before changing the method logic.
 
 ## Flowchart Maintenance Guidance
@@ -175,6 +195,7 @@ When updating this flowchart, first check whether any of the following changed:
 - the E1a or E1b regression calls changed;
 - the age thresholds changed;
 - `eduLeaveSchoolFlag` is set or consumed differently;
+- `setEducationLevel()` no longer preserves the highest-ranked value of `eduHighestC4`;
 - `InSchoolAlignment.evaluate()` no longer reuses `Person.inSchool(double)`;
 - `leavingSchool()` no longer performs the education-level assignment and status reset.
 

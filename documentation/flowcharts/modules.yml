@@ -364,7 +364,7 @@ modules:
     status: active
     review_state: up_to_date
     update_mode: assisted
-    last_verified_commit: c16e46693
+    last_verified_commit: b31dba160
     last_trigger_commit: c16e46693
     flowchart:
       source_md: documentation/flowcharts/modules/inschool.md
@@ -374,6 +374,7 @@ modules:
         - src/main/java/simpaths/model/SimPathsModel.java
         - src/main/java/simpaths/model/InSchoolAlignment.java
         - src/main/java/simpaths/data/Parameters.java
+        - src/main/java/simpaths/model/enums/Education.java
       methods:
         - Person.inSchool
         - Person.leavingSchool
@@ -382,6 +383,7 @@ modules:
         - SimPathsModel.getInSchoolAdjustment
         - InSchoolAlignment.evaluate
         - InSchoolAlignment.evalStudentShare
+        - Education.getRank
     wiki_links:
       - documentation/wiki/developer-guide/how-to/code-logic-flowcharts.md
     update_triggers:
@@ -389,5 +391,6 @@ modules:
       - E1a/E1b regression calls change
       - age thresholds change
       - eduLeaveSchoolFlag handling changes
+      - E2 education-level rank comparison or non-diminution handling changes
       - InSchoolAlignment behavior changes
       - leavingSchool handoff changes
