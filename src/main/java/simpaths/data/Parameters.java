@@ -136,6 +136,8 @@ public class Parameters {
         "wealthPensValue",              //benefit unit total private (personal and occupational) pensions
         "wealthPrptyValue",             //benefit unit value of main home (gross of mortgage debt)
         "wealthMortgageDebtValue",      //benefit unit value of mortgage debt
+        "wealthUnsecuredDebtLowValue",  //benefit unit value of low-cost unsecured debt
+        "wealthUnsecuredDebtHighValue", //benefit unit value of high-cost unsecured debt
     };
 
     public static final String[] PERSON_VARIABLES_INITIAL = new String[] {
@@ -546,6 +548,11 @@ public class Parameters {
 
     //Financial wealth
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW1a;
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2a;
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2b;
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2c;
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2d;
+    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2e;
 
     //Unemployment
     private static MultiKeyCoefficientMap coeffCovarianceUnemploymentU1a;
@@ -803,6 +810,10 @@ public class Parameters {
 
     //Financial wealth
     private static LinearRegression regFW1a;
+    private static LinearRegression regFW2b;
+    private static LinearRegression regFW2c;
+    private static LinearRegression regFW2d;
+    private static LinearRegression regFW2e;
 
     //Unemployment
     private static BinomialRegression regUnemploymentMaleGraduateU1a;
@@ -1211,6 +1222,11 @@ public class Parameters {
 
         //Financial wealth
         coeffCovarianceFinancialWealthFW1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW1a", 1);
+        coeffCovarianceFinancialWealthFW2a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2a", 1);
+        coeffCovarianceFinancialWealthFW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2b", 1);
+        coeffCovarianceFinancialWealthFW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2c", 1);
+        coeffCovarianceFinancialWealthFW2d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2d", 1);
+        coeffCovarianceFinancialWealthFW2e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2e", 1);
 
         //Unemployment
         coeffCovarianceUnemploymentU1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_unemployment.xlsx", "U1a", 1);
@@ -1354,6 +1370,10 @@ public class Parameters {
                     {"coeffCovariancePensionWealthHW1d", coeffCovariancePensionWealthHW1d},
                     {"coeffCovariancePensionWealthHW2a", coeffCovariancePensionWealthHW2a},
                     {"coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a},
+                    {"coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b},
+                    {"coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c},
+                    {"coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d},
+                    {"coeffCovarianceFinancialWealthFW2e", coeffCovarianceFinancialWealthFW2e},
                     // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
                     {"coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales},
                     {"coeffCovarianceEquivalisedIncomeFemales", coeffCovarianceEquivalisedIncomeFemales},
@@ -1475,6 +1495,10 @@ public class Parameters {
 
             //Financial wealth
             coeffCovarianceFinancialWealthFW1a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a);
+            coeffCovarianceFinancialWealthFW2b = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b);
+            coeffCovarianceFinancialWealthFW2c = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c);
+            coeffCovarianceFinancialWealthFW2d = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d);
+            coeffCovarianceFinancialWealthFW2e = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2e", coeffCovarianceFinancialWealthFW2e);
 
             //lifetime incomes
             coeffCovarianceEquivalisedIncomeMales = bootstrapWithTrace("coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales);
@@ -1585,6 +1609,10 @@ public class Parameters {
 
         //Financial wealth
         regFW1a = new LinearRegression(coeffCovarianceFinancialWealthFW1a);
+        regFW2b = new LinearRegression(coeffCovarianceFinancialWealthFW2b);
+        regFW2c = new LinearRegression(coeffCovarianceFinancialWealthFW2c);
+        regFW2d = new LinearRegression(coeffCovarianceFinancialWealthFW2d);
+        regFW2e = new LinearRegression(coeffCovarianceFinancialWealthFW2e);
 
         //lifetime incomes
         regEquivalisedIncomeMales = new LinearRegression(coeffCovarianceEquivalisedIncomeMales);
@@ -2147,6 +2175,18 @@ public class Parameters {
     public static LinearRegression getRegHW2d() { return regHW2d; }
 
     public static LinearRegression getRegFW1a() { return regFW1a; }
+    public static LinearRegression getRegFW2b() { return regFW2b; }
+    public static LinearRegression getRegFW2c() { return regFW2c; }
+    public static LinearRegression getRegFW2d() { return regFW2d; }
+    public static LinearRegression getRegFW2e() { return regFW2e; }
+
+    public static double getFinancialWealthTransitionProbability(int lagState, int currentState) {
+        Object probability = coeffCovarianceFinancialWealthFW2a.getValue("P" + lagState + currentState);
+        if (probability instanceof Number) {
+            return ((Number) probability).doubleValue();
+        }
+        throw new RuntimeException("Financial wealth transition probability not found for lag state " + lagState + " and current state " + currentState);
+    }
 
     public static LinearRegression getRegEquivalisedIncomeMales() {return regEquivalisedIncomeMales;}
     public static LinearRegression getRegEquivalisedIncomeFemales() {return regEquivalisedIncomeFemales;}
@@ -3221,7 +3261,11 @@ public class Parameters {
         donorPool = list;
     }
     public static double asinh(double xx) {
-        return Math.log(xx + Math.sqrt(xx * xx + 1.0));
+        double abs = Math.abs(xx);
+        double val = (abs > 1.0e154) ?
+                Math.log(abs) + Math.log(2.0) :
+                Math.log(abs + Math.hypot(abs, 1.0));
+        return (xx < 0.0) ? -val : val;
     }
     public static void setMdDualIncome(MahalanobisDistance md) {
         mdDualIncome = md;

@@ -9,6 +9,7 @@ import simpaths.data.Parameters;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
+import simpaths.model.benefitunit.WealthFinancial;
 import simpaths.model.enums.Education;
 import simpaths.model.enums.Indicator;
 
@@ -117,6 +118,80 @@ public class Statistics3 {
     @Column(name = "av_bu_mortgage_holder_55_74")
     private double yWealthBUMortgageHolder55to74Avg;
 
+    //benefit unit financial wealth by age group of reference person
+    @Column(name = "av_bu_fin_net_18_29")
+    private double yWealthBUFinancialNetValue18to29Avg;
+
+    @Column(name = "av_bu_fin_net_30_54")
+    private double yWealthBUFinancialNetValue30to54Avg;
+
+    @Column(name = "av_bu_fin_net_55_74")
+    private double yWealthBUFinancialNetValue55to74Avg;
+
+    @Column(name = "av_bu_fin_assets_18_29")
+    private double yWealthBUFinancialAssetsValue18to29Avg;
+
+    @Column(name = "av_bu_fin_assets_30_54")
+    private double yWealthBUFinancialAssetsValue30to54Avg;
+
+    @Column(name = "av_bu_fin_assets_55_74")
+    private double yWealthBUFinancialAssetsValue55to74Avg;
+
+    @Column(name = "av_bu_unsec_debt_18_29")
+    private double yWealthBUUnsecuredDebtValue18to29Avg;
+
+    @Column(name = "av_bu_unsec_debt_30_54")
+    private double yWealthBUUnsecuredDebtValue30to54Avg;
+
+    @Column(name = "av_bu_unsec_debt_55_74")
+    private double yWealthBUUnsecuredDebtValue55to74Avg;
+
+    @Column(name = "av_bu_low_debt_18_29")
+    private double yWealthBULowCostDebtValue18to29Avg;
+
+    @Column(name = "av_bu_low_debt_30_54")
+    private double yWealthBULowCostDebtValue30to54Avg;
+
+    @Column(name = "av_bu_low_debt_55_74")
+    private double yWealthBULowCostDebtValue55to74Avg;
+
+    @Column(name = "av_bu_high_debt_18_29")
+    private double yWealthBUHighCostDebtValue18to29Avg;
+
+    @Column(name = "av_bu_high_debt_30_54")
+    private double yWealthBUHighCostDebtValue30to54Avg;
+
+    @Column(name = "av_bu_high_debt_55_74")
+    private double yWealthBUHighCostDebtValue55to74Avg;
+
+    //benefit unit incidence of unsecured debts by age group of reference person
+    @Column(name = "pr_bu_low_debt_18_29")
+    private double yWealthBULowCostDebtHolder18to29Avg;
+
+    @Column(name = "pr_bu_low_debt_30_54")
+    private double yWealthBULowCostDebtHolder30to54Avg;
+
+    @Column(name = "pr_bu_low_debt_55_74")
+    private double yWealthBULowCostDebtHolder55to74Avg;
+
+    @Column(name = "pr_bu_high_debt_18_29")
+    private double yWealthBUHighCostDebtHolder18to29Avg;
+
+    @Column(name = "pr_bu_high_debt_30_54")
+    private double yWealthBUHighCostDebtHolder30to54Avg;
+
+    @Column(name = "pr_bu_high_debt_55_74")
+    private double yWealthBUHighCostDebtHolder55to74Avg;
+
+    @Column(name = "pr_bu_mixed_debt_18_29")
+    private double yWealthBUMixedDebtHolder18to29Avg;
+
+    @Column(name = "pr_bu_mixed_debt_30_54")
+    private double yWealthBUMixedDebtHolder30to54Avg;
+
+    @Column(name = "pr_bu_mixed_debt_55_74")
+    private double yWealthBUMixedDebtHolder55to74Avg;
+
     public double getyWealthBUMortgageHolder18to29Avg() {
         return yWealthBUMortgageHolder18to29Avg;
     }
@@ -139,6 +214,198 @@ public class Statistics3 {
 
     public void setyWealthBUMortgageHolder55to74Avg(double yWealthBUMortgageHolder55to74Avg) {
         this.yWealthBUMortgageHolder55to74Avg = yWealthBUMortgageHolder55to74Avg;
+    }
+
+    public double getyWealthBUFinancialNetValue18to29Avg() {
+        return yWealthBUFinancialNetValue18to29Avg;
+    }
+
+    public void setyWealthBUFinancialNetValue18to29Avg(double yWealthBUFinancialNetValue18to29Avg) {
+        this.yWealthBUFinancialNetValue18to29Avg = yWealthBUFinancialNetValue18to29Avg;
+    }
+
+    public double getyWealthBUFinancialNetValue30to54Avg() {
+        return yWealthBUFinancialNetValue30to54Avg;
+    }
+
+    public void setyWealthBUFinancialNetValue30to54Avg(double yWealthBUFinancialNetValue30to54Avg) {
+        this.yWealthBUFinancialNetValue30to54Avg = yWealthBUFinancialNetValue30to54Avg;
+    }
+
+    public double getyWealthBUFinancialNetValue55to74Avg() {
+        return yWealthBUFinancialNetValue55to74Avg;
+    }
+
+    public void setyWealthBUFinancialNetValue55to74Avg(double yWealthBUFinancialNetValue55to74Avg) {
+        this.yWealthBUFinancialNetValue55to74Avg = yWealthBUFinancialNetValue55to74Avg;
+    }
+
+    public double getyWealthBUFinancialAssetsValue18to29Avg() {
+        return yWealthBUFinancialAssetsValue18to29Avg;
+    }
+
+    public void setyWealthBUFinancialAssetsValue18to29Avg(double yWealthBUFinancialAssetsValue18to29Avg) {
+        this.yWealthBUFinancialAssetsValue18to29Avg = yWealthBUFinancialAssetsValue18to29Avg;
+    }
+
+    public double getyWealthBUFinancialAssetsValue30to54Avg() {
+        return yWealthBUFinancialAssetsValue30to54Avg;
+    }
+
+    public void setyWealthBUFinancialAssetsValue30to54Avg(double yWealthBUFinancialAssetsValue30to54Avg) {
+        this.yWealthBUFinancialAssetsValue30to54Avg = yWealthBUFinancialAssetsValue30to54Avg;
+    }
+
+    public double getyWealthBUFinancialAssetsValue55to74Avg() {
+        return yWealthBUFinancialAssetsValue55to74Avg;
+    }
+
+    public void setyWealthBUFinancialAssetsValue55to74Avg(double yWealthBUFinancialAssetsValue55to74Avg) {
+        this.yWealthBUFinancialAssetsValue55to74Avg = yWealthBUFinancialAssetsValue55to74Avg;
+    }
+
+    public double getyWealthBUUnsecuredDebtValue18to29Avg() {
+        return yWealthBUUnsecuredDebtValue18to29Avg;
+    }
+
+    public void setyWealthBUUnsecuredDebtValue18to29Avg(double yWealthBUUnsecuredDebtValue18to29Avg) {
+        this.yWealthBUUnsecuredDebtValue18to29Avg = yWealthBUUnsecuredDebtValue18to29Avg;
+    }
+
+    public double getyWealthBUUnsecuredDebtValue30to54Avg() {
+        return yWealthBUUnsecuredDebtValue30to54Avg;
+    }
+
+    public void setyWealthBUUnsecuredDebtValue30to54Avg(double yWealthBUUnsecuredDebtValue30to54Avg) {
+        this.yWealthBUUnsecuredDebtValue30to54Avg = yWealthBUUnsecuredDebtValue30to54Avg;
+    }
+
+    public double getyWealthBUUnsecuredDebtValue55to74Avg() {
+        return yWealthBUUnsecuredDebtValue55to74Avg;
+    }
+
+    public void setyWealthBUUnsecuredDebtValue55to74Avg(double yWealthBUUnsecuredDebtValue55to74Avg) {
+        this.yWealthBUUnsecuredDebtValue55to74Avg = yWealthBUUnsecuredDebtValue55to74Avg;
+    }
+
+    public double getyWealthBULowCostDebtValue18to29Avg() {
+        return yWealthBULowCostDebtValue18to29Avg;
+    }
+
+    public void setyWealthBULowCostDebtValue18to29Avg(double yWealthBULowCostDebtValue18to29Avg) {
+        this.yWealthBULowCostDebtValue18to29Avg = yWealthBULowCostDebtValue18to29Avg;
+    }
+
+    public double getyWealthBULowCostDebtValue30to54Avg() {
+        return yWealthBULowCostDebtValue30to54Avg;
+    }
+
+    public void setyWealthBULowCostDebtValue30to54Avg(double yWealthBULowCostDebtValue30to54Avg) {
+        this.yWealthBULowCostDebtValue30to54Avg = yWealthBULowCostDebtValue30to54Avg;
+    }
+
+    public double getyWealthBULowCostDebtValue55to74Avg() {
+        return yWealthBULowCostDebtValue55to74Avg;
+    }
+
+    public void setyWealthBULowCostDebtValue55to74Avg(double yWealthBULowCostDebtValue55to74Avg) {
+        this.yWealthBULowCostDebtValue55to74Avg = yWealthBULowCostDebtValue55to74Avg;
+    }
+
+    public double getyWealthBUHighCostDebtValue18to29Avg() {
+        return yWealthBUHighCostDebtValue18to29Avg;
+    }
+
+    public void setyWealthBUHighCostDebtValue18to29Avg(double yWealthBUHighCostDebtValue18to29Avg) {
+        this.yWealthBUHighCostDebtValue18to29Avg = yWealthBUHighCostDebtValue18to29Avg;
+    }
+
+    public double getyWealthBUHighCostDebtValue30to54Avg() {
+        return yWealthBUHighCostDebtValue30to54Avg;
+    }
+
+    public void setyWealthBUHighCostDebtValue30to54Avg(double yWealthBUHighCostDebtValue30to54Avg) {
+        this.yWealthBUHighCostDebtValue30to54Avg = yWealthBUHighCostDebtValue30to54Avg;
+    }
+
+    public double getyWealthBUHighCostDebtValue55to74Avg() {
+        return yWealthBUHighCostDebtValue55to74Avg;
+    }
+
+    public void setyWealthBUHighCostDebtValue55to74Avg(double yWealthBUHighCostDebtValue55to74Avg) {
+        this.yWealthBUHighCostDebtValue55to74Avg = yWealthBUHighCostDebtValue55to74Avg;
+    }
+
+    public double getyWealthBULowCostDebtHolder18to29Avg() {
+        return yWealthBULowCostDebtHolder18to29Avg;
+    }
+
+    public void setyWealthBULowCostDebtHolder18to29Avg(double yWealthBULowCostDebtHolder18to29Avg) {
+        this.yWealthBULowCostDebtHolder18to29Avg = yWealthBULowCostDebtHolder18to29Avg;
+    }
+
+    public double getyWealthBULowCostDebtHolder30to54Avg() {
+        return yWealthBULowCostDebtHolder30to54Avg;
+    }
+
+    public void setyWealthBULowCostDebtHolder30to54Avg(double yWealthBULowCostDebtHolder30to54Avg) {
+        this.yWealthBULowCostDebtHolder30to54Avg = yWealthBULowCostDebtHolder30to54Avg;
+    }
+
+    public double getyWealthBULowCostDebtHolder55to74Avg() {
+        return yWealthBULowCostDebtHolder55to74Avg;
+    }
+
+    public void setyWealthBULowCostDebtHolder55to74Avg(double yWealthBULowCostDebtHolder55to74Avg) {
+        this.yWealthBULowCostDebtHolder55to74Avg = yWealthBULowCostDebtHolder55to74Avg;
+    }
+
+    public double getyWealthBUHighCostDebtHolder18to29Avg() {
+        return yWealthBUHighCostDebtHolder18to29Avg;
+    }
+
+    public void setyWealthBUHighCostDebtHolder18to29Avg(double yWealthBUHighCostDebtHolder18to29Avg) {
+        this.yWealthBUHighCostDebtHolder18to29Avg = yWealthBUHighCostDebtHolder18to29Avg;
+    }
+
+    public double getyWealthBUHighCostDebtHolder30to54Avg() {
+        return yWealthBUHighCostDebtHolder30to54Avg;
+    }
+
+    public void setyWealthBUHighCostDebtHolder30to54Avg(double yWealthBUHighCostDebtHolder30to54Avg) {
+        this.yWealthBUHighCostDebtHolder30to54Avg = yWealthBUHighCostDebtHolder30to54Avg;
+    }
+
+    public double getyWealthBUHighCostDebtHolder55to74Avg() {
+        return yWealthBUHighCostDebtHolder55to74Avg;
+    }
+
+    public void setyWealthBUHighCostDebtHolder55to74Avg(double yWealthBUHighCostDebtHolder55to74Avg) {
+        this.yWealthBUHighCostDebtHolder55to74Avg = yWealthBUHighCostDebtHolder55to74Avg;
+    }
+
+    public double getyWealthBUMixedDebtHolder18to29Avg() {
+        return yWealthBUMixedDebtHolder18to29Avg;
+    }
+
+    public void setyWealthBUMixedDebtHolder18to29Avg(double yWealthBUMixedDebtHolder18to29Avg) {
+        this.yWealthBUMixedDebtHolder18to29Avg = yWealthBUMixedDebtHolder18to29Avg;
+    }
+
+    public double getyWealthBUMixedDebtHolder30to54Avg() {
+        return yWealthBUMixedDebtHolder30to54Avg;
+    }
+
+    public void setyWealthBUMixedDebtHolder30to54Avg(double yWealthBUMixedDebtHolder30to54Avg) {
+        this.yWealthBUMixedDebtHolder30to54Avg = yWealthBUMixedDebtHolder30to54Avg;
+    }
+
+    public double getyWealthBUMixedDebtHolder55to74Avg() {
+        return yWealthBUMixedDebtHolder55to74Avg;
+    }
+
+    public void setyWealthBUMixedDebtHolder55to74Avg(double yWealthBUMixedDebtHolder55to74Avg) {
+        this.yWealthBUMixedDebtHolder55to74Avg = yWealthBUMixedDebtHolder55to74Avg;
     }
 
     public double getyWealthBUHomeOwner18to29Avg() {
@@ -430,6 +697,14 @@ public class Statistics3 {
         double[] avBUMgV = {0.,0.,0.};
         double[] prBUHgV = {0.,0.,0.};
         double[] prBUMgV = {0.,0.,0.};
+        double[] avBUFinNetV = {0.,0.,0.};
+        double[] avBUFinAssetV = {0.,0.,0.};
+        double[] avBUUnsecDebtV = {0.,0.,0.};
+        double[] avBULowDebtV = {0.,0.,0.};
+        double[] avBUHighDebtV = {0.,0.,0.};
+        double[] prBULowDebt = {0.,0.,0.};
+        double[] prBUHighDebt = {0.,0.,0.};
+        double[] prBUMixedDebt = {0.,0.,0.};
         double[] popBU = {0.,0.,0.};
         for (BenefitUnit bu : model.getBenefitUnits()) {
 
@@ -448,6 +723,18 @@ public class Statistics3 {
                 avBUMgV[ii] += bu.getWealthNonPension().getWealthMortgageDebtValue();
                 prBUHgV[ii] += bu.getWealthPrptyValue() > 0.0 ? 1.0: 0.0;
                 prBUMgV[ii] += bu.getWealthNonPension().getWealthMortgageDebtValue() > 0.0 ? 1.0: 0.0;
+
+                WealthFinancial wealthFinancial = bu.getWealthNonPension().getWealthFinancial();
+                double lowDebt = wealthFinancial.getWealthUnsecuredDebtLowValue();
+                double highDebt = wealthFinancial.getWealthUnsecuredDebtHighValue();
+                avBUFinNetV[ii] += wealthFinancial.getValue();
+                avBUFinAssetV[ii] += wealthFinancial.getWealthFinancialAssetsValue();
+                avBULowDebtV[ii] += lowDebt;
+                avBUHighDebtV[ii] += highDebt;
+                avBUUnsecDebtV[ii] += lowDebt + highDebt;
+                prBULowDebt[ii] += wealthFinancial.hasLowCostDebt() ? 1.0: 0.0;
+                prBUHighDebt[ii] += wealthFinancial.hasHighCostDebt() ? 1.0: 0.0;
+                prBUMixedDebt[ii] += wealthFinancial.hasMixedDebt() ? 1.0: 0.0;
                 popBU[ii] += 1.0;
             }
         }
@@ -460,6 +747,14 @@ public class Statistics3 {
                 avBUMgV[ii] /= popBU[ii];
                 prBUHgV[ii] /= popBU[ii];
                 prBUMgV[ii] /= popBU[ii];
+                avBUFinNetV[ii] /= popBU[ii];
+                avBUFinAssetV[ii] /= popBU[ii];
+                avBUUnsecDebtV[ii] /= popBU[ii];
+                avBULowDebtV[ii] /= popBU[ii];
+                avBUHighDebtV[ii] /= popBU[ii];
+                prBULowDebt[ii] /= popBU[ii];
+                prBUHighDebt[ii] /= popBU[ii];
+                prBUMixedDebt[ii] /= popBU[ii];
             }
         }
 
@@ -494,5 +789,29 @@ public class Statistics3 {
         setyWealthBUMortgageHolder18to29Avg(prBUMgV[0]);
         setyWealthBUMortgageHolder30to54Avg(prBUMgV[1]);
         setyWealthBUMortgageHolder55to74Avg(prBUMgV[2]);
+        setyWealthBUFinancialNetValue18to29Avg(avBUFinNetV[0]);
+        setyWealthBUFinancialNetValue30to54Avg(avBUFinNetV[1]);
+        setyWealthBUFinancialNetValue55to74Avg(avBUFinNetV[2]);
+        setyWealthBUFinancialAssetsValue18to29Avg(avBUFinAssetV[0]);
+        setyWealthBUFinancialAssetsValue30to54Avg(avBUFinAssetV[1]);
+        setyWealthBUFinancialAssetsValue55to74Avg(avBUFinAssetV[2]);
+        setyWealthBUUnsecuredDebtValue18to29Avg(avBUUnsecDebtV[0]);
+        setyWealthBUUnsecuredDebtValue30to54Avg(avBUUnsecDebtV[1]);
+        setyWealthBUUnsecuredDebtValue55to74Avg(avBUUnsecDebtV[2]);
+        setyWealthBULowCostDebtValue18to29Avg(avBULowDebtV[0]);
+        setyWealthBULowCostDebtValue30to54Avg(avBULowDebtV[1]);
+        setyWealthBULowCostDebtValue55to74Avg(avBULowDebtV[2]);
+        setyWealthBUHighCostDebtValue18to29Avg(avBUHighDebtV[0]);
+        setyWealthBUHighCostDebtValue30to54Avg(avBUHighDebtV[1]);
+        setyWealthBUHighCostDebtValue55to74Avg(avBUHighDebtV[2]);
+        setyWealthBULowCostDebtHolder18to29Avg(prBULowDebt[0]);
+        setyWealthBULowCostDebtHolder30to54Avg(prBULowDebt[1]);
+        setyWealthBULowCostDebtHolder55to74Avg(prBULowDebt[2]);
+        setyWealthBUHighCostDebtHolder18to29Avg(prBUHighDebt[0]);
+        setyWealthBUHighCostDebtHolder30to54Avg(prBUHighDebt[1]);
+        setyWealthBUHighCostDebtHolder55to74Avg(prBUHighDebt[2]);
+        setyWealthBUMixedDebtHolder18to29Avg(prBUMixedDebt[0]);
+        setyWealthBUMixedDebtHolder30to54Avg(prBUMixedDebt[1]);
+        setyWealthBUMixedDebtHolder55to74Avg(prBUMixedDebt[2]);
     }
 }

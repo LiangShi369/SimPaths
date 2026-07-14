@@ -34,12 +34,18 @@ public class WealthNonPension {
     }
 
     public WealthNonPension(double wealthTotValue, double wealthPrptyValue, double wealthMortgageDebtValue, double wealthPensValue) {
+        this(wealthTotValue, wealthPrptyValue, wealthMortgageDebtValue, wealthPensValue, 0.0, 0.0);
+    }
+
+    public WealthNonPension(double wealthTotValue, double wealthPrptyValue, double wealthMortgageDebtValue, double wealthPensValue,
+                            double wealthUnsecuredDebtLowValue, double wealthUnsecuredDebtHighValue) {
         // used for initial population
         inYearSavings = 0.0;
         inYearHousingAccrual = 0.0;
         wealthNonPensionValue = wealthTotValue - wealthPensValue;
         wealthHousing = new WealthHousing(wealthPrptyValue,  wealthMortgageDebtValue);
-        wealthFinancial = new WealthFinancial(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
+        wealthFinancial = new WealthFinancial(wealthNonPensionValue - wealthHousing.getWealthNetHousing(),
+                wealthUnsecuredDebtLowValue, wealthUnsecuredDebtHighValue);
     }
 
 
@@ -58,7 +64,8 @@ public class WealthNonPension {
 
     public void projectNonPensionWealth(BenefitUnit benefitUnit, WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual,
                                         double xConsumptionAnnual, double innovHousingIncidence, double innovHousingNetValue,
-                                        double innovMortgageIncidence, double innovMortgageValue) {
+                                        double innovMortgageIncidence, double innovMortgageValue,
+                                        double innovUnsecuredDebtState, double innovLowDebtValue, double innovHighDebtValue) {
 
         // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
@@ -69,7 +76,9 @@ public class WealthNonPension {
                 innovMortgageIncidence, innovMortgageValue);
 
         // allocate remaining share of non-pension wealth to financial
-        wealthFinancial.setValue(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
+        wealthFinancial.projectWealthValue(benefitUnit, wealthNonPensionL1.getWealthFinancial(),
+                wealthNonPensionValue - wealthHousing.getWealthNetHousing(),
+                innovUnsecuredDebtState, innovLowDebtValue, innovHighDebtValue);
     }
 
 
@@ -83,6 +92,8 @@ public class WealthNonPension {
     }
 
     public WealthHousing getWealthHousing() {return wealthHousing;}
+
+    public WealthFinancial getWealthFinancial() {return wealthFinancial;}
 
     public double getWealthNonPensionValue() {
         return updateWealthNonPensionValue();
