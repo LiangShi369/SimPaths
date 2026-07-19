@@ -248,3 +248,4 @@ input/EUROMODoutput/baseline/*
 .idea/
 
 input/InitialPopulations/original/*
+input/InitialPopulations/base/*
