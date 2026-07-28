@@ -1,6 +1,8 @@
 package simpaths.model.enums;
 
-public enum UnsecuredDebtState {
+import microsim.statistics.regression.IntegerValuedEnum;
+
+public enum UnsecuredDebtState implements IntegerValuedEnum {
 
     None(0, false, false),
     LowCostOnly(1, true, false),

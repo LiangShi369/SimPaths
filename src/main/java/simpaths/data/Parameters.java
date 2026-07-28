@@ -810,6 +810,7 @@ public class Parameters {
 
     //Financial wealth
     private static LinearRegression regFW1a;
+    private static MultinomialRegression<UnsecuredDebtState> regFW2a;
     private static LinearRegression regFW2b;
     private static LinearRegression regFW2c;
     private static LinearRegression regFW2d;
@@ -1370,6 +1371,7 @@ public class Parameters {
                     {"coeffCovariancePensionWealthHW1d", coeffCovariancePensionWealthHW1d},
                     {"coeffCovariancePensionWealthHW2a", coeffCovariancePensionWealthHW2a},
                     {"coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a},
+                    {"coeffCovarianceFinancialWealthFW2a", coeffCovarianceFinancialWealthFW2a},
                     {"coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b},
                     {"coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c},
                     {"coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d},
@@ -1495,6 +1497,7 @@ public class Parameters {
 
             //Financial wealth
             coeffCovarianceFinancialWealthFW1a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW1a", coeffCovarianceFinancialWealthFW1a);
+            coeffCovarianceFinancialWealthFW2a = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2a", coeffCovarianceFinancialWealthFW2a);
             coeffCovarianceFinancialWealthFW2b = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b);
             coeffCovarianceFinancialWealthFW2c = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c);
             coeffCovarianceFinancialWealthFW2d = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d);
@@ -1609,6 +1612,7 @@ public class Parameters {
 
         //Financial wealth
         regFW1a = new LinearRegression(coeffCovarianceFinancialWealthFW1a);
+        regFW2a = new MultinomialRegression<>(RegressionType.MultinomialLogit, UnsecuredDebtState.class, coeffCovarianceFinancialWealthFW2a);
         regFW2b = new LinearRegression(coeffCovarianceFinancialWealthFW2b);
         regFW2c = new LinearRegression(coeffCovarianceFinancialWealthFW2c);
         regFW2d = new LinearRegression(coeffCovarianceFinancialWealthFW2d);
@@ -2175,18 +2179,11 @@ public class Parameters {
     public static LinearRegression getRegHW2d() { return regHW2d; }
 
     public static LinearRegression getRegFW1a() { return regFW1a; }
+    public static MultinomialRegression<UnsecuredDebtState> getRegFW2a() { return regFW2a; }
     public static LinearRegression getRegFW2b() { return regFW2b; }
     public static LinearRegression getRegFW2c() { return regFW2c; }
     public static LinearRegression getRegFW2d() { return regFW2d; }
     public static LinearRegression getRegFW2e() { return regFW2e; }
-
-    public static double getFinancialWealthTransitionProbability(int lagState, int currentState) {
-        Object probability = coeffCovarianceFinancialWealthFW2a.getValue("P" + lagState + currentState);
-        if (probability instanceof Number) {
-            return ((Number) probability).doubleValue();
-        }
-        throw new RuntimeException("Financial wealth transition probability not found for lag state " + lagState + " and current state " + currentState);
-    }
 
     public static LinearRegression getRegEquivalisedIncomeMales() {return regEquivalisedIncomeMales;}
     public static LinearRegression getRegEquivalisedIncomeFemales() {return regEquivalisedIncomeFemales;}

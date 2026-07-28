@@ -12,8 +12,8 @@ public class WealthHousing {
     private double inYearAccrualPty;            // accrued property wealth in the year
     private double inYearAccrualMtg;            // accrued mortgage debt in the year
     private double wealthMortgageDebtValue;     // value of outstanding mortgage debt
-    private double wealthNetInnovation;         // innovation used to project value of net housing wealth
-    private double wealthMortgageDebtInnovation; // innovation used to project value of mortgage debt
+    private double wealthNetInnovation;         // persistent residual state for net housing wealth
+    private double wealthMortgageDebtInnovation; // persistent residual state for mortgage debt
 
 
     /******************************************************
@@ -72,7 +72,8 @@ public class WealthHousing {
 
             double netHousing;
             double score, rmse, gauss;
-            if (wealthHousingL1.isHomeOwner()) {
+            boolean continuingHomeOwner = wealthHousingL1.isHomeOwner();
+            if (continuingHomeOwner) {
                 score = Parameters.getRegHW1c().getScore(benefitUnit, BenefitUnit.Variables.class);
                 rmse = Parameters.getRMSEForRegression("HW1c");
             } else {
@@ -80,8 +81,16 @@ public class WealthHousing {
                 rmse = Parameters.getRMSEForRegression("HW1d");
             }
             gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovNetValue);
-            wealthNetInnovation = gauss * rmse;
-            netHousing = Math.sinh(score + wealthNetInnovation);
+            double shock = gauss * rmse;
+            double transformedNetHousing = score + shock;
+            if (continuingHomeOwner) {
+                double persistence = Parameters.getRegHW1c().getCoefficient("HousingPersistence");
+                wealthNetInnovation = persistence * wealthHousingL1.getWealthNetInnovation() + shock;
+            } else {
+                double continuationScore = Parameters.getRegHW1c().getScore(benefitUnit, BenefitUnit.Variables.class);
+                wealthNetInnovation = transformedNetHousing - continuationScore;
+            }
+            netHousing = Math.sinh(transformedNetHousing);
             if (!Parameters.isFinite(netHousing))
                 throw new RuntimeException("projec" +
                         "tion for net housing value is not finite");
@@ -93,12 +102,16 @@ public class WealthHousing {
             boolean mortgageHolder;
             boolean newHomeOwner = !wealthHousingL1.isHomeOwner();
             if (newHomeOwner && !wealthHousingL1.isMortgageHolder()) {
-                mortgageHolder = innovMortgageIncidence < ManagerRegressions.getProbability(benefitUnit, RegressionName.WealthHousingHW2a);
+                mortgageHolder = innovMortgageIncidence < ManagerRegressions.getProbability(
+                        benefitUnit, RegressionName.WealthHousingHW2a);
             } else {
-                mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthHousingL1.isMortgageHolder(), innovMortgageIncidence, RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
+                mortgageHolder = ManagerRegressions.getAnnualEventFromBiennial(
+                        benefitUnit, wealthHousingL1.isMortgageHolder(), innovMortgageIncidence,
+                        RegressionName.WealthHousingHW2a, RegressionName.WealthHousingHW2b);
             }
             if (mortgageHolder) {
-                if (wealthHousingL1.isMortgageHolder()) {
+                boolean continuingMortgage = wealthHousingL1.isMortgageHolder();
+                if (continuingMortgage) {
                     score = Parameters.getRegHW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
                     rmse = Parameters.getRMSEForRegression("HW2c");
                 } else {
@@ -106,8 +119,16 @@ public class WealthHousing {
                     rmse = Parameters.getRMSEForRegression("HW2d");
                 }
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovMortgageValue);
-                wealthMortgageDebtInnovation = gauss * rmse;
-                double mortgageDebt = Math.exp(score + wealthMortgageDebtInnovation);
+                shock = gauss * rmse;
+                double transformedMortgageDebt = score + shock;
+                if (continuingMortgage) {
+                    double persistence = Parameters.getRegHW2c().getCoefficient("MortgagePersistence");
+                    wealthMortgageDebtInnovation = persistence * wealthHousingL1.getWealthMortgageDebtInnovation() + shock;
+                } else {
+                    double continuationScore = Parameters.getRegHW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
+                    wealthMortgageDebtInnovation = transformedMortgageDebt - continuationScore;
+                }
+                double mortgageDebt = Math.exp(transformedMortgageDebt);
                 if (!Parameters.isFinite(mortgageDebt))
                     throw new RuntimeException("projection for mortgage debt value is not finite");
                 wealthMortgageDebtValue = mortgageDebt;
@@ -131,6 +152,10 @@ public class WealthHousing {
 
     public void setWealthNetInnovation( double val ) {
         wealthNetInnovation = val;
+    }
+
+    public void setWealthMortgageDebtInnovation(double value) {
+        wealthMortgageDebtInnovation = value;
     }
 
     public double getInYearAccrualNet() {

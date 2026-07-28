@@ -62,10 +62,11 @@ public class WealthNonPension {
         return wealthHousing.projectReturnAnnual(year);
     }
 
-    public void projectNonPensionWealth(BenefitUnit benefitUnit, WealthNonPension wealthNonPensionL1, double disposableIncomeAnnual,
-                                        double xConsumptionAnnual, double innovHousingIncidence, double innovHousingNetValue,
-                                        double innovMortgageIncidence, double innovMortgageValue,
-                                        double innovUnsecuredDebtState, double innovLowDebtValue, double innovHighDebtValue) {
+    public void projectNonPensionWealthBeforeUnsecuredDebt(BenefitUnit benefitUnit,
+                                        WealthNonPension wealthNonPensionL1,
+                                        double disposableIncomeAnnual, double xConsumptionAnnual,
+                                        double innovHousingIncidence, double innovHousingNetValue,
+                                        double innovMortgageIncidence, double innovMortgageValue) {
 
         // project total non-pension wealth
         inYearSavings = disposableIncomeAnnual - xConsumptionAnnual;
@@ -75,9 +76,19 @@ public class WealthNonPension {
         wealthHousing.projectValues(benefitUnit, wealthNonPensionL1.getWealthHousing(), innovHousingIncidence, innovHousingNetValue,
                 innovMortgageIncidence, innovMortgageValue);
 
-        // allocate remaining share of non-pension wealth to financial
-        wealthFinancial.projectWealthValue(benefitUnit, wealthNonPensionL1.getWealthFinancial(),
-                wealthNonPensionValue - wealthHousing.getWealthNetHousing(),
+        // Establish current net financial wealth for every benefit unit before
+        // any FW2a transition is evaluated.  The model assigns current-year
+        // cross-sectional deciles between this phase and projectUnsecuredDebt.
+        wealthFinancial.setValue(wealthNonPensionValue - wealthHousing.getWealthNetHousing());
+    }
+
+    public void projectUnsecuredDebt(BenefitUnit benefitUnit,
+                                     WealthNonPension wealthNonPensionL1,
+                                     double innovUnsecuredDebtState,
+                                     double innovLowDebtValue,
+                                     double innovHighDebtValue) {
+        wealthFinancial.projectUnsecuredDebt(benefitUnit,
+                wealthNonPensionL1.getWealthFinancial(),
                 innovUnsecuredDebtState, innovLowDebtValue, innovHighDebtValue);
     }
 

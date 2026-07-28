@@ -601,6 +601,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (Parameters.projectNonPensionWealth) {
 
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateNonPensionWealth);
+            yearlySchedule.addEvent(this, Processes.AssignFinancialWealthRanks);
+            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateUnsecuredDebt);
             yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdateNonPensionWealth);
         }
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateTotalWealth);
@@ -818,6 +820,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         EndYear,
         UnionMatching,
         LabourMarketUpdate,
+        AssignFinancialWealthRanks,
 
         //Alignment Processes
         FertilityAlignment,
@@ -854,6 +857,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 System.out.println("Finished year " + year + " (in " + timerForYear + " seconds)");
                 if (commentsOn) log.info("Finished year " + year + " (in " + timerForYear + " seconds)");
                 elapsedTime0 = elapsedTime1;
+            }
+            case AssignFinancialWealthRanks -> {
+                assignFinancialWealthRanks();
             }
             case PopulationAlignment -> {
 
@@ -971,6 +977,39 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
      * METHODS IMPLEMENTING PROCESS LEVEL COMPUTATIONS
      *
      */
+
+    private void assignFinancialWealthRanks() {
+
+        Map<BenefitUnit, Integer> wealthRanks = WeightedQuantileRanks.assign(
+                benefitUnits,
+                BenefitUnit::getNetFinancialWealthForRanking,
+                BenefitUnit::getWeight,
+                10);
+        wealthRanks.forEach(BenefitUnit::setNetFinancialWealthDecile);
+
+        Map<IncomeRankGroup, List<BenefitUnit>> incomeGroups = new LinkedHashMap<>();
+        for (BenefitUnit benefitUnit : benefitUnits) {
+            Double monthlyPrivateIncome = benefitUnit.getGrossIncomeMonthly();
+            if (monthlyPrivateIncome == null || !Double.isFinite(monthlyPrivateIncome))
+                throw new IllegalStateException("Current private income is not available for benefit unit "
+                        + benefitUnit.getId());
+            Person referencePerson = benefitUnit.getRefPerson();
+            boolean graduate = Education.High.equals(referencePerson.getEduHighestC4());
+            IncomeRankGroup group = new IncomeRankGroup(benefitUnit.getOccupancy(), graduate);
+            incomeGroups.computeIfAbsent(group, ignored -> new ArrayList<>()).add(benefitUnit);
+        }
+        for (List<BenefitUnit> group : incomeGroups.values()) {
+            Map<BenefitUnit, Integer> incomeRanks = WeightedQuantileRanks.assign(
+                    group,
+                    benefitUnit -> benefitUnit.getGrossIncomeMonthly(),
+                    BenefitUnit::getWeight,
+                    10);
+            incomeRanks.forEach(BenefitUnit::setPrivateIncomeDecile);
+        }
+    }
+
+    private record IncomeRankGroup(Occupancy occupancy, boolean graduate) {
+    }
 
 
     private void screenForExitingObjects() {

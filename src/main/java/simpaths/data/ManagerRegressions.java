@@ -265,6 +265,9 @@ public class ManagerRegressions {
             case WealthPensionPW1e -> {
                 return Parameters.getRegPW1e();
             }
+            case WealthFinancialFW2a -> {
+                return Parameters.getRegFW2a();
+            }
             // case SocialCareS2e -> {
             //     return Parameters.getRegPartnerSupplementaryCareS2e();
             // }
@@ -420,10 +423,9 @@ public class ManagerRegressions {
 
         double pent2 = getProbability(obj, entryRegression);
         double pper2 = getProbability(obj, persistRegression);
-        if (pent2 >= pper2)
-            throw new ArithmeticException("Entry probability of biennial system must be less than persistence probability");
-        double pent = pent2 / (1.0 + Math.sqrt(pper2 - pent2));
-        double pper = pent + Math.sqrt(pper2 - pent2);
+        double[] annualProbabilities = recoverAnnualEntryPersistence(pent2, pper2);
+        double pent = annualProbabilities[0];
+        double pper = annualProbabilities[1];
         if (lagIncidence) {
 
             return (rand < pper);
@@ -431,6 +433,22 @@ public class ManagerRegressions {
 
             return (rand < pent);
         }
+    }
+
+    public static double[] recoverAnnualEntryPersistence(double biennialEntry, double biennialPersistence) {
+        if (!Double.isFinite(biennialEntry) || !Double.isFinite(biennialPersistence) ||
+                biennialEntry < 0.0 || biennialEntry > 1.0 ||
+                biennialPersistence < 0.0 || biennialPersistence > 1.0) {
+            throw new IllegalArgumentException("biennial entry and persistence probabilities must lie in [0,1]");
+        }
+
+        if (biennialEntry > biennialPersistence)
+            throw new ArithmeticException("biennial entry probability exceeds persistence probability");
+
+        double persistenceGap = Math.sqrt(Math.max(0.0, biennialPersistence - biennialEntry));
+        double annualEntry = biennialEntry / (1.0 + persistenceGap);
+        double annualPersistence = annualEntry + persistenceGap;
+        return new double[] {annualEntry, annualPersistence};
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> double getProbability(E event, IDoubleSource obj, RegressionName regression) {
@@ -441,6 +459,12 @@ public class ManagerRegressions {
     public static <E extends Enum<E> & IntegerValuedEnum> Map<E, Double> getProbabilities(IDoubleSource obj, RegressionName regression) {
 
         return getDiscreteVariableRegression(regression).getProbabilities(obj, Person.Variables.class);
+    }
+
+    public static <E extends Enum<E> & IntegerValuedEnum, R extends Enum<R>> Map<E, Double> getProbabilities(
+            IDoubleSource obj, Class<R> regressorsClass, RegressionName regression) {
+
+        return getDiscreteVariableRegression(regression).getProbabilities(obj, regressorsClass);
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> E getEvent(Map<E, Double> probs, double rand) {
