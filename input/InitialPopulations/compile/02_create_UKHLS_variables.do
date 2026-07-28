@@ -3456,6 +3456,8 @@ gen total_wealth = -9
 gen total_pensions = -9
 gen housing_wealth = -9
 gen mortgage_debt = -9
+gen unsecured_low_debt = -9
+gen unsecured_high_debt = -9
 gen contRateOPEe = -9
 gen contRateOPEr = -9
 gen contRatePP = -9
@@ -3466,6 +3468,8 @@ label var total_wealth "total wealth net of liabilities of benefit unit includin
 label var total_pensions "value of all private (personal and occupational) pensions of benefit unit"
 label var housing_wealth "value of main home gross of mortgage debt of benefit unit"
 label var mortgage_debt "total mortgage debt owed on main home of benefit unit"
+label var unsecured_low_debt "low-cost unsecured debt"
+label var unsecured_high_debt "high-cost unsecured debt"
 
 *check for duplicates in the pooled dataset 
 duplicates tag idperson idhh swv, gen(dup)
