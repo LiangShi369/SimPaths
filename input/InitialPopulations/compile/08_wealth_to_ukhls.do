@@ -37,7 +37,7 @@ global seedAdjust = 0
 *********************************************************************/
 use "population_initial_fs_UK_$yearWealth", clear
 sort idperson
-drop total_wealth total_pensions housing_wealth mortgage_debt contRateOPEe contRateOPEr contRatePP smp rnk mtc
+drop total_wealth total_pensions housing_wealth mortgage_debt unsecured_low_debt unsecured_high_debt contRateOPEe contRateOPEr contRatePP smp rnk mtc
 
 
 /**********************************************************************

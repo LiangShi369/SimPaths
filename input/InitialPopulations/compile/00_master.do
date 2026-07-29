@@ -176,7 +176,7 @@ global scProvWaves "f g h i j k l m n o" //Next time available in wave 16 p
 global firstSimYear = 2010
 global lastSimYear = 2024
 global wealthStartYear = 2015
-global wealthEndYear = 2019
+global wealthEndYear = 2021
 
 
 * Define threshold ages

@@ -273,17 +273,14 @@ rename dot01 demEthnC6
 * --- Income, labour, wealth ---
 rename obs_earnings_hourly labWageHrly
 rename l1_obs_earnings_hourly labWageHrlyL1
-//rename liquid_wealth wealthLiq
-//rename tot_pen wealthPensValue
-//rename nvmhome wealthPrptyValue
 
 rename disp_inc yDispMonth //disposable income at the benefit unit level                 
 rename total_wealth wealthTotValue   //total wealth net of liabilities of benefit unit including housing, business and
 rename mortgage_debt wealthMortgageDebtValue  //total mortgage debt owed on main home of benefit unit
 rename housing_wealth wealthPrptyValue //value of main home gross of mortgage debt of benefit unit
 rename total_pensions wealthPensValue //value of all private (personal and occupational) pensions of benefit unit
-rename unsecured_low_debt wealthUnsecuredDebtLowValue
-rename unsecured_high_debt wealthUnsecuredDebtHighValue
+rename unsecured_low_debt wealthUnsecuredDebtLowValue //value of low-cost unsecured debt of benefit unit
+rename unsecured_high_debt wealthUnsecuredDebtHighValue //value of high-cost unsecured debt of benefit unit
 
 rename econ_benefits yBenReceivedFlag
 rename econ_benefits_nonuc yBenNonUCReceivedFlag
