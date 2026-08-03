@@ -2610,6 +2610,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         PrivateIncomeDecile8,
         PrivateIncomeDecile9,
         PrivateIncomeDecile10,
+        PrivateIncomeQuintile2,
+        PrivateIncomeQuintile3,
+        PrivateIncomeQuintile4,
+        PrivateIncomeQuintile5,
         PrivatePensionIncome,
         ReferencePersonEmployed,
         ReferencePersonGraduate,
@@ -4291,6 +4295,15 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 int requestedDecile = variableID.ordinal()
                         - Variables.PrivateIncomeDecile2.ordinal() + 2;
                 return getPrivateIncomeDecile() == requestedDecile ? 1.0 : 0.0;
+            }
+            case PrivateIncomeQuintile2, PrivateIncomeQuintile3,
+                    PrivateIncomeQuintile4, PrivateIncomeQuintile5 -> {
+                int requestedQuintile = variableID.ordinal()
+                        - Variables.PrivateIncomeQuintile2.ordinal() + 2;
+                // The Stata amount models group the existing within-cell income
+                // deciles in adjacent pairs: 1-2, 3-4, 5-6, 7-8 and 9-10.
+                int currentQuintile = (getPrivateIncomeDecile() + 1) / 2;
+                return currentQuintile == requestedQuintile ? 1.0 : 0.0;
             }
             case ReferencePersonEmployed -> {
                 return Les_c4.EmployedOrSelfEmployed.equals(getRefPerson().getLabC4()) ? 1.0 : 0.0;
