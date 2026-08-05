@@ -1,16 +1,12 @@
 package simpaths.model.benefitunit;
 
-import microsim.statistics.IDoubleSource;
 import microsim.statistics.regression.LinearRegression;
 import simpaths.data.ManagerRegressions;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
-import simpaths.data.TransitionMatrixAnnualiser;
 import simpaths.model.BenefitUnit;
 import simpaths.model.enums.TimeVaryingRate;
 import simpaths.model.enums.UnsecuredDebtState;
-
-import java.util.Map;
 
 public class WealthFinancial {
 
@@ -47,17 +43,17 @@ public class WealthFinancial {
         unsecuredDebtState = original.unsecuredDebtState;
     }
 
-    public WealthFinancial(double value) {
+    public WealthFinancial(double netFinancialWealth) {
         this();
-        setValue(value);
+        setNetFinancialAssetsValue(netFinancialWealth);
     }
 
-    public WealthFinancial(double value, double lowCostDebt, double highCostDebt) {
+    public WealthFinancial(double netFinancialWealth, double lowCostDebt, double highCostDebt) {
         this();
         wealthUnsecuredDebtLowValue = positiveOrZero(lowCostDebt);
         wealthUnsecuredDebtHighValue = positiveOrZero(highCostDebt);
         unsecuredDebtState = getUnsecuredDebtStateFromValues();
-        setValue(value);
+        setNetFinancialAssetsValue(netFinancialWealth);
     }
 
 
@@ -67,9 +63,19 @@ public class WealthFinancial {
 
     public double projectIncomeAnnual(int year) {
         // projects returns - see BenefitUnit.setInvestmentIncomeAnnual()
-        double returnsAssets = wealthFinancialAssetsValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
-        double costsLowDebt = wealthUnsecuredDebtLowValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealDebtCostLow);
-        double costsHighDebt = wealthUnsecuredDebtHighValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealDebtCostHigh);
+
+        double returnsAssets, costsLowDebt = 0.0, costsHighDebt = 0.0;
+        if (Parameters.projectLowCostDebt) {
+            costsLowDebt = wealthUnsecuredDebtLowValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealDebtCostLow);
+        }
+        if (Parameters.projectHighCostDebt) {
+            costsHighDebt = wealthUnsecuredDebtHighValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealDebtCostHigh);
+        }
+        if (wealthFinancialAssetsValue > 0.0) {
+            returnsAssets = wealthFinancialAssetsValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealSavingReturn);
+        } else {
+            returnsAssets = wealthFinancialAssetsValue * Parameters.getTimeSeriesRate(year, TimeVaryingRate.RealDebtCostLow);
+        }
         yWealthFinancialReturnYear = returnsAssets - costsLowDebt - costsHighDebt;
         return yWealthFinancialReturnYear;
     }
@@ -78,56 +84,31 @@ public class WealthFinancial {
                                      double innovUnsecuredDebtState,
                                      double innovLowDebtValue,
                                      double innovHighDebtValue) {
-        // Net financial wealth was established in the population-wide prepare
-        // phase, before current-year wealth deciles were assigned.
+
         double netFinancialWealth = getValue();
-        unsecuredDebtState = drawUnsecuredDebtState(benefitUnit, wealthFinancialL1.getUnsecuredDebtState(), innovUnsecuredDebtState);
+        projectUnsecuredDebtState(benefitUnit, wealthFinancialL1, innovUnsecuredDebtState);
 
         wealthUnsecuredDebtLowValue = 0.0;
         wealthUnsecuredDebtHighValue = 0.0;
         wealthUnsecuredDebtLowInnovation = 0.0;
         wealthUnsecuredDebtHighInnovation = 0.0;
 
+        // low-cost debt
         if (unsecuredDebtState.hasLowCostDebt()) {
-            boolean continuing = wealthFinancialL1.hasLowCostDebt();
-            String regression = continuing ? "FW2c" : "FW2b";
-            LinearRegression regressionModel = continuing ? Parameters.getRegFW2c() : Parameters.getRegFW2b();
-            double score = regressionModel.getScore(benefitUnit, BenefitUnit.Variables.class);
-            double shock = getInnovation(regression, innovLowDebtValue);
-            double transformedValue = score + shock;
-            if (continuing) {
-                double persistence = Parameters.getRegFW2c().getCoefficient("LowCostDebtPersistence");
-                wealthUnsecuredDebtLowInnovation = persistence * wealthFinancialL1.getWealthUnsecuredDebtLowInnovation() + shock;
-            } else {
-                double continuationScore = Parameters.getRegFW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
-                wealthUnsecuredDebtLowInnovation = transformedValue - continuationScore;
-            }
-            wealthUnsecuredDebtLowValue = Math.max(0.0, Math.sinh(transformedValue));
-            if (!Parameters.isFinite(wealthUnsecuredDebtLowValue))
-                throw new RuntimeException("projection for low-cost unsecured debt value is not finite"
-                        + " for benefit unit " + benefitUnit.getId()
-                        + ", regression " + regression
-                        + ", netFinancialWealth " + netFinancialWealth
-                        + ", score " + score
-                        + ", randomDraw " + innovLowDebtValue
-                        + ", shock " + shock
-                        + ", transformed value " + transformedValue);
+            // not currently supported
+
+            throw new RuntimeException("unsecured debt projection not supported for low-cost debt");
         }
 
+        // high-cost debt
         if (unsecuredDebtState.hasHighCostDebt()) {
+
             boolean continuing = wealthFinancialL1.hasHighCostDebt();
-            String regression = continuing ? "FW2e" : "FW2d";
-            LinearRegression regressionModel = continuing ? Parameters.getRegFW2e() : Parameters.getRegFW2d();
+            LinearRegression regressionModel = continuing ? Parameters.getRegFW2d() : Parameters.getRegFW2c();
             double score = regressionModel.getScore(benefitUnit, BenefitUnit.Variables.class);
-            double shock = getInnovation(regression, innovHighDebtValue);
-            double transformedValue = score + shock;
-            if (continuing) {
-                double persistence = Parameters.getRegFW2e().getCoefficient("HighCostDebtPersistence");
-                wealthUnsecuredDebtHighInnovation = persistence * wealthFinancialL1.getWealthUnsecuredDebtHighInnovation() + shock;
-            } else {
-                double continuationScore = Parameters.getRegFW2e().getScore(benefitUnit, BenefitUnit.Variables.class);
-                wealthUnsecuredDebtHighInnovation = transformedValue - continuationScore;
-            }
+            String regression = continuing ? "FW2d" : "FW2c";
+            wealthUnsecuredDebtHighInnovation = getInnovation(regression, innovHighDebtValue);
+            double transformedValue = score + wealthUnsecuredDebtHighInnovation;
             wealthUnsecuredDebtHighValue = Math.max(0.0, Math.sinh(transformedValue));
             if (!Parameters.isFinite(wealthUnsecuredDebtHighValue))
                 throw new RuntimeException("projection for high-cost unsecured debt value is not finite"
@@ -136,35 +117,53 @@ public class WealthFinancial {
                         + ", netFinancialWealth " + netFinancialWealth
                         + ", score " + score
                         + ", randomDraw " + innovHighDebtValue
-                        + ", shock " + shock
+                        + ", shock " + wealthUnsecuredDebtHighInnovation
                         + ", transformed value " + transformedValue);
         }
 
+        // assets
         wealthFinancialAssetsValue = netFinancialWealth + wealthUnsecuredDebtLowValue + wealthUnsecuredDebtHighValue;
     }
 
-    private UnsecuredDebtState drawUnsecuredDebtState(BenefitUnit benefitUnit, UnsecuredDebtState lagState, double randomDraw) {
-        UnsecuredDebtState[] states = UnsecuredDebtState.values();
-        double[][] biennialTransition = new double[states.length][states.length];
-        for (UnsecuredDebtState assumedLagState : states) {
-            IDoubleSource source = new CounterfactualDebtStateSource(benefitUnit, assumedLagState);
-            Map<UnsecuredDebtState, Double> probabilities = ManagerRegressions.getProbabilities(
-                    source, BenefitUnit.Variables.class, RegressionName.WealthFinancialFW2a);
-            for (UnsecuredDebtState currentState : states) {
-                biennialTransition[assumedLagState.getValue()][currentState.getValue()] = probabilities.get(currentState);
-            }
-        }
-        double[][] annualTransition = TransitionMatrixAnnualiser.annualiseBiennial(biennialTransition);
+    private void projectUnsecuredDebtState(BenefitUnit benefitUnit, WealthFinancial wealthFinancialL1, double randomDraw) {
 
-        double cumulative = 0.0;
-        for (UnsecuredDebtState state : states) {
-            cumulative += annualTransition[lagState.getValue()][state.getValue()];
-            if (randomDraw < cumulative) {
-                return state;
+        if (Parameters.projectLowCostDebt && Parameters.projectHighCostDebt) {
+
+            throw new RuntimeException("unsecured debt projection not supported for both low-cost and high-cost debt");
+            /*
+            UnsecuredDebtState lagState = wealthFinancialL1.getUnsecuredDebtState();
+            UnsecuredDebtState[] states = UnsecuredDebtState.values();
+            double[][] biennialTransition = new double[states.length][states.length];
+            for (UnsecuredDebtState assumedLagState : states) {
+                IDoubleSource source = new CounterfactualDebtStateSource(benefitUnit, assumedLagState);
+                Map<UnsecuredDebtState, Double> probabilities = ManagerRegressions.getProbabilities(
+                        source, BenefitUnit.Variables.class, RegressionName.WealthFinancialFW2a);
+                for (UnsecuredDebtState currentState : states) {
+                    biennialTransition[assumedLagState.getValue()][currentState.getValue()] = probabilities.get(currentState);
+                }
             }
+            double[][] annualTransition = TransitionMatrixAnnualiser.annualiseBiennial(biennialTransition);
+
+            double cumulative = 0.0;
+            for (UnsecuredDebtState state : states) {
+                cumulative += annualTransition[lagState.getValue()][state.getValue()];
+                if (randomDraw <= cumulative) {
+                    unsecuredDebtState = state;
+                    break;
+                }
+            }
+             */
+        } else if (Parameters.projectHighCostDebt || Parameters.projectLowCostDebt) {
+
+            boolean debtHolder = ManagerRegressions.getAnnualEventFromBiennial(benefitUnit, wealthFinancialL1.hasDebt(), randomDraw, RegressionName.WealthFinancialFW2a, RegressionName.WealthFinancialFW2b);
+            setDebt(debtHolder);
+        } else {
+
+            unsecuredDebtState =  UnsecuredDebtState.None;
         }
-        return UnsecuredDebtState.Mixed;
     }
+
+    /*
 
     private static final class CounterfactualDebtStateSource implements IDoubleSource {
 
@@ -191,6 +190,7 @@ public class WealthFinancial {
         }
     }
 
+     */
     private double getInnovation(String regression, double randomDraw) {
         double rmse = Parameters.getRMSEForRegression(regression);
         double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(randomDraw);
@@ -219,8 +219,8 @@ public class WealthFinancial {
         return wealthFinancialAssetsValue - wealthUnsecuredDebtLowValue - wealthUnsecuredDebtHighValue;
     }
 
-    public void setValue(double val) {
-        wealthFinancialAssetsValue = val + wealthUnsecuredDebtLowValue + wealthUnsecuredDebtHighValue;
+    public void setNetFinancialAssetsValue(double netFinancialWealthValue) {
+        wealthFinancialAssetsValue = netFinancialWealthValue + wealthUnsecuredDebtLowValue + wealthUnsecuredDebtHighValue;
     }
 
     public double getWealthFinancialAssetsValue() {
@@ -265,5 +265,27 @@ public class WealthFinancial {
 
     public boolean hasMixedDebt() {
         return unsecuredDebtState == UnsecuredDebtState.Mixed;
+    }
+
+    public boolean hasDebt() {
+
+        return unsecuredDebtState.hasLowCostDebt() || unsecuredDebtState.hasHighCostDebt();
+    }
+
+    private void setDebt(boolean debtHolder) {
+
+        if (debtHolder) {
+
+            if (Parameters.projectLowCostDebt) {
+                unsecuredDebtState = UnsecuredDebtState.LowCostOnly;
+            } else if (Parameters.projectHighCostDebt) {
+                unsecuredDebtState = UnsecuredDebtState.HighCostOnly;
+            } else {
+                unsecuredDebtState = UnsecuredDebtState.None;
+            }
+        } else {
+
+            unsecuredDebtState = UnsecuredDebtState.None;
+        }
     }
 }

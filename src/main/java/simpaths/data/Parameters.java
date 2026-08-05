@@ -233,6 +233,8 @@ public class Parameters {
     // parameters to manage simulation of optimised decisions
     public static boolean projectPensionWealth = true;
     public static boolean projectNonPensionWealth = true;
+    public static boolean projectLowCostDebt = false;                     // mixed debt allows for two types of debt, designed to reflect low and high cost debt
+    public static boolean projectHighCostDebt = true;                     // mixed debt allows for two types of debt, designed to reflect low and high cost debt
     public static boolean enableIntertemporalOptimisations = false;
 
     public static Grids grids = null;
@@ -552,7 +554,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2b;
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2c;
     private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2d;
-    private static MultiKeyCoefficientMap coeffCovarianceFinancialWealthFW2e;
 
     //Unemployment
     private static MultiKeyCoefficientMap coeffCovarianceUnemploymentU1a;
@@ -810,11 +811,10 @@ public class Parameters {
 
     //Financial wealth
     private static LinearRegression regFW1a;
-    private static MultinomialRegression<UnsecuredDebtState> regFW2a;
-    private static LinearRegression regFW2b;
+    private static BinomialRegression regFW2a;
+    private static BinomialRegression regFW2b;
     private static LinearRegression regFW2c;
     private static LinearRegression regFW2d;
-    private static LinearRegression regFW2e;
 
     //Unemployment
     private static BinomialRegression regUnemploymentMaleGraduateU1a;
@@ -1227,7 +1227,6 @@ public class Parameters {
         coeffCovarianceFinancialWealthFW2b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2b", 1);
         coeffCovarianceFinancialWealthFW2c = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2c", 1);
         coeffCovarianceFinancialWealthFW2d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2d", 1);
-        coeffCovarianceFinancialWealthFW2e = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_wealth_financial.xlsx", "FW2e", 1);
 
         //Unemployment
         coeffCovarianceUnemploymentU1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_unemployment.xlsx", "U1a", 1);
@@ -1375,7 +1374,6 @@ public class Parameters {
                     {"coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b},
                     {"coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c},
                     {"coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d},
-                    {"coeffCovarianceFinancialWealthFW2e", coeffCovarianceFinancialWealthFW2e},
                     // {"coeffCovarianceSocialCareS3e", coeffCovarianceSocialCareS3e}, // retired process
                     {"coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales},
                     {"coeffCovarianceEquivalisedIncomeFemales", coeffCovarianceEquivalisedIncomeFemales},
@@ -1501,7 +1499,6 @@ public class Parameters {
             coeffCovarianceFinancialWealthFW2b = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2b", coeffCovarianceFinancialWealthFW2b);
             coeffCovarianceFinancialWealthFW2c = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2c", coeffCovarianceFinancialWealthFW2c);
             coeffCovarianceFinancialWealthFW2d = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2d", coeffCovarianceFinancialWealthFW2d);
-            coeffCovarianceFinancialWealthFW2e = bootstrapWithTrace("coeffCovarianceFinancialWealthFW2e", coeffCovarianceFinancialWealthFW2e);
 
             //lifetime incomes
             coeffCovarianceEquivalisedIncomeMales = bootstrapWithTrace("coeffCovarianceEquivalisedIncomeMales", coeffCovarianceEquivalisedIncomeMales);
@@ -1612,11 +1609,10 @@ public class Parameters {
 
         //Financial wealth
         regFW1a = new LinearRegression(coeffCovarianceFinancialWealthFW1a);
-        regFW2a = new MultinomialRegression<>(RegressionType.MultinomialLogit, UnsecuredDebtState.class, coeffCovarianceFinancialWealthFW2a);
-        regFW2b = new LinearRegression(coeffCovarianceFinancialWealthFW2b);
+        regFW2a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceFinancialWealthFW2a);
+        regFW2b = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceFinancialWealthFW2b);
         regFW2c = new LinearRegression(coeffCovarianceFinancialWealthFW2c);
         regFW2d = new LinearRegression(coeffCovarianceFinancialWealthFW2d);
-        regFW2e = new LinearRegression(coeffCovarianceFinancialWealthFW2e);
 
         //lifetime incomes
         regEquivalisedIncomeMales = new LinearRegression(coeffCovarianceEquivalisedIncomeMales);
@@ -1924,6 +1920,7 @@ public class Parameters {
     }
 
     public static double getRMSEForRegression(String regressionName) {
+
         Object rmseValue = coefficientMapRMSE.getValue(regressionName);
         if (rmseValue instanceof Number) {
             return ((Number) rmseValue).doubleValue();
@@ -2179,11 +2176,10 @@ public class Parameters {
     public static LinearRegression getRegHW2d() { return regHW2d; }
 
     public static LinearRegression getRegFW1a() { return regFW1a; }
-    public static MultinomialRegression<UnsecuredDebtState> getRegFW2a() { return regFW2a; }
-    public static LinearRegression getRegFW2b() { return regFW2b; }
+    public static BinomialRegression getRegFW2a() { return regFW2a; }
+    public static BinomialRegression getRegFW2b() { return regFW2b; }
     public static LinearRegression getRegFW2c() { return regFW2c; }
     public static LinearRegression getRegFW2d() { return regFW2d; }
-    public static LinearRegression getRegFW2e() { return regFW2e; }
 
     public static LinearRegression getRegEquivalisedIncomeMales() {return regEquivalisedIncomeMales;}
     public static LinearRegression getRegEquivalisedIncomeFemales() {return regEquivalisedIncomeFemales;}

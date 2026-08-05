@@ -24,7 +24,7 @@ global dir_do "${dir_work}/do"
 global dir_data "${dir_work}/data"
 
 global wealthStartYear = 2015
-global wealthEndYear = 2019
+global wealthEndYear = 2021
 
 
 /********************************************************************************/

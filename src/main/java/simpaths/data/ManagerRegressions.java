@@ -136,6 +136,12 @@ public class ManagerRegressions {
             throw new RuntimeException("requested Binomial regression is not recognised: " + regression.name());
 
         switch (regression) {
+            case WealthFinancialFW2a -> {
+                return Parameters.getRegFW2a();
+            }
+            case WealthFinancialFW2b -> {
+                return Parameters.getRegFW2b();
+            }
             case WealthHousingHW1a -> {
                 return Parameters.getRegHW1a();
             }
@@ -264,9 +270,6 @@ public class ManagerRegressions {
             }
             case WealthPensionPW1e -> {
                 return Parameters.getRegPW1e();
-            }
-            case WealthFinancialFW2a -> {
-                return Parameters.getRegFW2a();
             }
             // case SocialCareS2e -> {
             //     return Parameters.getRegPartnerSupplementaryCareS2e();
@@ -442,13 +445,18 @@ public class ManagerRegressions {
             throw new IllegalArgumentException("biennial entry and persistence probabilities must lie in [0,1]");
         }
 
-        if (biennialEntry > biennialPersistence)
-            throw new ArithmeticException("biennial entry probability exceeds persistence probability");
+        if (biennialEntry < biennialPersistence) {
 
-        double persistenceGap = Math.sqrt(Math.max(0.0, biennialPersistence - biennialEntry));
-        double annualEntry = biennialEntry / (1.0 + persistenceGap);
-        double annualPersistence = annualEntry + persistenceGap;
-        return new double[] {annualEntry, annualPersistence};
+            double persistenceGap = Math.sqrt(Math.max(0.0, biennialPersistence - biennialEntry));
+            double annualEntry = biennialEntry / (1.0 + persistenceGap);
+            double annualPersistence = annualEntry + persistenceGap;
+            return new double[] {annualEntry, annualPersistence};
+        } else {
+
+            double annualEntry = biennialEntry / 2.0;                   // ignores persistence and assumes equal entry in each period
+            double annualPersistence = Math.sqrt(biennialPersistence);  // ignores entry and assumes equal persistence in each period
+            return new double[] {annualEntry, annualPersistence};
+        }
     }
 
     public static <E extends Enum<E> & IntegerValuedEnum> double getProbability(E event, IDoubleSource obj, RegressionName regression) {

@@ -601,6 +601,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (Parameters.projectNonPensionWealth) {
 
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateNonPensionWealth);
+            yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateHousingWealth);
             yearlySchedule.addEvent(this, Processes.AssignFinancialWealthRanks);
             yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.UpdateUnsecuredDebt);
             yearlySchedule.addCollectionEvent(persons, Person.Processes.UpdateNonPensionWealth);
@@ -980,6 +981,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private void assignFinancialWealthRanks() {
 
+        benefitUnits.forEach(BenefitUnit :: updateNetFinancialAssetsValue);
         Map<BenefitUnit, Integer> wealthRanks = WeightedQuantileRanks.assign(
                 benefitUnits,
                 BenefitUnit::getNetFinancialWealthForRanking,

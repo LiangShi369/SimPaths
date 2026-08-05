@@ -220,7 +220,7 @@ if _rc {
 recode unsec_debt_total highcost_debt_proxy (missing=0)
 gen unsec_high = highcost_debt_proxy
 replace unsec_high = 0 if (unsec_high<0 | unsec_high>=.)
-gen unsec_low = unsec_debt_total - unsec_high
+gen unsec_low = lowcost_debt
 replace unsec_low = 0 if (unsec_low<0 | unsec_low>=.)
 
 * limit sample

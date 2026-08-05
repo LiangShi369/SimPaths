@@ -387,14 +387,35 @@ foreach file in "${dir_was_data}/was_round_5_person_eul_oct_2020.dta" ///
 		gen pp_contrib_annual = pp_core_annual
 		replace pp_contrib_annual = pp_fallback_annual if (missing(pp_contrib_annual) | pp_contrib_annual<=0) & pp_fallback_annual>0
 		replace pp_contrib_annual = 0 if missing(pp_contrib_annual)
+		gen chk = pp_contrib_annual * (earnings < 0.01)
+		gsort was_round bu
+		by was_round bu: egen chk2 = sum(chk)
+		by was_round bu: egen earn_max = max(earnings)
+		gen pp_reallocate = 0
+		replace pp_reallocate = chk2 if (earnings == earn_max & earnings > 0.01)
+		gen pp_contrib_annual2 = pp_contrib_annual + pp_reallocate
+		replace pp_contrib_annual2 = 0 if (chk==1)
+		gen pp_contrate = 0
+		replace pp_contrate = pp_contrib_annual2 / (earnings) * 100 if (pp_contrib_annual2>=0 & pp_contrib_annual2<. & earnings>0 & earnings<.)
+		gen pp_membi = (pp_contrate>0.01) * (pp_contrate<.) * (adlt)
+		egen pp_membu = sum(pp_membi), by (case bu)
+
+		//gen ocdc_contrate_emee = dvcontocc_emee_dc1 * (dvcontocc_emee_dc1<.) + dvcontocc_emee_dc2 * (dvcontocc_emee_dc2 <.)
+		//gen ocdc_contrate_emer = dvcontocc_emer_dc1 * (dvcontocc_emer_dc1<.) + dvcontocc_emer_dc2 * (dvcontocc_emer_dc2 <.)
+		
 
 		gen byte pp_contrib_source_core = (pp_core_annual>0)
 		gen byte pp_contrib_source_fallback = (pp_core_annual<=0 & pp_fallback_annual>0)
 		label var pp_core_annual "Personal pension annual contribution (core regular amount-period)"
 		label var pp_fallback_annual "Personal pension annual contribution (fallback last contribution amount-period)"
 		label var pp_contrib_annual "Personal pension annual contribution (core with fallback)"
+		label var pp_contrib_annual2 "Personal pension annual contribution (core with fallback and reallocation)"
 		label var pp_contrib_source_core "1 if pp_contrib_annual sourced from core regular contribution"
 		label var pp_contrib_source_fallback "1 if pp_contrib_annual sourced from fallback last contribution"
+		label var pp_contrate "Personal pension contribution rate (% of gross employment income)"
+// 		label var ocdc_contrate_emee "DC occupational employee pension contribution rate (% of gross employment income)"
+// 		label var ocdc_contrate_emer "DC occupational employer pension contribution rate (% of gross employment income)"
+		label var pp_membu "number of personal pension members in benefit unit"
 
 		gen occ_emp_contrib_rate = .
 		replace occ_emp_contrib_rate = max(dvcontocc_emee_dc1,0) + max(dvcontocc_emee_dc2,0) if !missing(dvcontocc_emee_dc1) | !missing(dvcontocc_emee_dc2)
@@ -749,8 +770,8 @@ foreach file in "${dir_was_data}/was_round_5_person_eul_oct_2020.dta" ///
 			totcsc_sum totcsc_trans_sum totcsc_pers_sum tothp_sum tot_los tot_los_exc_slc totmo_sum ///
 			cc_debt cc_debt_trans cc_debt_pers hp_debt loan_debt loan_debt_exc_slc loan_debt_slc ///
 			loan_doorstep loan_pawnbroker loan_payday informal_loan_debt highcost_loan_debt ///
-			mail_debt unsec_debt_total unsec_debt_core highcost_debt_proxy ///
-			op_memb op_db op_dc ///
+			mail_debt unsec_debt_total unsec_debt_core highcost_debt_proxy lowcost_debt ///
+			op_memb pp_membu op_membu op_db op_dc ///
 			pp_core_annual pp_fallback_annual pp_contrib_annual pp_contrib_rate_income priv_total_contrib_rate_inc ///
 			pp_contrib_source_core pp_contrib_source_fallback occ_emp_contrib_rate occ_emp_contrib_annual ///
 			caser5 caser6 caser7 personw5 personw6 personr7
