@@ -2742,7 +2742,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
                 System.out.println("Will expand the initial population to " + popSize + " individuals, each of whom has an equal weight.");
 
-                // approach to resampling considered here is designed to allow for surveys that over-sample some population
+                // Approach to resampling considered here is designed to allow for surveys that over-sample some population
                 // subgroups. In this case you may have many similar observations in the sample all with low survey weights
                 // so that replicating by a factor adjustment on weight of each observation may result in none of the
                 // observations being included in the simulated sample (unless the simulated sample was very large).

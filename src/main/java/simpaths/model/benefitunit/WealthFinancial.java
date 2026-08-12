@@ -269,7 +269,10 @@ public class WealthFinancial {
 
     public boolean hasDebt() {
 
-        return unsecuredDebtState.hasLowCostDebt() || unsecuredDebtState.hasHighCostDebt();
+        if (Parameters.projectLowCostDebt && unsecuredDebtState.hasLowCostDebt())
+            return true;
+        else
+            return (Parameters.projectHighCostDebt && unsecuredDebtState.hasHighCostDebt());
     }
 
     private void setDebt(boolean debtHolder) {
