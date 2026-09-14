@@ -17,12 +17,12 @@ set maxvar 30000
 
 /********************************* SET LOG FILE *******************************/
 cap log close 
-log using "${dir_log}/reg_health_wellbeing_simple.log", replace
+log using "${dir_log}/reg_health_wellbeing.log", replace
 
 
 /********************************* SET EXCEL FILE *****************************/
 
-putexcel set "$dir_results/reg_health_wellbeing_simple", sheet("Info") modify //replace
+putexcel set "$dir_results/reg_health_wellbeing", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "This file contains regression estimates for wellbeing processes: MCS, PCS and Life Satisfaction scores"
 putexcel A2 = "Authors:"	
@@ -51,7 +51,7 @@ putexcel B13 = "Life Satisfaction, Stage 2 - causal estimate post labour-supply 
 putexcel A14 = "Process DLS2_Males"
 putexcel B14 = "Life Satisfaction, Stage 2 - causal estimate post labour-supply (Males) :  Life Satisfaction Score (0-10)"
 
-putexcel set "$dir_results/reg_health_wellbeing_simple", sheet("Gof") modify
+putexcel set "$dir_results/reg_health_wellbeing", sheet("Gof") modify
 putexcel A1 = "Goodness of fit", bold	
 
 /********************************* PREPARE DATA *******************************/
@@ -75,16 +75,16 @@ do "${dir_do}/programs.do"
 /**************************** DHE_MCS1: SF12 MCS Score (0-100) ***************************/
 
 reg dhe_mcs ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dgn Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb1_if_condition} [pw=${weight}], vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_MCS1") sheet("DHE_MCS1") ///
+process_regression, domain("health_wellbeing") process("DHE_MCS1") sheet("DHE_MCS1") ///
 	title("Process DHE_MCS1: SF12 MCS Score (0-100)") ///
 	gofrow(3) goflabel("DHE_MCS1 SF12 MCS Score (0-100)") ///
 	ifcond("${hwb1_if_condition}")	
@@ -107,21 +107,36 @@ restore
 reghdfe dhe_mcs ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 0 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_MCS2_Females") sheet("DHE_MCS2_Females") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DHE_MCS2_Females") sheet("DHE_MCS2_Females") ///
 	title("Process DHE_MCS2_Females: SF12 MCS Score (0-100)") ///
 	gofrow(7) goflabel("DHE_MCS2_Females: SF12 MCS Score (0-100)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DHE_MCS2_Females") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
@@ -131,37 +146,52 @@ process_regression, domain("health_wellbeing_simple") process("DHE_MCS2_Females"
 reghdfe dhe_mcs ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 1 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_MCS2_Males") sheet("DHE_MCS2_Males") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DHE_MCS2_Males") sheet("DHE_MCS2_Males") ///
 	title("Process DHE_MCS2_Males: SF12 MCS Score (0-100)") ///
 	gofrow(11) goflabel("DHE_MCS2_Males: SF12 MCS Score (0-100)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DHE_MCS2_Males") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
 /**************************** DHE_PCS1: SF12 PCS Score (0-100) ***************************/
 
 reg dhe_pcs ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dgn Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb1_if_condition} [pw=${weight}], vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_PCS1") sheet("DHE_PCS1") ///
+process_regression, domain("health_wellbeing") process("DHE_PCS1") sheet("DHE_PCS1") ///
 	title("Process DHE_PCS1: SF12 PCS Score (0-100)") ///
 	gofrow(15) goflabel("DHE_PCS1 SF12 PCS Score (0-100)") ///
 	ifcond("${hwb1_if_condition}")	
@@ -184,21 +214,36 @@ restore
 reghdfe dhe_pcs ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 0 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_PCS2_Females") sheet("DHE_PCS2_Females") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DHE_PCS2_Females") sheet("DHE_PCS2_Females") ///
 	title("Process DHE_PCS2_Females: SF12 PCS Score (0-100)") ///
 	gofrow(19) goflabel("DHE_PCS2_Females: SF12 PCS Score (0-100)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DHE_PCS2_Females") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
@@ -208,37 +253,52 @@ process_regression, domain("health_wellbeing_simple") process("DHE_PCS2_Females"
 reghdfe dhe_pcs ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	L_Dhe_mcs L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	L_Dhe_mcs L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 1 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DHE_PCS2_Males") sheet("DHE_PCS2_Males") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DHE_PCS2_Males") sheet("DHE_PCS2_Males") ///
 	title("Process DHE_PCS2_Males: SF12 PCS Score (0-100)") ///
 	gofrow(23) goflabel("DHE_PCS2_Males: SF12 PCS Score (0-100)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DHE_PCS2_Males") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
 /**************************** DLS1: Life Satisfaction Score (0-10) ***************************/
 
 reg dls ///
-	Ded Dgn Dag Dag_sq ///
-	Dls_L1 L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	Dls_L1 L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dgn Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb1_if_condition} [pw=${weight}], vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DLS1") sheet("DLS1") ///
+process_regression, domain("health_wellbeing") process("DLS1") sheet("DLS1") ///
 	title("Process DLS1: Life Satisfaction Score (0-10)") ///
 	gofrow(27) goflabel("DLS1 Life Satisfaction Score (0-10)") ///
 	ifcond("${hwb1_if_condition}")	
@@ -261,21 +321,36 @@ restore
 reghdfe dls ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	Dls_L1 L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	Dls_L1 L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 0 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DLS2_Females") sheet("DLS2_Females") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DLS2_Females") sheet("DLS2_Females") ///
 	title("Process DLS2_Females: Life Satisfaction Score (0-10)") ///
 	gofrow(31) goflabel("DLS2_Females: Life Satisfaction Score (0-10)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DLS2_Females") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
@@ -285,21 +360,43 @@ process_regression, domain("health_wellbeing_simple") process("DLS2_Females") sh
 reghdfe dls ///
 	PersistentEmployed UnemployedToEmployed PersistentUnemployed ///
 	NoPoverty PovertyToNonPoverty PersistentPoverty ///
-	RealIncomeChange RealIncomeDecrease_D FinancialDistress D_Econ_benefits_NonUC ///
-	D_Econ_benefits_UC ///
-	Ded Dgn Dag Dag_sq ///
-	Dls_L1 L_Dhe_pcs ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	RealIncomeChange RealIncomeDecrease_D FinancialDistress ///
+	Y2020 Y2021 ///
 	Dhh_owned_L1 Dcpst_Single_L1 Dnc_L1 ///
-	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
-	L_Dlltsd01 $regions Year_transformed ///
-	Y2020 Y2021 $ethnicity ///
+	Dls_L1 L_Dhe_pcs ///
+	$regions L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dlltsd01 Dag Dag_sq ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	$ethnicity ///
+	Year_transformed ///
 	if ${hwb2_if_condition} & Dgn == 1 [pw=${weight}], absorb(idperson) vce(cluster idperson)
 
-process_regression, domain("health_wellbeing_simple") process("DLS2_Males") sheet("DLS2_Males") ///
+matrix results = r(table)
+
+local exitEmp = results[1,1] * -1
+
+local enterPov = results[1,4] * -1
+	
+process_regression, domain("health_wellbeing") process("DLS2_Males") sheet("DLS2_Males") ///
 	title("Process DLS2_Males: Life Satisfaction Score (0-10)") ///
 	gofrow(35) goflabel("DLS2_Males: Life Satisfaction Score (0-10)") ///
 	ifcond("${hwb2_if_condition}") gformula maxestimates(11)
+  
+putexcel set "$dir_results/reg_health_wellbeing", sheet("DLS2_Males") modify
+
+putexcel A2 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel C1 = "EmployedToUnemployed" // actually "continuous employment" with sign reversed
+putexcel B2 = `exitEmp'
+putexcel A5 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel F1 = "NonPovertyToPoverty" // actually "no poverty" with sign reversed
+putexcel B5 = `enterPov'
 
 
 
+
+
+capture log close
+
+*******************************************************
+*** End
+*******************************************************

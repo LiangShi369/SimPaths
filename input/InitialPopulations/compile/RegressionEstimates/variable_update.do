@@ -1367,15 +1367,31 @@ gen Dls_L1 = L1.Dls if !missing(L1.Dls)
 gen Dag_L1 = L1.Dag if !missing(L1.Dag)
 gen Dag_sq_L1 = L1.Dag_sq if !missing(L1.Dag_sq)
 
-gen EmployedToUnemployed = L1.Les_c3_Employed == 1 & Les_c3_NotEmployed == 1 if !missing(L1.Les_c3_Employed)
-gen UnemployedToEmployed = Les_c3_Employed == 1 & L1.Les_c3_NotEmployed == 1 if !missing(L1.Les_c3_NotEmployed)
-gen PersistentUnemployed = Les_c3_NotEmployed == 1 & L1.Les_c3_NotEmployed == 1 if !missing(L1.Les_c3_NotEmployed)
-gen PersistentEmployed = Les_c3_Employed == 1 & L1.Les_c3_Employed == 1 if !missing(L1.Les_c3_Employed)
+
+gen EmployedToUnemployed = 0
+gen UnemployedToEmployed = 0
+gen PersistentUnemployed = 0
+gen PersistentEmployed = 0
+
+replace EmployedToUnemployed = 1 if L.les_c4 == 1 & les_c4 == 3
+replace UnemployedToEmployed = 1 if L.les_c4== 3 & les_c4 == 1
+replace PersistentUnemployed = 1 if L.les_c4== 3 & les_c4 == 3
+replace PersistentEmployed = 1 if L.les_c4== 1 & les_c4 == 1
+
+replace EmployedToUnemployed = . if missing(exp_emp)
+replace UnemployedToEmployed = . if missing(exp_emp)
+replace PersistentUnemployed = . if missing(exp_emp)
+replace PersistentEmployed = . if missing(exp_emp)
 
 gen NonPovertyToPoverty = exp_poverty == 1
 gen PovertyToNonPoverty = exp_poverty == 2
 gen PersistentPoverty = exp_poverty == 3
 gen NoPoverty = exp_poverty == 0
+
+replace PovertyToNonPoverty = . if missing(exp_poverty)
+replace NonPovertyToPoverty = . if missing(exp_poverty)
+replace NoPoverty = . if missing(exp_poverty)
+replace PersistentPoverty = . if missing(exp_poverty)
 
 gen RealIncomeChange = exp_incchange == 1
 gen RealIncomeDecrease_D = D.log_income
@@ -1398,6 +1414,10 @@ gen Lhw_10 = Lhw_c5 == 10
 gen Lhw_20 = Lhw_c5 == 20
 gen Lhw_30 = Lhw_c5 == 30
 gen Lhw_40 = Lhw_c5 == 40
+
+gen Deh_c3_High = (deh_c3 == 1) if !missing(deh_c3)
+gen Deh_c3_Medium = (deh_c3 == 2) if !missing(deh_c3)
+gen Deh_c3_Low = (deh_c3 == 3) if !missing(deh_c3)
 
 *==================================================
 * End  
