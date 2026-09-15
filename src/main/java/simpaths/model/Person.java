@@ -193,6 +193,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @NullInitialised private Double contRateOPEe;           //employee contribution rate to occupation pension
     @NullInitialised private Double contRateOPEr;           //employer contribution rate to occupation pension
     @NullInitialised private Double contRatePP;             //employee contribution rate to personal pension
+    private Boolean memberOP;                               //active occupational-pension membership for output
 
     // non-pension wealth
     @NullInitialised private Double wealthNonPensValue;
@@ -2410,6 +2411,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     private void updateOutputVariables() {
         idPartner = getPartnerID();
         demPartnerStatus = getDemPartnerStatus();
+        memberOP = privatePension != null && privatePension.isMemberOP();
     }
 
     // used when children leave home
@@ -8303,6 +8305,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setContRatePP(Double contRatePP) {
         this.contRatePP = contRatePP;
+    }
+
+    public Boolean getMemberOP() {
+        return memberOP;
     }
 
     public PrivatePension getPrivatePension() {

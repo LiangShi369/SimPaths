@@ -1,0 +1,31 @@
+# SimPaths covariate-path run for the annual-frequency conversion paper.
+#
+# The 2021 population initialises the simulation after WAS round 8 (2020--2021).
+# Output starts in 2022, after one annual update has generated occupational-
+# pension membership; initial contribution-rate fields are unavailable in the
+# deposited starting population. Person and benefit-unit files are both required:
+# person-year records contain the pension-equation covariates, while region is
+# merged from the contemporaneous benefit unit.
+
+maxNumberOfRuns: 1
+executeWithGui: false
+randomSeed: 606
+startYear: 2021
+endYear: 2032
+popSize: 50000
+
+collector_args:
+  exportToDatabase: false
+  exportToCSV: true
+  persistPersons: true
+  persistBenefitUnits: true
+  persistHouseholds: false
+  persistStatistics: true
+  persistStatistics2: true
+  persistStatistics3: true
+  persistEmploymentStatistics: true
+  dataDumpStartTime: 1
+  dataDumpTimePeriod: 1.0
+
+parameter_args:
+  trainingFlag: false
