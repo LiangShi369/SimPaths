@@ -270,10 +270,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean enableIntertemporalOptimisations = false;
 
     private boolean lifetimeIncomeGenerate = true;    // request to generate new set of lifetime incomes
-    private Integer lifetimeIncomeStartBirthYear;
-    private Integer lifetimeIncomeEndBirthYear;
-    private Integer lifetimeIncomeEndAge;
-    private Integer lifetimeIncomeCohortSize = 10000;
+    private Integer lifetimeIncomeStartBirthYear = 1934;
+    private Integer lifetimeIncomeEndBirthYear = 2019;
+    private Integer lifetimeIncomeEndAge = 80;
+    private Integer lifetimeIncomeCohortSize = 100000;
     private boolean lifetimeIncomeWriteToCSV = false;
     private long lifetimeIncomeRandomSeed = 505;
     private double lifetimeIncomeAge0StdDev = 0.9;
@@ -371,6 +371,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
 
         // time check
+        String outputPath = "./output/" + getEngine().getCurrentExperiment().runId;
         elapsedTime0 = System.currentTimeMillis();
         timerStartSim = elapsedTime0;
 
@@ -390,7 +391,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (lifetimeIncomeGenerate) {
             ManagerProjectLifetimeIncomes.run(log, lifetimeIncomeStartBirthYear,
                     lifetimeIncomeEndBirthYear, lifetimeIncomeEndAge, lifetimeIncomeCohortSize, lifetimeIncomeWriteToCSV,
-                    lifetimeIncomeRandomSeed, lifetimeIncomeAge0StdDev);
+                    lifetimeIncomeRandomSeed, lifetimeIncomeAge0StdDev, outputPath);
         }
         if (enableIntertemporalOptimisations) {
 
@@ -398,7 +399,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             DecisionParams.loadParameters(employmentOptionsOfPrincipalWorker, employmentOptionsOfSecondaryWorker,
                     responsesToHealth, minAgeForPoorHealth, responsesToDisability, responsesToRegion, responsesToEducation,
                     responsesToPension, responsesToLowWageOffer, responsesToRetirement, saveBehaviour,
-                    readGrid, getEngine().getCurrentExperiment().getOutputFolder(), startYear, endYear);
+                    readGrid, outputPath, startYear, endYear);
             //DecisionTests.compareGrids();
             //DatabaseExtension.extendInputData();
         }

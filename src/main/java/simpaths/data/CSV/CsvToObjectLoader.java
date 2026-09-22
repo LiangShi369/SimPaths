@@ -12,8 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * Reads a CSV file and populates a {@link LinkedHashSet} whose elements are
- * instances of a caller-supplied class, one per data row.
+ * Reads a CSV file and populates a collection whose elements are instances
+ * of a caller-supplied class, one per data row.
  *
  * <p>The first line of the file is treated as a header row. Each header
  * name is matched (case-insensitively, ignoring spaces/underscores/hyphens)
@@ -22,9 +22,16 @@ import java.util.List;
  * the field's declared type.
  *
  * <p>The target class must have an accessible no-argument constructor.
- * Because results are collected into a {@code LinkedHashSet}, duplicate rows
- * (per the target class's {@code equals}/{@code hashCode}) collapse into a
- * single entry, and insertion order (i.e. file order) is preserved.
+ *
+ * <p>Two entry points are provided, differing only in the collection they
+ * return:
+ * <ul>
+ *   <li>{@link #load} returns a {@link LinkedHashSet}. Duplicate rows (per
+ *       the target class's {@code equals}/{@code hashCode}) collapse into a
+ *       single entry, and insertion order (i.e. file order) is preserved.
+ *   <li>{@link #loadList} returns an {@link ArrayList}. Every row becomes
+ *       an element, including exact duplicates, in file order.
+ * </ul>
  *
  * <p>Supported field types: {@code String}, all primitive types and their
  * wrapper classes, {@code enum} types, {@link BigDecimal}, {@link LocalDate},
@@ -32,8 +39,11 @@ import java.util.List;
  *
  * <p>Example:
  * <pre>{@code
- * LinkedHashSet<Employee> employees =
+ * LinkedHashSet<Employee> uniqueEmployees =
  *     CsvToObjectLoader.load("employees.csv", Employee.class);
+ *
+ * ArrayList<Employee> allRows =
+ *     CsvToObjectLoader.loadList("employees.csv", Employee.class);
  * }</pre>
  */
 public final class CsvToObjectLoader {
@@ -44,20 +54,53 @@ public final class CsvToObjectLoader {
 
     /**
      * Loads {@code filePath} as a CSV file and maps each data row onto a new
-     * instance of {@code targetClass}.
+     * instance of {@code targetClass}, collecting the results into a
+     * {@link LinkedHashSet} (duplicate rows, per the target class's {@code
+     * equals}/{@code hashCode}, collapse into a single entry).
      *
      * @param filePath    path to the CSV file
      * @param targetClass class of object to create for each row; must have
      *                    an accessible no-argument constructor
      * @param <T>         the row object type
-     * @return a LinkedHashSet containing one populated instance per data
-     *         row, in file order
+     * @return a LinkedHashSet containing one populated instance per unique
+     *         data row, in file order
      * @throws IOException          if the file cannot be read
      * @throws CsvMappingException  if a row cannot be mapped onto the target
      *                              class (bad constructor, inaccessible
      *                              field, or unconvertible value)
      */
     public static <T> LinkedHashSet<T> load(String filePath, Class<T> targetClass) throws IOException {
+        return new LinkedHashSet<>(readRows(filePath, targetClass));
+    }
+
+    /**
+     * Loads {@code filePath} as a CSV file and maps each data row onto a new
+     * instance of {@code targetClass}, collecting the results into an
+     * {@link ArrayList}. Unlike {@link #load}, every row becomes an element
+     * &mdash; exact duplicate rows are not collapsed.
+     *
+     * @param filePath    path to the CSV file
+     * @param targetClass class of object to create for each row; must have
+     *                    an accessible no-argument constructor
+     * @param <T>         the row object type
+     * @return an ArrayList containing one populated instance per data row,
+     *         in file order
+     * @throws IOException          if the file cannot be read
+     * @throws CsvMappingException  if a row cannot be mapped onto the target
+     *                              class (bad constructor, inaccessible
+     *                              field, or unconvertible value)
+     */
+    public static <T> ArrayList<T> loadList(String filePath, Class<T> targetClass) throws IOException {
+        return readRows(filePath, targetClass);
+    }
+
+    /**
+     * Parses every data row in {@code filePath} into an instance of {@code
+     * targetClass}, in file order. Shared by {@link #load} and {@link
+     * #loadList}, which differ only in what collection they wrap this list
+     * in.
+     */
+    private static <T> ArrayList<T> readRows(String filePath, Class<T> targetClass) throws IOException {
         if (filePath == null) {
             throw new IllegalArgumentException("filePath must not be null");
         }
@@ -65,7 +108,7 @@ public final class CsvToObjectLoader {
             throw new IllegalArgumentException("targetClass must not be null");
         }
 
-        LinkedHashSet<T> results = new LinkedHashSet<>();
+        ArrayList<T> results = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String headerLine = reader.readLine();
@@ -96,7 +139,7 @@ public final class CsvToObjectLoader {
     }
 
     private static <T> T createInstance(Class<T> targetClass, String[] headers, String[] values,
-                                         int lineNumber, String filePath) {
+                                        int lineNumber, String filePath) {
         T instance;
         try {
             java.lang.reflect.Constructor<T> constructor = targetClass.getDeclaredConstructor();
@@ -117,7 +160,7 @@ public final class CsvToObjectLoader {
     }
 
     private static <T> void setField(T instance, Class<T> targetClass, String columnName,
-                                      String rawValue, int lineNumber, String filePath) {
+                                     String rawValue, int lineNumber, String filePath) {
         Field field = findField(targetClass, columnName);
         if (field == null) {
             // No field on the target class matches this column; skip it.
@@ -211,7 +254,7 @@ public final class CsvToObjectLoader {
         if (type == boolean.class) return false;
         if (type == short.class) return (short) 0;
         if (type == byte.class) return (byte) 0;
-        if (type == char.class) return ' ';
+        if (type == char.class) return " ";
         return null;
     }
 

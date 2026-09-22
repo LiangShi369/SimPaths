@@ -79,7 +79,7 @@ public class AnnualIncome implements IDoubleSource {
             z_m1 = Math.log(income_m1 / gmIncome_m1);
 
             double z_score = Parameters.getRegLifetimeIncome2b().getScore(this, AnnualIncome.DoublesVariables.class);
-            innov = Parameters.getEquivalisedIncomeDraw2(rnd);
+            innov = 0.0;
             val = Math.exp(z_score+innov) * gmIncome;
         }
         else {
@@ -99,7 +99,7 @@ public class AnnualIncome implements IDoubleSource {
             z_m2 = Math.log(income_m2 / gmIncome_m2);
 
             double z_score = Parameters.getRegLifetimeIncome2a().getScore(this, AnnualIncome.DoublesVariables.class);
-            innov = Parameters.getEquivalisedIncomeDraw(rnd);
+            innov = 0.0;
             val = Math.exp(z_score+innov) * gmIncome;
         }
         return val;

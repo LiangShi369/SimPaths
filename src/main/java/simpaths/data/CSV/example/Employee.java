@@ -27,6 +27,19 @@ public class Employee {
     private Employee() {
     }
 
+    // Convenience factory for building instances directly in code (e.g. demos/tests).
+    public static Employee create(int id, String firstName, String lastName, BigDecimal salary,
+                                  LocalDate hireDate, boolean active) {
+        Employee employee = new Employee();
+        employee.id = id;
+        employee.firstName = firstName;
+        employee.lastName = lastName;
+        employee.salary = salary;
+        employee.hireDate = hireDate;
+        employee.active = active;
+        return employee;
+    }
+
     public int getId() {
         return id;
     }

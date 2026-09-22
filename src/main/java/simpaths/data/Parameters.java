@@ -460,10 +460,6 @@ public class Parameters {
     private static int equivalisedIncomeMaxYear;
     private static int equivalisedIncomeMinYear;
     private static int equivalisedIncomeMaxAge;
-    private static MultiKeyCoefficientMap equivalisedIncomeCDFData;
-    private static MultiKeyCoefficientMap equivalisedIncomeCDFData2;
-    private static EquivalisedIncomeCDF equivalisedIncomeCDF;
-    private static EquivalisedIncomeCDF equivalisedIncomeCDF2;
     private static MultiKeyCoefficientMap coeffLifetimeIncome1a;
     private static MultiKeyCoefficientMap coeffLifetimeIncome1b;
     private static MultiKeyCoefficientMap coeffLifetimeIncome2a;
@@ -1045,10 +1041,6 @@ public class Parameters {
         //Lifetime incomes
         equivalisedIncomeByGenderAgeYear = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "geometric_means", 2);
         setMapBounds(MapBounds.EquivalisedIncome, countryString);
-        equivalisedIncomeCDFData = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "LI2b", 1, 1);
-        equivalisedIncomeCDF = new EquivalisedIncomeCDF(equivalisedIncomeCDFData);
-        equivalisedIncomeCDFData2 = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "LI3b", 1);
-        equivalisedIncomeCDF2 = new EquivalisedIncomeCDF(equivalisedIncomeCDFData2);
         mapRealGDPperCapita = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "gdp_pc", 1, 1);
         coeffLifetimeIncome1a = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "LI1a", 1);
         coeffLifetimeIncome1b = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_lifetime_incomes.xlsx", "LI1b", 1);
@@ -2411,14 +2403,6 @@ public class Parameters {
         mortalityProbability = prob.doubleValue() / 100000.0;
 
         return mortalityProbability;
-    }
-
-    public static double getEquivalisedIncomeDraw(double rnd) {
-        return equivalisedIncomeCDF.getValue(rnd);
-    }
-
-    public static double getEquivalisedIncomeDraw2(double rnd) {
-        return equivalisedIncomeCDF2.getValue(rnd);
     }
 
     public static Double getEquivalisedIncome(Gender demSex, int age, int year) {

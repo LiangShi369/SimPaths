@@ -6,7 +6,7 @@ package simpaths.model.lifetime_incomes;
  */
 public class InitialisationObservation {
 
-    public double pid;          // person id
+    public double pidp;          // person id
     public double z;            // z value (normalised income)
     public double fixedEffect;  // estimated fixed effects
 
@@ -15,8 +15,8 @@ public class InitialisationObservation {
     }
 
     // Getters and setters.
-    public double getPid() {return pid; }
-    public void setPid(double pid) { this.pid = pid; }
+    public double getPidp() {return pidp; }
+    public void setPidp(double pidp) { this.pidp = pidp; }
     public double getFixedEffect() {
         return fixedEffect;
     }

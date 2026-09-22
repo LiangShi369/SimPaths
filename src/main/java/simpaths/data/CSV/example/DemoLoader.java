@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
  *
  * Usage: java com.example.csv.example.Demo path/to/employees.csv
  */
-public class Demo {
+public class DemoLoader {
 
     public static void main(String[] args) throws IOException {
         String path = args.length > 0 ? args[0] : "src/main/resources/csv/employees.csv";

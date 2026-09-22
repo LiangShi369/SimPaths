@@ -6,9 +6,9 @@ package simpaths.model.lifetime_incomes;
  */
 public class WhiteNoiseEstimate {
 
-    public double pid;          // person id
+    public double pidp;         // person id
     public double etaHat;       // estimated white noise
-    public double age;          //  observation age
+    public double age;          // observation age
     public double weight;       // survey weight
 
     // Required by CsvToObjectLoader (reflection-based instantiation).
@@ -16,8 +16,8 @@ public class WhiteNoiseEstimate {
     }
 
     // Getters and setters.
-    public double getPid() {return pid; }
-    public void setPid(double pid) { this.pid = pid; }
+    public double getPidp() {return pidp; }
+    public void setPidp(double pidp) { this.pidp = pidp; }
     public double getEtaHat() { return etaHat; }
     public void setEtaHat(double etaHat) { this.etaHat = etaHat; }
     public double getAge() { return age; }
