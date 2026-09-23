@@ -7,6 +7,7 @@ import microsim.engine.SimulationEngine;
 import microsim.event.EventListener;
 import microsim.statistics.IDoubleSource;
 import microsim.statistics.IIntSource;
+import microsim.statistics.Series;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,6 @@ import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.data.Parameters;
 import simpaths.data.RegressionName;
-import simpaths.data.filters.FertileFilter;
 import simpaths.experiment.SimPathsCollector;
 import simpaths.data.filters.Filters;
 import simpaths.model.annotations.Lag;
@@ -164,9 +164,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 //	individual in the simulated population, in each simulated period.
     @Column(name="labWageHrly") private Double labWageFullTimeHrly;		//Is hourly rate.  Initialised with value: ils_earns / (4.34 * lhw), where lhw is the weekly hours a person worked in EUROMOD input data
     @Lag(field="labWageFullTimeHrly") @Transient private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
-    @Transient private Series.Double yDispEquivYear;
-    @Lag(field="labWageFullTimeHrly") @Column(name="labWageFullTimeHrlyL1") private Double labWageFullTimeHrlyL1; // Lag(1) of potentialHourlyEarnings
+    @Transient private Double yDispEquivYear;
     @NullInitialised private Double xEquivYear;
+    @Lag(field="xEquivYear") @Transient private Double xEquivYearL1;
     private Integer demPartnerNYear; //Number of years in partnership
     @Transient private Integer demPartnerNYearL1; //Lag(1) of number of years in partnership
 
@@ -318,8 +318,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labHrsWorkWeek = getLabourSupplyWeekly().getHours(this);
         idHh = mother.getBenefitUnit().getHousehold().getId();
 //		setDeviationFromMeanRetirementAge();			//This would normally be done within initialisation, but the line above has been commented out for reasons given...
-        yDispEquivYear = new Series.Double(this, Variables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, Variables.EquivalisedConsumptionYearly);
+        yDispEquivYear = getBenefitUnit().getEquivalisedDisposableIncomeYearly();
         xEquivYear = 0.;
         yLifeTime = 0.;
         demBornInSimFlag = true;
@@ -548,8 +547,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         yWageDesired = Objects.requireNonNullElseGet(originalPerson.yWageDesired, () -> sampleDifferentials[1]);
 
         demAdultChildFlag = originalPerson.demAdultChildFlag;
-        yDispEquivYear = new Series.Double(this, Variables.EquivalisedIncomeYearly);
-        xEquivYearL1 = new Series.Double(this, Variables.EquivalisedConsumptionYearly);
+        yDispEquivYear = originalPerson.getBenefitUnit().getEquivalisedDisposableIncomeYearly();
         xEquivYear = originalPerson.xEquivYear;
         demEthnC6 = originalPerson.demEthnC6;
         yBenReceivedFlag = originalPerson.yBenReceivedFlag;
@@ -1051,7 +1049,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             privatePension = new PrivatePension();
 
         if (demAge >= Parameters.AGE_TO_BECOME_RESPONSIBLE && !Les_c4.Retired.equals(labC4))
-            privatePension.projectWealth(privatePensionL1.getWealth(), getEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturn), labC4);
+            privatePension.projectWealth(privatePensionL1.getWealth(), getGrossEarningsYearly(), Parameters.getTimeSeriesRate(model.getYear(), TimeVaryingRate.RealPensionReturn), labC4);
 
         wealthPensValue = privatePension.getWealth();
         contRateOPEe = privatePension.getContRateOPEe();
@@ -1621,10 +1619,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             // receive care
             // if probNeedCare > probRecCare, then code here implies that anyone who receives care will also need care
 
-                Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Variables.class);
-                MultiValEvent event = new MultiValEvent(probs1, statInnovations.getDoubleDraw(8));
-                SocialCareReceiptS2c socialCareReceiptS2c = (SocialCareReceiptS2c) event.eval();
-                Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Person.DoublesVariables.class);
+                Map<SocialCareReceiptS2c,Double> probs1 = Parameters.getRegSocialCareMarketS2c().getProbabilities(this, Person.Variables.class);
                 var event = new MultiValEvent<SocialCareReceiptS2c>(probs1, statInnovations.getDoubleDraw(8));
                 var socialCareReceiptS2c = event.eval();
                 careReceivedFlag = SocialCareReceipt.getCode(socialCareReceiptS2c);
@@ -1757,21 +1752,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             boolean provideCare = (statInnovations.getDoubleDraw(37) < probProvideAny);
             if (!Parameters.flagSuppressSocialCareCosts && provideCare) {
 
-                double score;
-                double rmse;
-                if (partner == null) {
-
-                    // S3c: informal care hours provided, singles (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3c().getScore(this, Variables.class);
-                    rmse = Parameters.getRMSEForRegression("S3c");
-                } else {
-
-                    // S3d: informal care hours provided, partnered (conditional on providing care).
-                    score = Parameters.getRegCareHoursProvS3d().getScore(this, Variables.class);
-                    rmse = Parameters.getRMSEForRegression("S3d");
-                }
-                double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(14));
-                careHrsProvidedWeek = Math.min(Parameters.MAX_HOURS_WEEKLY_INFORMAL_CARE, Math.sinh(score + rmse * gauss));
                 // S3c/S3d: ordered-logit category of informal care hours, conditional on providing care.
                 RegressionName regression = (partner == null) ? RegressionName.SocialCareS3c : RegressionName.SocialCareS3d;
                 CareHoursProvidedCategory category = ManagerRegressions.getEvent(this, regression, statInnovations.getDoubleDraw(14));
@@ -2816,6 +2796,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAge_12,
         demAge_13,
         demAge_14,
+        Dnc_L1_,
         demCompHhC4SingleChL1,
         Deh_c3_High,
         Deh_c3_Low,
@@ -2970,6 +2951,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Female,
         FertilityRate,
         FinancialDistress,
+        L_FinancialDistress,
         GrossEarningsYearly,
         GrossLabourIncomeMonthly,
         InverseMillsRatio,
@@ -4781,7 +4763,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return yFinDstrssFlag ? 1. : 0.;
             }
             case GrossEarningsYearly -> {
-                return getEarningsYearly();
+                return getGrossEarningsYearly();
             }
             case GrossLabourIncomeMonthly -> {
                 return getCovidYLabGross();
@@ -7011,7 +6993,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return getLabourSupplyHoursYearly() * model.getScalingFactor();
     }
 
-    public double getEarningsYearly() {
+    public double getGrossEarningsYearly() {
         return getEarningsWeekly() * Parameters.WEEKS_PER_YEAR;
     }
 
@@ -7476,6 +7458,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setXEquivYear(Double xEquivYear) {
         this.xEquivYear = xEquivYear;
+    }
+
+    public Double getXEquivYearL1() { return xEquivYearL1; }
+
+    public void setXEquivYearL1(Double val) {
+        xEquivYearL1 = val;
     }
 
     public Integer getLabHrsWorkNewL1() {
@@ -8230,18 +8218,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (refresh || i_yEarningsQuintileC5 == null) {
 
             SimPathsCollector collector = getBenefitUnit().getCollector();
-            if (collector.getStats() != null) { //Collector only gets initialised when simulation starts running
+            if (collector.getWealthIncomeStats() != null) { //Collector only gets initialised when simulation starts running
 
                 // quintile cut-offs are evaluated for preceding year - uprate for wage growth
                 double wageGrowth = Parameters.getTimeSeriesIndex(model.getYear(), UpratingCase.Earnings) /
                         Parameters.getTimeSeriesIndex(model.getYear() - 1, UpratingCase.Earnings);
-                if (getEarningsYearly() < collector.getStats().getEmployedEarningsP20() * wageGrowth) {
+                if (getGrossEarningsYearly() < collector.getWealthIncomeStats().getEmployedEarningsP20() * wageGrowth) {
                     i_yEarningsQuintileC5 = Quintiles.Q1;
-                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP40() * wageGrowth) {
+                } else if (getGrossEarningsYearly() < collector.getWealthIncomeStats().getEmployedEarningsP40() * wageGrowth) {
                     i_yEarningsQuintileC5 = Quintiles.Q2;
-                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP60() * wageGrowth) {
+                } else if (getGrossEarningsYearly() < collector.getWealthIncomeStats().getEmployedEarningsP60() * wageGrowth) {
                     i_yEarningsQuintileC5 = Quintiles.Q3;
-                } else if (getEarningsYearly() < collector.getStats().getEmployedEarningsP80() * wageGrowth) {
+                } else if (getGrossEarningsYearly() < collector.getWealthIncomeStats().getEmployedEarningsP80() * wageGrowth) {
                     i_yEarningsQuintileC5 = Quintiles.Q4;
                 } else {
                     i_yEarningsQuintileC5 = Quintiles.Q5;

@@ -313,13 +313,13 @@ public class LabourMarket {
             if (person != null && person.getCovidYLabGrossXt5() == null) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
                 WealthIncomeStatistics wealthIncomeStats = ((SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName())).getWealthIncomeStats();
-                if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP20()) {
+                if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);

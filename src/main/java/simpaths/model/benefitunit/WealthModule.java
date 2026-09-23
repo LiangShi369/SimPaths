@@ -1,6 +1,8 @@
 package simpaths.model.benefitunit;
 
-import org.apache.log4j.Logger;
+import jakarta.persistence.Transient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import simpaths.data.Parameters;
 import simpaths.data.WeightedQuantileRanks;
 import simpaths.model.BenefitUnit;
@@ -20,7 +22,7 @@ import java.util.Map;
  */
 public final class WealthModule {
 
-    private static final Logger log = Logger.getLogger(WealthModule.class);
+    private static Logger log = LogManager.getLogger(WealthModule.class);
 
     private boolean capInitialHousingResiduals = false;
     private double initialHousingResidualCapRmseMultiplier = 2.6;

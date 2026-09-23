@@ -288,6 +288,9 @@ public class Parameters {
     public static final boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
     public static int maxAge;										// maximum age possible in simulation
     public static final int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
+    public static final int MIN_AGE_LEAVE_PH = 18;                  // Minimum age for a person to leave the parental home
+    public static int MAX_AGE_ADULT_CHILD;                          // Maximum age for a person to remain an adult child in the parental home
+    // after this age a person stop considering leaving p.h. and stops being an a.c.
     public static final int MIN_AGE_TO_PROVIDE_CARE = 16;           // Minimum age to provide social care
     public static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-demYear) education
     public static final int MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION = 29;
@@ -2739,12 +2742,12 @@ public class Parameters {
     public static void loadTimeSeriesFactorMaps(Country country) {
 
         // load demYear varying rates
-        priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
-        priceMapRealPensionReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_pension_returns", 1, 1);
-        priceMapRealHousingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_housing_returns", 1, 1);
-        priceMapRealMortgageRates = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_mortgage_rates", 1, 1);
-        priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
-        priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
+        priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "saving_returns", 1, 1);
+        priceMapRealPensionReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "pension_returns", 1, 1);
+        priceMapRealHousingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "housing_returns", 1, 1);
+        priceMapRealMortgageRates = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "mortgage_rates", 1, 1);
+        priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_low", 1, 1);
+        priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_hi", 1, 1);
         priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "saving_returns", 1, 1);
         priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_low", 1, 1);
         priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_hi", 1, 1);

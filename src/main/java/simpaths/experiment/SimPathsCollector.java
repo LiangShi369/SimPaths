@@ -121,7 +121,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private Ydses_c5 yHhQuintilesMonthC5;
 
-    private GrossLabourIncome grossLabourIncome;
+    private GrossLabourForceEarnings grossLabourForceEarnings;
+
+    private GrossEmploymentEarnings grossEmploymentEarnings;
 
     private DataExport exportPersons;
 
@@ -306,9 +308,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         }
 
         yHhQuintilesMonthC5 = new Ydses_c5();
-        grossLabourIncome = new GrossLabourIncome();
-
-
+        grossLabourForceEarnings = new GrossLabourForceEarnings();
+        grossEmploymentEarnings = new GrossEmploymentEarnings();
     }
 
     /**
@@ -390,7 +391,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     //	Inner classes for data collection
     // ---------------------------------------------------------------------
 
-    private class GrossLabourIncome {
+    private class GrossLabourForceEarnings {
 
         final SimPathsModel model = (SimPathsModel) getManager();
 
@@ -399,26 +400,42 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
             var income_stats = new Stats(income_cs.get()).descrStats();
 
-            wealthIncomeStats.setYLabP20(income_stats.getPercentile(20.0));
-            wealthIncomeStats.setYLabP40(income_stats.getPercentile(40.0));
-            wealthIncomeStats.setYLabP60(income_stats.getPercentile(60.0));
-            wealthIncomeStats.setYLabP80(income_stats.getPercentile(80.0));
+            wealthIncomeStats.setLabFceEarningsP20(income_stats.getPercentile(20.0));
+            wealthIncomeStats.setLabFceEarningsP40(income_stats.getPercentile(40.0));
+            wealthIncomeStats.setLabFceEarningsP60(income_stats.getPercentile(60.0));
+            wealthIncomeStats.setLabFceEarningsP80(income_stats.getPercentile(80.0));
 
             for (Person person : model.getPersons()) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
-                if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP20()) {
+                if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getYLabP80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);
                 }
             }
 
+        }
+    }
+
+    private class GrossEmploymentEarnings {
+
+        final SimPathsModel model = (SimPathsModel) getManager();
+
+        public void update() {
+            var filtered = new FilteredCollection<>(model::getPersons, Filters.isEmployed());
+            var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
+            var income_stats = new Stats(income_cs.get()).descrStats();
+
+            wealthIncomeStats.setEmployedEarningsP20(income_stats.getPercentile(20.0));
+            wealthIncomeStats.setEmployedEarningsP40(income_stats.getPercentile(40.0));
+            wealthIncomeStats.setEmployedEarningsP60(income_stats.getPercentile(60.0));
+            wealthIncomeStats.setEmployedEarningsP80(income_stats.getPercentile(80.0));
         }
     }
 
@@ -728,7 +745,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private void calculateGrossIncome() {
         yHhQuintilesMonthC5.update();
-        grossLabourIncome.update();
+        grossLabourForceEarnings.update();
+        grossEmploymentEarnings.update();
     }
 
     // ---------------------------------------------------------------------
