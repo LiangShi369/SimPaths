@@ -123,6 +123,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @NullInitialised @Transient private Integer i_wealthFinancialDecile;
     @NullInitialised @Transient private Integer i_yPrivateDecile;
     @NullInitialised @Transient private Integer i_yWealthPrivateIncomeQuintile;
+    @NullInitialised @Transient private Double i_yWealthPrivateIncomeMonth;
+    @Lag(field = "i_yWealthPrivateIncomeMonth") @Transient private Double i_yWealthPrivateIncomeMonthL1;
 
     // ================= At Risk of Work cache to avoid unnecessary atRiskOfWork() calls =================
     @NullInitialised @Transient private Boolean cachedMaleAtRiskOfWork = null;
@@ -308,6 +310,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             wealthNonPension = new WealthNonPension(originalBenefitUnit.wealthNonPension);
         if (originalBenefitUnit.wealthNonPensionL1 != null)
             wealthNonPensionL1 = new WealthNonPension(originalBenefitUnit.wealthNonPensionL1);
+        i_yWealthPrivateIncomeMonth = originalBenefitUnit.i_yWealthPrivateIncomeMonth;
+        i_yWealthPrivateIncomeMonthL1 = originalBenefitUnit.i_yWealthPrivateIncomeMonthL1;
 //        if (wealthNonPension.getWealthHousing().getWealthNetInnovation() == 0.0) {
 //            double rmse = Parameters.getRMSEForRegression("HW1c");
 //            double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(9));
@@ -2168,6 +2172,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         AlignmentSingleDepMen,
         AlignmentSingleDepWomen,
         AsinhLagMortgageDebtToAnnualPrivateIncome,
+        AsinhLagMortgageDebtToLagAnnualPrivateIncome,
         AsinhNetFinancialWealth,
         AsinhNetHousingWealth,
         AsinhNetNonPensionWealth,
@@ -2726,6 +2731,14 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for AsinhLagMortgageDebtToAnnualPrivateIncome");
                 double annualPrivateIncome = Math.max(1.0, Objects.requireNonNullElse(yGrossMonth, 0.0) * 12.0);
                 return Parameters.asinh(wealthNonPensionL1.getWealthMortgageDebtValue() / annualPrivateIncome);
+            }
+            case AsinhLagMortgageDebtToLagAnnualPrivateIncome -> {
+                if (wealthNonPensionL1 == null)
+                    throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for AsinhLagMortgageDebtToLagAnnualPrivateIncome");
+                if (i_yWealthPrivateIncomeMonthL1 == null)
+                    throw new IllegalArgumentException("lagged benefit-unit private income not initialised prior to request for AsinhLagMortgageDebtToLagAnnualPrivateIncome");
+                double lagAnnualPrivateIncome = Math.max(1.0, i_yWealthPrivateIncomeMonthL1 * 12.0);
+                return Parameters.asinh(wealthNonPensionL1.getWealthMortgageDebtValue() / lagAnnualPrivateIncome);
             }
             case AsinhLagHighCostDebt -> {
                 if (wealthNonPensionL1 == null)
@@ -5798,6 +5811,24 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         if (quintile < 1 || quintile > 5)
             throw new IllegalArgumentException("Wealth private-income quintile must be in [1, 5]");
         i_yWealthPrivateIncomeQuintile = quintile;
+    }
+
+    public void setWealthPrivateIncomeMonthly(double monthlyIncome) {
+        if (!Double.isFinite(monthlyIncome))
+            throw new IllegalArgumentException("Wealth private income must be finite");
+        i_yWealthPrivateIncomeMonth = monthlyIncome;
+    }
+
+    public double getWealthPrivateIncomeMonthly() {
+        if (i_yWealthPrivateIncomeMonth == null)
+            throw new IllegalStateException("Current wealth private income has not been assigned");
+        return i_yWealthPrivateIncomeMonth;
+    }
+
+    public double getWealthPrivateIncomeMonthlyL1() {
+        if (i_yWealthPrivateIncomeMonthL1 == null)
+            throw new IllegalStateException("Lagged wealth private income has not been assigned");
+        return i_yWealthPrivateIncomeMonthL1;
     }
 
     public int getNetFinancialWealthDecile() {
