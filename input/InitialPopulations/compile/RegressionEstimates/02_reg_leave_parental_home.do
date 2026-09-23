@@ -24,7 +24,7 @@ log using "${dir_log}/reg_leave_parental_home.log", replace
 
 /********************************* SET EXCEL FILE *****************************/
 
-putexcel set "$dir_results/reg_leave_parental_home", sheet("Info") replace
+putexcel set "$dir_results/reg_leave_parental_home", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing leaving parental home"
 putexcel A2 = "Authors:"
@@ -65,13 +65,26 @@ do "${dir_do}/programs.do"
 
 /**************** P1: PROBABILITY OF LEAVING THE PARENTAL HOME ****************/
 display "${p1_if_condition}"
+
+/*
+probit dlftphm i.Dgn Dag Dag_sq li.Deh_c4_Na li.Deh_c4_Medium li.Deh_c4_Low ///
+	li.Les_c3_Student li.Les_c3_NotEmployed ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${p1_if_condition} [pw=${weight}], vce(robust)
+	
+process_regression, domain("leave_parental_home") process("P1") sheet("P1_orig") ///
+	title("Process P1: Prob. leave parental home") ///
+	gofrow(3) goflabel("P1 - Leave parental home") ///
+	ifcond("${p1_if_condition}") probit	
+	*/
 	
 probit dlftphm ///
     demMaleFlag demAge demAgeSq  ///
     eduHighestC4NaL1 eduHighestC4MediumL1 eduHighestC4LowL1 ///
 	labStatusC3StudentL1 labStatusC3NotEmployedL1 ///
 	yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
-	$regions demYear demYear2020 demYear2021 $ethnicity ///
+	$regions demYearTransformed demYear2020 demYear2021 $ethnicity ///
 	if ${p1_if_condition} [pw=${weight}], vce(robust)
 
 	

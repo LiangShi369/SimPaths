@@ -24,7 +24,7 @@ log using "${dir_log}/reg_fertility.log", replace
 
 /******************************* SET EXCEL FILE *******************************/
 
-putexcel set "$dir_results/reg_fertility", sheet("Info") replace
+putexcel set "$dir_results/reg_fertility", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing projection of fertility"
 putexcel A2 = "Authors:"
@@ -69,18 +69,38 @@ do "${dir_do}/programs.do"
 
 /*********************** F1: PROBABILITY OF HAVING A CHILD ********************/
 display "${f1_if_condition}" 
+/*
+probit dchpd ///
+	i.Ded Dag Dag_sq ///
+	l.Dhe_pcs l.Dhe_mcs ///
+	Dcpst_Single li.Dcpst_Single ///
+	/*Ded_Dag Ded_Dhe_pcs Ded_Dhe_mcs*/ ///
+	Ded_Dcpst_Single /*Ded_Dcpst_Single_L1*/ ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
+	l.Dnc l.Dnc02 ///
+	i.Deh_c4_Low i.Deh_c4_High ///
+	FertilityRate ///
+	/*li.Les_c3_Student*/ li.Les_c3_NotEmployed ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	 if ${f1_if_condition} [pw=${weight}], vce(robust)
+
+process_regression, domain("fertility") process("F1") sheet("F1_orig") ///
+	title("Process F1: Prob. have a child") ///
+	gofrow(3) goflabel("F1 - Have child") ///
+	ifcond("${f1_if_condition}") probit	 
+*/
 
 probit dchpd ///
-	eduSampleFlag demMaleFlag demAge demAgeSq ///
+	eduSampleFlag demAge demAgeSq ///
 	healthPhysicalPcsL1 healthMentalMcsL1 ///
 	demPartnerStatusSingle demPartnerStatusSingleL1 ///
 	eduSampleFlag_Single ///
 	yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
 	demNChildL1 demNChild0to2L1 ///
-	eduHighestC4HighL1 eduHighestC4MediumL1 eduHighestC4LowL1 ///
+	eduHighestC4Low eduHighestC4High ///
 	fertilityRate ///
 	/*labStatusC3StudentL1*/ labStatusC3NotEmployedL1 ///
-	$regions demYear demYear2020 demYear2021 $ethnicity /// 
+	$regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 if ${f1_if_condition} [pw=${weight}], vce(robust)
 
 process_regression, domain("fertility") process("F1") sheet("F1") ///

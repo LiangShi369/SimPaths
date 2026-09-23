@@ -94,12 +94,6 @@ public class ManagerRegressions {
             case SocialCareS2e -> {
                 return Parameters.getRegFormalCareHoursS2e();
             }
-            case SocialCareS3c -> {
-                return Parameters.getRegCareHoursProvS3c();
-            }
-            case SocialCareS3d -> {
-                return Parameters.getRegCareHoursProvS3d();
-            }
             // case SocialCareS1b -> {
             //     return Parameters.getRegCareHoursS1b();
             // }
@@ -243,6 +237,12 @@ public class ManagerRegressions {
         switch (regression) {
             case HealthHM1Case -> {
                 return Parameters.getRegHealthHM1Case();
+            }
+            case SocialCareS3c -> {
+                return Parameters.getRegCareHoursProvS3c();
+            }
+            case SocialCareS3d -> {
+                return Parameters.getRegCareHoursProvS3d();
             }
             default -> {
                 throw new RuntimeException("unrecognised regression (1)");

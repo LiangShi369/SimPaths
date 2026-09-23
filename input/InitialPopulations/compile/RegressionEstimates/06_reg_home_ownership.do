@@ -24,7 +24,7 @@ log using "${dir_log}/reg_home_ownership.log", replace
 
 /********************************* SET EXCEL FILE *****************************/
 
-putexcel set "$dir_results/reg_home_ownership", sheet("Info") replace
+putexcel set "$dir_results/reg_home_ownership", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing projection of home ownership"
 putexcel A2 = "Authors:	"
@@ -51,11 +51,11 @@ putexcel A1 = "Goodness of fit", bold
 use "${estimation_sample}", clear
 
 * Set data 
-xtset idperson swv
-sort idperson swv 
+//xtset idperson swv
+//sort idperson swv 
 
 * Adjust variables 
-do "${dir_do}/variable_update.do"
+//do "${dir_do}/variable_update.do"
 
 
 * Create sample at benefit unit head 
@@ -95,7 +95,13 @@ assert `n_bu_before' == `n_bu_after'
 by idbenefitunit swv, sort: gen n=_N
 assert n==1
 
+* Set data 
+xtset idperson swv
 sort idperson swv 
+
+* Adjust variables 
+do "${dir_do}/variable_update.do"
+
 
 
 /********************************** ESTIMATION ********************************/
@@ -107,16 +113,35 @@ do "${dir_do}/programs.do"
 /********************** HO1: PROBABILITY OF OWNING HOME ***********************/
 display "${ho1_if_condition}" 
 
+/*
+probit dhh_owned ///
+     i.Dgn Dag Dag_sq ///
+    il.Dhhtp_c8_2 il.Dhhtp_c8_3 il.Dhhtp_c8_4 il.Dhhtp_c8_5 il.Dhhtp_c8_6 il.Dhhtp_c8_7 il.Dhhtp_c8_8 ///
+	il.Les_c4_Student il.Les_c4_NotEmployed il.Les_c4_Retired  ///
+	i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	l.Dhe_mcs l.Dhe_pcs ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
+	l.Yptciihs_dv ///
+	l.Dhh_owned ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${ho1_if_condition} [pw=${weight}], vce(cluster idperson)
+
+process_regression, domain("home_ownership") process("HO1") sheet("HO1_orig") ///
+	title("Process S2b: Prob. own home") ///
+	gofrow(3) goflabel("HO1 - Own home") ///
+	ifcond("${ho1_if_condition}") probit	
+*/
+
 probit dhh_owned ///
        demMaleFlag demAge demAgeSq ///  
        demCompHhC82L1 demCompHhC83L1 demCompHhC84L1 demCompHhC85L1 demCompHhC86L1 demCompHhC87L1 demCompHhC88L1 ///
        labStatusC4StudentL1 labStatusC4NotEmployedL1 labStatusC4RetiredL1 /// 
-       eduHighestC4MediumL1 eduHighestC4LowL1 eduHighestC4NaL1 ///
+       eduHighestC4Medium eduHighestC4Low eduHighestC4Na ///
        healthPhysicalPcsL1 healthMentalMcsL1 ///
 	   yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
 	   yMiscPersGrossMonthL1 ///
        wealthPrptyFlagL1 ///
-	   $regions demYear demYear2020 demYear2021 $ethnicity /// 
+	   $regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 	if ${ho1_if_condition} [pw=dwt], vce(cluster idperson)
 	
 process_regression, domain("home_ownership") process("HO1") sheet("HO1") ///

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import microsim.data.db.PanelEntityKey;
 import org.hibernate.annotations.Fetch;
+import simpaths.data.filters.Filters;
 import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.model.annotations.Lag;
@@ -19,7 +20,8 @@ import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import simpaths.data.Parameters;
 import simpaths.model.decisions.DecisionParams;
@@ -37,7 +39,7 @@ import static java.lang.StrictMath.min;
 @Entity
 public class BenefitUnit implements EventListener, IDoubleSource, Weight, Comparable<BenefitUnit> {
 
-    @Transient private static Logger log = Logger.getLogger(BenefitUnit.class);
+    @Transient private static Logger log = LogManager.getLogger(BenefitUnit.class);
     @Transient private final SimPathsModel model;
     @Transient private final SimPathsCollector collector;
     @Transient public static long benefitUnitIdCounter = 1L;
@@ -1982,13 +1984,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         return logSumExp;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
-
     protected void calculateBUIncome() {
 
         /*
@@ -2036,20 +2031,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
             setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-            //Based on the percentiles calculated by the collector, assign household to one of the quintiles of (equivalised) income distribution
-            if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                } else {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                }
-            }
         } else if(getOccupancy().equals(Occupancy.Single_Male)) {
 
             if (male != null) {
@@ -2064,19 +2045,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
             } else
                 throw new RuntimeException("single male unit does not include a single male");
         } else {
@@ -2094,22 +2062,24 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
             } else
                 throw new RuntimeException("single female unit does not include a single male");
+        }
+    }
+
+    public void updateIncomeQuintile() {
+        if (collector.getWealthIncomeStats() != null) {
+            if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P20()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q1;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P40()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q2;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P60()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q3;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P80()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q4;
+            } else {
+                yHhQuintilesMonthC5 = Ydses_c5.Q5;
+            }
         }
     }
 
@@ -4454,12 +4424,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
     //	Override equals and hashCode to make unique BenefitUnit determined by Key.getId()
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public boolean equals(Object o) {
 
@@ -4489,11 +4454,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
     public boolean getAtRiskOfWork() {
 
         boolean atRiskOfWork = false;
@@ -4583,14 +4543,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             throw new RuntimeException("problem evaluating yearly change in log edi");
         return yearlyChangeInLogEquivalisedDisposableIncome;
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Access Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
 
     /**
      *
@@ -4829,16 +4781,13 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         }
         return nChildren;
     }
+
+    /// Whether the Person has children in the given age range (both ends included).
     public Indicator getIndicatorChildren(int minAge, int maxAge) {
-        Indicator flag = Indicator.False;
-        for (int aa=minAge; aa<=maxAge; aa++) {
-            if (getNumberChildrenByAge(aa) > 0) {
-                flag = Indicator.True;
-                break;
-            }
-        }
-        return flag;
+        var found = this.members.stream().anyMatch(Filters.ageRange(minAge, maxAge));
+        return found ? Indicator.True : Indicator.False;
     }
+
     public Indicator getIndicatorChildren0to3() {
 
         return getIndicatorChildren(0,3);

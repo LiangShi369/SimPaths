@@ -1,6 +1,7 @@
 package simpaths.model.decisions;
 
 import java.security.InvalidParameterException;
+import java.util.Map;
 
 import simpaths.data.ManagerRegressions;
 import simpaths.data.Parameters;
@@ -502,15 +503,12 @@ public class Expectations {
             Indicator status = currentStates.getSocialCareProvisionState();
             if (!Indicator.False.equals(status)) {
 
-                double score, rmse;
-                if (cohabitation) {
-                    score = Parameters.getRegCareHoursProvS3d().getScore(personProxyThisPeriod, Person.Variables.class);
-                    rmse = Parameters.getRMSEForRegression("S3d");
-                } else {
-                    score = Parameters.getRegCareHoursProvS3c().getScore(personProxyThisPeriod, Person.Variables.class);
-                    rmse = Parameters.getRMSEForRegression("S3c");
+                RegressionName regression = cohabitation ? RegressionName.SocialCareS3d : RegressionName.SocialCareS3c;
+                Map<CareHoursProvidedCategory, Double> probabilities =
+                        ManagerRegressions.getProbabilities(personProxyThisPeriod, regression);
+                for (Map.Entry<CareHoursProvidedCategory, Double> entry : probabilities.entrySet()) {
+                    socialCareHoursProvidedWeekly += entry.getKey().getRepresentativeHours() * entry.getValue();
                 }
-                socialCareHoursProvidedWeekly = Math.min(80.0, Math.exp(score + rmse*rmse/2.0));
             }
         }
         return socialCareHoursProvidedWeekly;

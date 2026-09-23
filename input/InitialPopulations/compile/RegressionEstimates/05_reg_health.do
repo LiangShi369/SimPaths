@@ -24,7 +24,7 @@ log using "${dir_log}/reg_health.log", replace
 
 /******************************* SET EXCEL FILE *******************************/
 
-putexcel set "$dir_results/reg_health", sheet("Info") replace
+putexcel set "$dir_results/reg_health", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing projection self-reported health status"
 putexcel A2 = "Authors:" 
@@ -75,16 +75,39 @@ do "${dir_do}/programs.do"
 
 /********************** H1: SELF-REPORTED HEALTH STATUS ***********************/
 display "${h1_if_condition}"
+/*
+gologit2 dhe ///
+         Ded Dgn Dag Dag_sq ///  /*Ded_Dag Ded_Dag_sq Ded_Dgn /// */
+	     L_Dhe_pcs L_Dhe_mcs ///
+		 i.Deh_c4_Medium i.Deh_c4_Low i.Deh_c4_Na ///
+	     /*L_Les_c4_Student*/ L_Les_c4_NotEmployed L_Les_c4_Retired ///
+		 L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+		 L_Dhhtp_c4_CoupleChildren L_Dhhtp_c4_SingleNoChildren  L_Dhhtp_c4_SingleChildren ///
+		 L_Dlltsd01 ///
+		 $regions Year_transformed Y2020 Y2021 $ethnicity if ///
+	     ${h1_if_condition} [pw=${weight}], autofit
+	  
+/* 
+Note: In gologit2, the coefficients show how covariates affect the log-odds of
+being above a certain category vs. at or below it.
+*/
+
+process_gologit, domain("health") process("H1") sheet("H1_orig") ///
+    title("Process H1: Self Rated Health") ///
+    gofrow(3) goflabel("H1 - Self-rated health") ///
+    outcomes(5) ///
+    ifcond("${h1_if_condition}")
+*/
 
 gologit2 dhe ///
          eduSampleFlag demMaleFlag demAge demAgeSq ///  
 		 healthPhysicalPcsL1 healthMentalMcsL1 ///
-		 eduHighestC4NaL1 eduHighestC4MediumL1 eduHighestC4LowL1 ///
-		 /*labStatusC4StudentL1*/ labStatusC4EmployedL1 labStatusC4RetiredL1 /// 
+		 eduHighestC4Medium eduHighestC4Low /*eduHighestC4Na*/ ///
+		 /*labStatusC4StudentL1*/ labStatusC4NotEmployedL1 labStatusC4RetiredL1 /// 
 		 yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
-		 demCompHhC4CoupleChL1 demCompHhC4SingleNoChL1 demCompHhC4L1SingleChL1 ///
+		 demCompHhC4CoupleChL1 demCompHhC4SingleNoChL1 demCompHhC4SingleChL1 ///
 		 healthDsblLongtermFlagL1 ///
-		 $regions demYear demYear2020 demYear2021 $ethnicity /// 
+		 $regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 	 if ${h1_if_condition} [pw=${weight}], autofit
   
 /* 
@@ -98,16 +121,34 @@ process_gologit, domain("health") process("H1") sheet("H1") ///
     outcomes(5) ///
     ifcond("${h1_if_condition}")
 
+	
 /**************** H2: PROBABILITY LONG-TERM SICK OR DISABLED ******************/
 display "${h2_if_condition}"
+/*
+probit dlltsd01 ///
+    i.Dgn Dag Dag_sq ///
+	Deh_c4_Medium Deh_c4_Low Deh_c4_Na ///
+	L_Ydses_c5_Q2 L_Ydses_c5_Q3 L_Ydses_c5_Q4 L_Ydses_c5_Q5 ///
+	L_Dhe_pcs L_Dhe_mcs ///
+	L_Dlltsd01 ///
+	L_Dhhtp_c4_CoupleChildren L_Dhhtp_c4_SingleNoChildren L_Dhhtp_c4_SingleChildren ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${h2_if_condition} [pw=${weight}], vce(robust)
+	
+process_regression, domain("health") process("H2") sheet("H2_orig") ///
+	title("Process H2: Prob.disabled or long term sick") ///
+	gofrow(7) goflabel("H2 - Disabled or long term sick") ///
+	ifcond("${h2_if_condition}") probit	 	
+*/
 
-probit dlltsd01 demMaleFlag demAge demAgeSq ///
+probit dlltsd01 ///
+       demMaleFlag demAge demAgeSq ///
        eduHighestC4Medium eduHighestC4Low eduHighestC4Na ///
 	   yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
 	   healthPhysicalPcsL1 healthMentalMcsL1 ///
 	   healthDsblLongtermFlagL1 ///
-	   demCompHhC4CoupleChL1 demCompHhC4SingleNoChL1 demCompHhC4L1SingleChL1 ///
-	   $regions demYear demYear2020 demYear2021 $ethnicity /// 
+	   demCompHhC4CoupleChL1 demCompHhC4SingleNoChL1 demCompHhC4SingleChL1 ///
+	   $regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 	if ${h2_if_condition} [pw=${weight}], vce(robust)
 	
 process_regression, domain("health") process("H2") sheet("H2") ///

@@ -3,7 +3,6 @@ package simpaths.model.lifetime_incomes;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
-import org.apache.log4j.Logger;
 import simpaths.data.CSV.CsvToObjectLoader;
 import simpaths.data.CSV.ObjectToCsvWriter;
 import simpaths.data.Parameters;
@@ -18,6 +17,8 @@ import java.sql.Statement;
 import java.util.*;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
+
+import org.apache.logging.log4j.Logger;
 
 public class ManagerProjectLifetimeIncomes {
 
@@ -174,7 +175,7 @@ public class ManagerProjectLifetimeIncomes {
         try {
             // initialise database for storing results
             String fileName = Parameters.getInputDirectory() + "input";
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + fileName + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             EntityManager em = Persistence.createEntityManagerFactory("lifetime-incomes", propertyMap).createEntityManager();
             txn = em.getTransaction();

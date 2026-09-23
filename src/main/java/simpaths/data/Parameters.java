@@ -7,7 +7,6 @@ import microsim.data.MultiKeyCoefficientMap;
 import microsim.data.excel.ExcelAssistant;
 import microsim.statistics.regression.*;
 // import plug-in packages
-import org.apache.commons.collections4.MapIterator;
 import org.apache.commons.io.FileUtils;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.decisions.DecisionParams;
@@ -15,7 +14,6 @@ import simpaths.model.utilities.AnnuityRates;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.enums.*;
-import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.lang3.tuple.Triple;
@@ -304,7 +302,7 @@ public class Parameters {
     public static final double MIN_HOURLY_WAGE_RATE = 1.5;
     public static final double MAX_HOURLY_WAGE_RATE = 150.0;
     public static final double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
+    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = HOURS_IN_WEEK;
     public static final double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
     public static final int MIN_DIFFERENCE_AGE_MOTHER_CHILD_IN_ALIGNMENT = 15; //When assigning children to mothers in the population alignment, specify how much older (at the minimum) the mother must be than the child
     public static final int MAX_EM_DONOR_RATIO = 3; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
@@ -317,7 +315,7 @@ public class Parameters {
     //public static int MAX_AGE_IN_EDUCATION;// = MAX_AGE;//30;			// Max age a person can stay in education	//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
     //public static int MAX_AGE_MARRIAGE;// = MAX_AGE;//75;  			// Max age a person can marry		//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
     private static int MIN_START_YEAR = 2011; //Minimum allowed starting point. Should correspond to the oldest initial population.
-    private static int MAX_START_YEAR = 2023; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static int MAX_START_YEAR = 2024; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int startYear;
     public static int endYear;
     private static final int MIN_START_YEAR_TESTING = 2019;
@@ -426,17 +424,11 @@ public class Parameters {
             employedShareACMales, employedShareACFemales, employedShareSingleDepMales, employedShareSingleDepFemales,
             employedShareSingleMales, employedShareSingleFemales, employedShareCouples, studentShare;
     public static Map<Integer, Double> partnershipAlignAdjustment, fertilityAlignAdjustment;
-    public static MultiKeyMap upratingFactorsMap = new MultiKeyMap<>();
+    public static MultiKeyMap<Object, Double> upratingFactorsMap = new MultiKeyMap<>();
 
     //Education level projections
     private static MultiKeyCoefficientMap projectionsHighEdu;			//Alignment projections for High Education
     private static MultiKeyCoefficientMap projectionsLowEdu;			//Alignment projections for Medium Education
-
-    //Student share projections for alignment
-    private static MultiKeyCoefficientMap studentShareProjections;		//Alignment projections for Student share of population
-
-    //Employment alignment targets
-    private static MultiKeyCoefficientMap employmentAlignment;
 
     //For marriage types:
     private static MultiKeyCoefficientMap marriageTypesFrequency;
@@ -761,15 +753,14 @@ public class Parameters {
     /////////////////////////////////////////////////////////////////// REGRESSION OBJECTS //////////////////////////////////////////
 
     //Health
-    private static GeneralisedOrderedRegression regHealthH1;
-    private static GeneralisedOrderedRegression regHealthH1b;
-    private static BinomialRegression regHealthH2;
+    private static GeneralisedOrderedRegression<Dhe> regHealthH1;
+    private static BinomialRegression<Indicator> regHealthH2;
 
     //Social care
     // private static LinearRegression regSocialCareS1b; // retired process
-    private static BinomialRegression regNeedCareS2a;
-    private static BinomialRegression regReceiveCareS2b;
-    private static MultinomialRegression regSocialCareMarketS2c;
+    private static BinomialRegression<Indicator> regNeedCareS2a;
+    private static BinomialRegression<Indicator> regReceiveCareS2b;
+    private static MultinomialRegression<SocialCareReceiptS2c> regSocialCareMarketS2c;
     private static LinearRegression regInformalCareHoursS2d;
     private static LinearRegression regFormalCareHoursS2e;
     // private static MultinomialRegression regNotPartnerInformalCareS2f; // retired process
@@ -778,10 +769,10 @@ public class Parameters {
     // private static LinearRegression regSonCareHoursS2i; // retired process
     // private static LinearRegression regOtherCareHoursS2j; // retired process
     // private static LinearRegression regFormalCareHoursS2k; // retired process
-    private static BinomialRegression regCarePartnerProvCareToOtherS3a;
-    private static BinomialRegression regNoCarePartnerProvCareToOtherS3b;
-    private static LinearRegression regCareHoursProvS3c;
-    private static LinearRegression regCareHoursProvS3d;
+    private static BinomialRegression<Indicator> regCarePartnerProvCareToOtherS3a;
+    private static BinomialRegression<Indicator> regNoCarePartnerProvCareToOtherS3b;
+    private static OrderedRegression<CareHoursProvidedCategory> regCareHoursProvS3c;
+    private static OrderedRegression<CareHoursProvidedCategory> regCareHoursProvS3d;
     // private static LinearRegression regCareHoursProvS3e; // retired process
 
     //Pension wealth
@@ -813,20 +804,20 @@ public class Parameters {
     private static LinearRegression regFW2d;
 
     //Unemployment
-    private static BinomialRegression regUnemploymentMaleGraduateU1a;
-    private static BinomialRegression regUnemploymentMaleNonGraduateU1b;
-    private static BinomialRegression regUnemploymentFemaleGraduateU1c;
-    private static BinomialRegression regUnemploymentFemaleNonGraduateU1d;
+    private static BinomialRegression<ReversedIndicator> regUnemploymentMaleGraduateU1a;
+    private static BinomialRegression<ReversedIndicator> regUnemploymentMaleNonGraduateU1b;
+    private static BinomialRegression<ReversedIndicator> regUnemploymentFemaleGraduateU1c;
+    private static BinomialRegression<ReversedIndicator> regUnemploymentFemaleNonGraduateU1d;
 
     // Financial distress
-    private static BinomialRegression regFinancialDistress;
+    private static BinomialRegression<Indicator> regFinancialDistress;
 
     //Health mental
     private static LinearRegression regHealthHM1Level;
     private static LinearRegression regHealthHM2LevelMales;
     private static LinearRegression regHealthHM2LevelFemales;
 
-    private static OrderedRegression regHealthHM1Case;
+    private static OrderedRegression<DhmGhq> regHealthHM1Case;
     private static LinearRegression regHealthHM2CaseMales;
     private static LinearRegression regHealthHM2CaseFemales;
 
@@ -846,24 +837,23 @@ public class Parameters {
     private static LinearRegression regHealthEQ5D;
 
     //Education
-    private static BinomialRegression regEducationE1a;
-    private static BinomialRegression regEducationE1b;
-    private static GeneralisedOrderedRegression regEducationE2;
+    private static BinomialRegression<Indicator> regEducationE1a;
+    private static BinomialRegression<Indicator> regEducationE1b;
+    private static GeneralisedOrderedRegression<EducationLevel> regEducationE2;
 
     //Partnership
-    private static BinomialRegression regPartnershipU1;
-    private static BinomialRegression regPartnershipU1b;
-    private static BinomialRegression regPartnershipU2;
+    private static BinomialRegression<Indicator> regPartnershipU1;
+    private static BinomialRegression<ReversedIndicator> regPartnershipU2;
 
 
     //Fertility
-    private static BinomialRegression regFertilityF1;
+    private static BinomialRegression<Indicator> regFertilityF1;
 
     //Income
-    private static BinomialRegression regIncomeI1a;
+    private static BinomialRegression<Indicator> regIncomeI1a;
     private static LinearRegression regIncomeI1b;
     private static LinearRegression regIncomeI2b;
-    private static BinomialRegression regIncomeI3a;
+    private static BinomialRegression<Indicator> regIncomeI3a;
     private static LinearRegression regIncomeI3b;
     // private static LinearRegression regIncomeI3c;
     // private static LinearRegression regIncomeI4a;
@@ -876,7 +866,7 @@ public class Parameters {
     // private static BinomialRegression regIncomeI6a_selection;
 
     //Homeownership
-    private static BinomialRegression regHomeownershipHO1a;
+    private static BinomialRegression<Indicator> regHomeownershipHO1a;
 
     private static MultinomialRegression<Education> regEducationLevel;
 
@@ -902,7 +892,7 @@ public class Parameters {
 
     // Covid-19 labour transitions regressions below
     // Initialisation
-    private static BinomialRegression regC19LS_SE; // Assigns self-employed status in the simulated population
+    private static BinomialRegression<Indicator> regC19LS_SE; // Assigns self-employed status in the simulated population
     // Transitions
     private static MultinomialRegression<Les_transitions_E1> regC19LS_E1;  // Models transitions from employment
     private static MultinomialRegression<Les_transitions_FF1> regC19LS_FF1;  // Models transitions from furlough full
@@ -919,21 +909,19 @@ public class Parameters {
     private static LinearRegression regC19LS_U2a;
 
     // Probability of SEISS
-    private static BinomialRegression regC19LS_S3;
+    private static BinomialRegression<Indicator> regC19LS_S3;
 
     //Leaving parental home
-    private static BinomialRegression regLeaveHomeP1a;
+    private static BinomialRegression<Indicator> regLeaveHomeP1a;
 
     //Retirement
-    private static BinomialRegression regRetirementR1a;
-    private static BinomialRegression regRetirementR1b;
+    private static BinomialRegression<Indicator> regRetirementR1a;
+    private static BinomialRegression<Indicator> regRetirementR1b;
 
     //Childcare
-    private static BinomialRegression regChildcareC1a;
+    private static BinomialRegression<Indicator> regChildcareC1a;
     private static LinearRegression regChildcareC1b;
 
-    private static BinomialRegression regBirthFemales;
-    private static BinomialRegression regUnionFemales;
     private static Set<Region> countryRegions;
     private static Map<Region, Double> unemploymentRatesByRegion;
     public static boolean isFixTimeTrend;
@@ -984,6 +972,7 @@ public class Parameters {
         System.out.flush();
 
         maxAge = maxAgeModel;
+        MAX_AGE_ADULT_CHILD = maxAge;
         startYear = startYearModel;
         endYear = endYearModel;
 
@@ -1020,11 +1009,6 @@ public class Parameters {
         //Alignment of education levels
         projectionsHighEdu = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_educLevel.xlsx", "High", 1);
         projectionsLowEdu = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_educLevel.xlsx", "Low", 1);
-
-        studentShareProjections = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_student_under30.xlsx", countryString, 1);
-
-        //Employment alignment
-        employmentAlignment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "align_employment.xlsx", countryString, 2);
 
         //Marriage types frequencies:
         marriageTypesFrequency = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "marriageTypes2.xlsx", countryString, 2);
@@ -1227,30 +1211,28 @@ public class Parameters {
         coeffCovarianceUnemploymentU1d = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_unemployment.xlsx", "U1d", 1);
 
         //Financial distress
-        coeffCovarianceFinancialDistress = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_financial_distress.xlsx", countryString, 1);
+        coeffCovarianceFinancialDistress = safeReadExcel(Parameters.getInputDirectory() + "reg_financial_distress.xlsx", "FinDis", 1);
 
         //Health mental: level and case-based
-        coeffCovarianceHM1Level = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM1_L", 1);
-        coeffCovarianceHM2LevelMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Males_L", 1);
-        coeffCovarianceHM2LevelFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Females_L", 1);
-        coeffCovarianceHM1Case = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM1_C", 1);
-        coeffCovarianceHM2CaseMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Males_C", 1);
-        coeffCovarianceHM2CaseFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Females_C", 1);
-
-        validateRegressors(coeffCovarianceHM2CaseMales, "reg_health_mental.xlsx", "HM2_Males_C");
+        coeffCovarianceHM1Level = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM1_L", 1);
+        coeffCovarianceHM2LevelMales = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Males_L", 1);
+        coeffCovarianceHM2LevelFemales = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Females_L", 1);
+        coeffCovarianceHM1Case = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM1_C", 1);
+        coeffCovarianceHM2CaseMales = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Males_C", 1);
+        coeffCovarianceHM2CaseFemales = safeReadExcel(Parameters.getInputDirectory() + "reg_health_mental.xlsx", "HM2_Females_C", 1);
 
         //Health
-        coeffCovarianceDHE_MCS1 = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS1", 1);
-        coeffCovarianceDHE_MCS2Males = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS2_Males", 1);
-        coeffCovarianceDHE_MCS2Females = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS2_Females", 1);
+        coeffCovarianceDHE_MCS1 = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS1", 1);
+        coeffCovarianceDHE_MCS2Males = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS2_Males", 1);
+        coeffCovarianceDHE_MCS2Females = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_MCS2_Females", 1);
 
-        coeffCovarianceDHE_PCS1 = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS1", 1);
-        coeffCovarianceDHE_PCS2Males = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS2_Males", 1);
-        coeffCovarianceDHE_PCS2Females = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS2_Females", 1);
+        coeffCovarianceDHE_PCS1 = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS1", 1);
+        coeffCovarianceDHE_PCS2Males = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS2_Males", 1);
+        coeffCovarianceDHE_PCS2Females = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DHE_PCS2_Females", 1);
 
-        coeffCovarianceDLS1 = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS1", 1);
-        coeffCovarianceDLS2Males = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS2_Males", 1);
-        coeffCovarianceDLS2Females = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS2_Females", 1);
+        coeffCovarianceDLS1 = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS1", 1);
+        coeffCovarianceDLS2Males = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS2_Males", 1);
+        coeffCovarianceDLS2Females = safeReadExcel(Parameters.getInputDirectory() + "reg_health_wellbeing.xlsx", "DLS2_Females", 1);
 
         loadEQ5DParameters(countryString);
 
@@ -1557,12 +1539,12 @@ public class Parameters {
 
         //Health
         regHealthH1 = new GeneralisedOrderedRegression<>(RegressionType.GenOrderedLogit, Dhe.class, coeffCovarianceHealthH1);
-        regHealthH2 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceHealthH2);
+        regHealthH2 = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceHealthH2);
 
         //Social care
         // regSocialCareS1b = new LinearRegression(coeffCovarianceSocialCareS1b); // retired process
-        regNeedCareS2a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS2a);
-        regReceiveCareS2b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS2b);
+        regNeedCareS2a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS2a);
+        regReceiveCareS2b = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS2b);
         regSocialCareMarketS2c = new MultinomialRegression<>(RegressionType.MultinomialLogit, SocialCareReceiptS2c.class, coeffCovarianceSocialCareS2c);
         regInformalCareHoursS2d = new LinearRegression(coeffCovarianceSocialCareS2d);
         regFormalCareHoursS2e = new LinearRegression(coeffCovarianceSocialCareS2e);
@@ -1572,10 +1554,10 @@ public class Parameters {
         // regSonCareHoursS2i = new LinearRegression(coeffCovarianceSocialCareS2i); // retired process
         // regOtherCareHoursS2j = new LinearRegression(coeffCovarianceSocialCareS2j); // retired process
         // regFormalCareHoursS2k = new LinearRegression(coeffCovarianceSocialCareS2k); // retired process
-        regCarePartnerProvCareToOtherS3a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3a);
-        regNoCarePartnerProvCareToOtherS3b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3b);
-        regCareHoursProvS3c = new LinearRegression(coeffCovarianceSocialCareS3c);
-        regCareHoursProvS3d = new LinearRegression(coeffCovarianceSocialCareS3d);
+        regCarePartnerProvCareToOtherS3a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3a);
+        regNoCarePartnerProvCareToOtherS3b = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceSocialCareS3b);
+        regCareHoursProvS3c = new OrderedRegression<>(RegressionType.OrderedLogit, CareHoursProvidedCategory.class, coeffCovarianceSocialCareS3c);
+        regCareHoursProvS3d = new OrderedRegression<>(RegressionType.OrderedLogit, CareHoursProvidedCategory.class, coeffCovarianceSocialCareS3d);
         // regCareHoursProvS3e = new LinearRegression(coeffCovarianceSocialCareS3e); // retired process
 
         //Pension wealth
@@ -1613,20 +1595,20 @@ public class Parameters {
         regLifetimeIncome2b = new LinearRegression(coeffLifetimeIncome2b);
 
         //Unemployment
-        regUnemploymentMaleGraduateU1a = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1a);
-        regUnemploymentMaleNonGraduateU1b = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1b);
-        regUnemploymentFemaleGraduateU1c = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1c);
-        regUnemploymentFemaleNonGraduateU1d = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1d);
+        regUnemploymentMaleGraduateU1a = new BinomialRegression<>(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1a);
+        regUnemploymentMaleNonGraduateU1b = new BinomialRegression<>(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1b);
+        regUnemploymentFemaleGraduateU1c = new BinomialRegression<>(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1c);
+        regUnemploymentFemaleNonGraduateU1d = new BinomialRegression<>(RegressionType.Probit, ReversedIndicator.class, coeffCovarianceUnemploymentU1d);
 
         //Financial distress
-        regFinancialDistress = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceFinancialDistress);
+        regFinancialDistress = new BinomialRegression<>(RegressionType.Logit, Indicator.class, coeffCovarianceFinancialDistress);
 
         //Health mental
         regHealthHM1Level = new LinearRegression(coeffCovarianceHM1Level);
         regHealthHM2LevelMales = new LinearRegression(coeffCovarianceHM2LevelMales);
         regHealthHM2LevelFemales = new LinearRegression(coeffCovarianceHM2LevelFemales);
 
-        regHealthHM1Case = new OrderedRegression(RegressionType.OrderedLogit,DhmGhq.class,coeffCovarianceHM1Case);
+        regHealthHM1Case = new OrderedRegression<>(RegressionType.OrderedLogit,DhmGhq.class,coeffCovarianceHM1Case);
         regHealthHM2CaseMales = new LinearRegression(coeffCovarianceHM2CaseMales);
         regHealthHM2CaseFemales = new LinearRegression(coeffCovarianceHM2CaseFemales);
 
@@ -1642,27 +1624,26 @@ public class Parameters {
         regLifeSatisfaction2Females = new LinearRegression(coeffCovarianceDLS2Females);
 
         // Education
-        regEducationE1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceEducationE1a);
-        regEducationE1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceEducationE1b);
+        regEducationE1a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceEducationE1a);
+        regEducationE1b = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceEducationE1b);
         regEducationE2 = new GeneralisedOrderedRegression<>(RegressionType.GenOrderedLogit, EducationLevel.class, coeffCovarianceEducationE2);
 
         //Partnership
         MultiKeyCoefficientMap coeffPartnershipU1Appended = appendCoefficientMaps(coeffCovariancePartnershipU1, partnershipTimeAdjustment, "Year");
         // MultiKeyCoefficientMap coeffPartnershipU1bAppended = appendCoefficientMaps(coeffCovariancePartnershipU1b, partnershipTimeAdjustment, "Year");
         MultiKeyCoefficientMap coeffPartnershipU2Appended = appendCoefficientMaps(coeffCovariancePartnershipU2, partnershipTimeAdjustment, "Year", true);
-        regPartnershipU1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1Appended);
-        // regPartnershipU1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1bAppended);
-        regPartnershipU2 = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2Appended);
+        regPartnershipU1 = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffPartnershipU1Appended);
+        regPartnershipU2 = new BinomialRegression<>(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2Appended);
 
         //Fertility
         MultiKeyCoefficientMap coeffFertilityF1aAppended = appendCoefficientMaps(coeffCovarianceFertilityF1, fertilityTimeAdjustment, "Year");
-        regFertilityF1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
+        regFertilityF1 = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
 
         //Income
-        regIncomeI1a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI1a);
+        regIncomeI1a = new BinomialRegression<Indicator>(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI1a);
         regIncomeI1b = new LinearRegression(coeffCovarianceIncomeI1b);
         regIncomeI2b = new LinearRegression(coeffCovarianceIncomeI2b);
-        regIncomeI3a = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI3a);
+        regIncomeI3a = new BinomialRegression<Indicator>(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI3a);
         regIncomeI3b = new LinearRegression(coeffCovarianceIncomeI3b);
         //regIncomeI3c = new LinearRegression(coeffCovarianceIncomeI3c);
         //regIncomeI4a = new LinearRegression(coeffCovarianceIncomeI4a);
@@ -1675,7 +1656,7 @@ public class Parameters {
         //regIncomeI6a_selection = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffCovarianceIncomeI6a_selection);
 
         //Homeownership
-        regHomeownershipHO1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceHomeownership);
+        regHomeownershipHO1a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceHomeownership);
 
         //XXX: Note: the model used for selection in Heckman procedure is a Probit, but to obtain Inverse Mills Ratio, linear prediction needs to be obtained - so linear regression used here
         //regEmploymentSelectionMale = new LinearRegression(coeffCovarianceEmploymentSelectionMales);
@@ -1703,7 +1684,7 @@ public class Parameters {
         regLabourSupplyUtilityCouples = new LinearRegression(coeffLabourSupplyUtilityCouples);
 
         // Regressions for Covid-19 labour transition models below
-        regC19LS_SE = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceC19LS_SE);
+        regC19LS_SE = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceC19LS_SE);
         regC19LS_E1 = new MultinomialRegression<>(RegressionType.MultinomialLogit, Les_transitions_E1.class, coeffC19LS_E1Map, true);
         regC19LS_FF1 = new MultinomialRegression<>(RegressionType.MultinomialLogit, Les_transitions_FF1.class, coeffC19LS_FF1Map, true);
         regC19LS_FX1 = new MultinomialRegression<>(RegressionType.MultinomialLogit, Les_transitions_FX1.class, coeffC19LS_FX1Map, true);
@@ -1716,17 +1697,17 @@ public class Parameters {
         regC19LS_F2c = new LinearRegression(coeffC19LS_F2c);
         regC19LS_S2a = new LinearRegression(coeffC19LS_S2a);
         regC19LS_U2a = new LinearRegression(coeffC19LS_U2a);
-        regC19LS_S3 = new BinomialRegression(RegressionType.Logit, Indicator.class, coeffC19LS_S3);
+        regC19LS_S3 = new BinomialRegression<>(RegressionType.Logit, Indicator.class, coeffC19LS_S3);
 
         //Leaving parental home
-        regLeaveHomeP1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceLeaveHomeP1);
+        regLeaveHomeP1a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceLeaveHomeP1);
 
         //Retirement
-        regRetirementR1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceRetirementR1a);
-        regRetirementR1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceRetirementR1b);
+        regRetirementR1a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceRetirementR1a);
+        regRetirementR1b = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceRetirementR1b);
 
         //Childcare
-        regChildcareC1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffCovarianceChildcareC1a);
+        regChildcareC1a = new BinomialRegression<>(RegressionType.Probit, Indicator.class, coeffCovarianceChildcareC1a);
         regChildcareC1b = new LinearRegression(coeffCovarianceChildcareC1b);
 
         //Create the age and wage differential MultivariateNormalDistribution for partnership formation, using means and var-cov matrix loaded from Excel
@@ -2006,8 +1987,7 @@ public class Parameters {
         currentEUROMODpolicySchedule = ExcelAssistant.loadCoefficientMap(getInputDirectory() + EUROMODpolicyScheduleFilename + ".xlsx", country.toString(), 1, 3);
         TreeMap<Integer, String> newEUROMODpolicySchedule = new TreeMap<>();
 
-        for(Object o: currentEUROMODpolicySchedule.keySet()) {
-            MultiKey k = (MultiKey)o;
+        for (var k : currentEUROMODpolicySchedule.keySet()) {
             if(k.getKey(0) != null) {
                 String name = k.getKey(0).toString();
                 if(name != null &&
@@ -2094,9 +2074,7 @@ public class Parameters {
 
     public static MultiKeyCoefficientMap getBenefitUnitVariableNames() { return benefitUnitVariableNames; }
 
-    public static MultiKeyCoefficientMap getStudentShareProjections() { return studentShareProjections; }
-
-    public static MultinomialRegression getRegEducationLevel() {return regEducationLevel;}
+    public static MultinomialRegression<Education> getRegEducationLevel() {return regEducationLevel;}
 
     public static MultiKeyCoefficientMap getEmploymentsFurloughedFull() {
         return employmentsFurloughedFull;
@@ -2126,13 +2104,12 @@ public class Parameters {
         Parameters.employmentsFurloughedFlex = employmentsFurloughedFlex;
     }
 
-    public static GeneralisedOrderedRegression getRegHealthH1() { return regHealthH1; }
-    // public static GeneralisedOrderedRegression getRegHealthH1b() { return regHealthH1b; }
-    public static BinomialRegression getRegHealthH2() { return regHealthH2; }
+    public static GeneralisedOrderedRegression<Dhe> getRegHealthH1() { return regHealthH1; }
+    public static BinomialRegression<Indicator> getRegHealthH2() { return regHealthH2; }
 
-    public static BinomialRegression getRegNeedCareS2a() { return regNeedCareS2a; }
-    public static BinomialRegression getRegReceiveCareS2b() { return regReceiveCareS2b; }
-    public static MultinomialRegression getRegSocialCareMarketS2c() { return regSocialCareMarketS2c; }
+    public static BinomialRegression<Indicator> getRegNeedCareS2a() { return regNeedCareS2a; }
+    public static BinomialRegression<Indicator> getRegReceiveCareS2b() { return regReceiveCareS2b; }
+    public static MultinomialRegression<SocialCareReceiptS2c> getRegSocialCareMarketS2c() { return regSocialCareMarketS2c; }
     public static LinearRegression getRegInformalCareHoursS2d() { return regInformalCareHoursS2d; }
     public static LinearRegression getRegFormalCareHoursS2e() { return regFormalCareHoursS2e; }
     // public static MultinomialRegression getRegNotPartnerInformalCareS2f() { return regNotPartnerInformalCareS2f; } // retired process
@@ -2142,10 +2119,10 @@ public class Parameters {
     // public static LinearRegression getRegSonCareHoursS2i() { return regSonCareHoursS2i; } // retired process
     // public static LinearRegression getRegOtherCareHoursS2j() { return regOtherCareHoursS2j; } // retired process
     // public static LinearRegression getRegFormalCareHoursS2k() { return regFormalCareHoursS2k; } // retired process
-    public static BinomialRegression getRegCarePartnerProvCareToOtherS3a() { return regCarePartnerProvCareToOtherS3a; }
-    public static BinomialRegression getRegNoCarePartnerProvCareToOtherS3b() { return regNoCarePartnerProvCareToOtherS3b; }
-    public static LinearRegression getRegCareHoursProvS3c() { return regCareHoursProvS3c; }
-    public static LinearRegression getRegCareHoursProvS3d() { return regCareHoursProvS3d; }
+    public static BinomialRegression<Indicator> getRegCarePartnerProvCareToOtherS3a() { return regCarePartnerProvCareToOtherS3a; }
+    public static BinomialRegression<Indicator> getRegNoCarePartnerProvCareToOtherS3b() { return regNoCarePartnerProvCareToOtherS3b; }
+    public static OrderedRegression<CareHoursProvidedCategory> getRegCareHoursProvS3c() { return regCareHoursProvS3c; }
+    public static OrderedRegression<CareHoursProvidedCategory> getRegCareHoursProvS3d() { return regCareHoursProvS3d; }
     // public static LinearRegression getRegCareHoursProvS3e() { return regCareHoursProvS3e; } // retired process
 
     public static BinomialRegression getRegPW1a() { return regPW1a; }
@@ -2178,17 +2155,17 @@ public class Parameters {
     public static LinearRegression getRegLifetimeIncome2a() {return regLifetimeIncome2a;}
     public static LinearRegression getRegLifetimeIncome2b() {return regLifetimeIncome2b;}
 
-    public static BinomialRegression getRegUnemploymentMaleGraduateU1a() { return regUnemploymentMaleGraduateU1a; }
-    public static BinomialRegression getRegUnemploymentMaleNonGraduateU1b() { return regUnemploymentMaleNonGraduateU1b; }
-    public static BinomialRegression getRegUnemploymentFemaleGraduateU1c() { return regUnemploymentFemaleGraduateU1c; }
-    public static BinomialRegression getRegUnemploymentFemaleNonGraduateU1d() { return regUnemploymentFemaleNonGraduateU1d; }
+    public static BinomialRegression<ReversedIndicator> getRegUnemploymentMaleGraduateU1a() { return regUnemploymentMaleGraduateU1a; }
+    public static BinomialRegression<ReversedIndicator> getRegUnemploymentMaleNonGraduateU1b() { return regUnemploymentMaleNonGraduateU1b; }
+    public static BinomialRegression<ReversedIndicator> getRegUnemploymentFemaleGraduateU1c() { return regUnemploymentFemaleGraduateU1c; }
+    public static BinomialRegression<ReversedIndicator> getRegUnemploymentFemaleNonGraduateU1d() { return regUnemploymentFemaleNonGraduateU1d; }
 
-    public static BinomialRegression getRegFinancialDistress() { return regFinancialDistress; }
+    public static BinomialRegression<Indicator> getRegFinancialDistress() { return regFinancialDistress; }
 
     public static LinearRegression getRegHealthHM1Level() { return regHealthHM1Level; }
     public static LinearRegression getRegHealthHM2LevelMales() { return regHealthHM2LevelMales; }
     public static LinearRegression getRegHealthHM2LevelFemales() { return regHealthHM2LevelFemales; }
-    public static OrderedRegression getRegHealthHM1Case() {return regHealthHM1Case;}
+    public static OrderedRegression<DhmGhq> getRegHealthHM1Case() {return regHealthHM1Case;}
     public static LinearRegression getRegHealthHM2CaseMales() {return regHealthHM2CaseMales;}
     public static LinearRegression getRegHealthHM2CaseFemales() {return regHealthHM2CaseFemales;}
 
@@ -2204,22 +2181,21 @@ public class Parameters {
     public static LinearRegression getRegLifeSatisfaction2Males() { return regLifeSatisfaction2Males; }
     public static LinearRegression getRegLifeSatisfaction2Females() { return regLifeSatisfaction2Females; }
 
-    public static BinomialRegression getRegEducationE1a() {return regEducationE1a;}
-    public static BinomialRegression getRegEducationE1b() {return regEducationE1b;}
-    public static GeneralisedOrderedRegression getRegEducationE2() {return regEducationE2;}
+    public static BinomialRegression<Indicator> getRegEducationE1a() {return regEducationE1a;}
+    public static BinomialRegression<Indicator> getRegEducationE1b() {return regEducationE1b;}
+    public static GeneralisedOrderedRegression<EducationLevel> getRegEducationE2() {return regEducationE2;}
 
     public static LinearRegression getRegEQ5D() { return regHealthEQ5D; };
 
-    public static BinomialRegression getRegPartnershipU1() {return regPartnershipU1;}
-    // public static BinomialRegression getRegPartnershipU1b() {return regPartnershipU1b;}
-    public static BinomialRegression getRegPartnershipU2() {return regPartnershipU2;}
+    public static BinomialRegression<Indicator> getRegPartnershipU1() {return regPartnershipU1;}
+    public static BinomialRegression<ReversedIndicator> getRegPartnershipU2() {return regPartnershipU2;}
 
-    public static BinomialRegression getRegFertilityF1() {return regFertilityF1;}
+    public static BinomialRegression<Indicator> getRegFertilityF1() {return regFertilityF1;}
 
-    public static BinomialRegression getRegIncomeI1a() {return regIncomeI1a;}
+    public static BinomialRegression<Indicator> getRegIncomeI1a() {return regIncomeI1a;}
     public static LinearRegression getRegIncomeI1b() {return regIncomeI1b;}
     public static LinearRegression getRegIncomeI2b() { return regIncomeI2b; }
-    public static BinomialRegression getRegIncomeI3a() { return regIncomeI3a; }
+    public static BinomialRegression<Indicator> getRegIncomeI3a() { return regIncomeI3a; }
     public static LinearRegression getRegIncomeI3b() { return regIncomeI3b; }
     // public static LinearRegression getRegIncomeI3c() { return regIncomeI3c; }
     // public static LinearRegression getRegIncomeI4a() { return regIncomeI4a; }
@@ -2231,13 +2207,13 @@ public class Parameters {
     // public static BinomialRegression getRegIncomeI5a_selection() { return regIncomeI5a_selection; }
     // public static BinomialRegression getRegIncomeI6a_selection() { return regIncomeI6a_selection; }
 
-    public static BinomialRegression getRegHomeownershipHO1a() {return regHomeownershipHO1a;}
+    public static BinomialRegression<Indicator> getRegHomeownershipHO1a() {return regHomeownershipHO1a;}
 
     public static Set<Region> getCountryRegions() {
         return countryRegions;
     }
 
-    public static MultiKeyMap getFertilityRateByRegionYear() {
+    public static MultiKeyMap<Object, Double> getFertilityRateByRegionYear() {
         return fertilityRateByRegionYear;
     }
 
@@ -2355,6 +2331,20 @@ public class Parameters {
             return (trainingFlag) ? MIN_START_YEAR_TRAINING : MIN_START_YEAR;
     }
 
+    public static void validateStartYear(int year) {
+        int min = getMinStartYear();
+        int max = getMaxStartYear();
+        if (year < min || year > max) {
+            String mode;
+            if (TESTING_FLAG) mode = "testing data";
+            else if (trainingFlag) mode = "training data";
+            else mode = "real data";
+            throw new IllegalArgumentException(
+                    "Start year " + year + " is outside the allowed range [" + min + ", " + max + "] for " + mode + ". " +
+                            "Choose a value within the supported initial-population years.");
+        }
+    }
+
     public static String getEuromodOutputDirectory() {
         if (TESTING_FLAG)
             return EUROMOD_OUTPUT_DIRECTORY;
@@ -2448,144 +2438,239 @@ public class Parameters {
         return wageAndAgeDifferentialMultivariateNormalDistribution.sample();
     }
 
-    public static BinomialRegression getRegLeaveHomeP1a() {
+    public static BinomialRegression<Indicator> getRegLeaveHomeP1a() {
         return regLeaveHomeP1a;
     }
 
-    public static BinomialRegression getRegRetirementR1a() {
+    public static BinomialRegression<Indicator> getRegRetirementR1a() {
         return regRetirementR1a;
     }
 
-    public static BinomialRegression getRegRetirementR1b() {
+    public static BinomialRegression<Indicator> getRegRetirementR1b() {
         return regRetirementR1b;
     }
 
-    public static BinomialRegression getRegChildcareC1a() { return regChildcareC1a; }
+    public static BinomialRegression<Indicator> getRegChildcareC1a() { return regChildcareC1a; }
 
     public static LinearRegression getRegChildcareC1b() {
         return regChildcareC1b;
     }
 
-    ///////////////////////////////////////////GETTERS FOR VALIDATION///////////////////////////////////////////////////
-    public static MultiKeyCoefficientMap getValidationStudentsByAge() {
-        return validationStudentsByAge;
+    // Access validation data
+    private static double nanIfNull(MultiKeyCoefficientMap map, int year, String label) {
+        // FIXME: why year-1?
+        var val = (Number) map.getValue(year - 1, label);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
     }
 
-    public static MultiKeyCoefficientMap getValidationStudentsByRegion() {
-        return validationStudentsByRegion;
+    private static String ageStr(int from, int to) {
+        return from + "_" + to;
     }
 
-    public static MultiKeyCoefficientMap getValidationEducationLevel() {
-        return validationEducationLevel;
+    private static String genderStr(Gender gender) {
+        return switch (gender) {
+            case Female -> "female";
+            case Male -> "male";
+        };
     }
 
-    public static MultiKeyCoefficientMap getValidationEducationLevelByAge() {
-        return validationEducationLevelByAge;
+    private static String eduStr(Education education) {
+        return switch (education) {
+            case Low -> "dehc3_low";
+            case Medium -> "dehc3_med";
+            case High -> "dehc3_high";
+            case InEducation -> "dehc3_ineducation";
+        };
     }
 
-    public static MultiKeyCoefficientMap getValidationEducationLevelByRegion() {
-        return validationEducationLevelByRegion;
+    private static String eduLevelStr(EducationLevel level) {
+        return switch (level) {
+            case Low -> "low";
+            case Medium -> "med";
+            case High -> "high";
+        };
     }
 
-    public static MultiKeyCoefficientMap getValidationPartneredShareByRegion() {
-        return validationPartneredShareByRegion;
+    public static double validationStudents(int year) {
+        return nanIfNull(validationStudentsByAge, year, "ageGroup_All");
     }
 
-    public static MultiKeyCoefficientMap getValidationDisabledByAge() {
-        return validationDisabledByAge;
+    public static double validationStudents(int year, int ageFrom, int ageTo) {
+        var label = String.join("_", "ageGroup", ageStr(ageFrom, ageTo));
+        return nanIfNull(validationStudentsByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationDisabledByGender() {
-        return validationDisabledByGender;
+    public static double validationStudents(int year, Region region) {
+        var label = String.join("_", "region", region.name());
+        return nanIfNull(validationStudentsByRegion, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationHealthByAge() {
-        return validationHealthByAge;
+    public static double validationEduc(int year, EducationLevel level) {
+        var label = String.join("_", "educ", eduLevelStr(level));
+        return nanIfNull(validationEducationLevel, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationMentalHealthByAge() {
-        return validationMentalHealthByAge;
+    public static double validationEduc(int year, EducationLevel level, int ageFrom, int ageTo) {
+        var label = String.join("_", "educ", eduLevelStr(level), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationEducationLevelByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationHealthMCSByAge() {
-        return validationHealthMCSByAge;
+    public static double validationEduc(int year, EducationLevel level, Region region) {
+        var label = String.join("_", "educ", eduLevelStr(level), region.name());
+        return nanIfNull(validationEducationLevelByRegion, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationHealthPCSByAge() {
-        return validationHealthPCSByAge;
+    public static double validationPartnered(int year) {
+        var label = String.join("_", "partnered", "All");
+        return nanIfNull(validationPartneredShareByRegion, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationLifeSatisfactionByAge() {
-        return validationLifeSatisfactionByAge;
+    public static double validationPartnered(int year, Region region) {
+        var label = String.join("_", "partnered", region.name());
+        return nanIfNull(validationPartneredShareByRegion, year, label);
     }
 
-
-    public static MultiKeyCoefficientMap getValidationPsychDistressByAge() {
-        return validationPsychDistressByAge;
+    public static double validationDisabled(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "disabled", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationDisabledByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationPsychDistressByAgeLow() {
-        return validationPsychDistressByAgeLow;
+    public static double validationDisabled(int year, Gender gender) {
+        var label = String.join("_", "dlltsd", genderStr(gender));
+        return nanIfNull(validationDisabledByGender, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationPsychDistressByAgeMed() {
-        return validationPsychDistressByAgeMed;
+    public static double validationHealth(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationPsychDistressByAgeHigh() {
-        return validationPsychDistressByAgeHigh;
+    public static double validationMentalHealth(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "mental_health", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationMentalHealthByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationEmploymentByGender() {
-        return validationEmploymentByGender;
+    public static double validationHealthMcs(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health_mcs_score", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthMCSByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationEmploymentByAgeAndGender() {
-        return validationEmploymentByAgeAndGender;
+    public static double validationHealthPcs(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "health_pcs_score", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationHealthPCSByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationEmploymentByMaternity() {
-        return validationEmploymentByMaternity;
+    public static double validationLifeSatisfaction(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "life_satisfaction", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationLifeSatisfactionByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationEmploymentByGenderAndRegion() {
-        return validationEmploymentByGenderAndRegion;
+    public static double validationPsychDistress(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAge, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationLabourSupplyByEducation() {
-        return validationLabourSupplyByEducation;
+    public static double validationPsychDistressLow(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeLow, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationActivityStatus() {
-        return validationActivityStatus;
+    public static double validationPsychDistressMed(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeMed, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationHomeownershipBenefitUnits() {
-        return validationHomeownershipBenefitUnits;
+    public static double validationPsychDistressHigh(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "psych_distress", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationPsychDistressByAgeHigh, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationGrossEarningsByGenderAndEducation() {
-        return validationGrossEarningsByGenderAndEducation;
+    public static double validationEmployment(int year, Gender gender) {
+        // this one has a different gender label than others...
+        var label = String.join("_", "employed", gender.name());
+        return nanIfNull(validationEmploymentByGender, year, label);
     }
 
-    public static MultiKeyCoefficientMap getValidationLhwByGenderAndEducation() {
-        return validationLhwByGenderAndEducation;
+    public static double validationEmployment(int year, Gender gender, int ageFrom, int ageTo) {
+        var label = String.join("_", "employed", genderStr(gender), ageStr(ageFrom, ageTo));
+        return nanIfNull(validationEmploymentByAgeAndGender, year, label);
     }
 
-    public static MultiKeyCoefficientMap getHourlyWageByGenderAndEducation() {
-        return hourlyWageByGenderAndEducation;
+    // FIXME: enum for maternity state
+    public static double validationEmployment(int year, boolean withChild, boolean childIsInfant) {
+        String chStr;
+        if (withChild) {
+            if (childIsInfant) {
+                chStr = "with_child_0_5";
+            } else {
+                chStr = "with_child_6_18";
+            }
+        } else {
+            chStr = "without_child";
+        }
+        var label = String.join("_", "emp", chStr);
+        return nanIfNull(validationEmploymentByMaternity, year, label);
+    }
+
+    public static double validationEmployment(int year, Gender gender, Region region) {
+        var label = String.join("_", "employed", genderStr(gender), region.name());
+        return nanIfNull(validationEmploymentByGenderAndRegion, year, label);
+    }
+
+    public static double validationLabourSupply(int year, Education education) {
+        // this one has a different education label than others...
+        var label = String.join("_", "labour_supply", education.name());
+        return nanIfNull(validationLabourSupplyByEducation, year, label);
+    }
+
+    // FIXME: enum for status
+    /// `status` can be `"employed"`, `"notemployedretired"`, `"student"`
+    public static double validationActivityStatus(int year, String status) {
+        var label = String.join("_", "as", status);
+        return nanIfNull(validationActivityStatus, year, label);
+    }
+
+    public static double validationHomeOwnership(int year) {
+        var val = (Number) validationHomeownershipBenefitUnits.getValue(year - 1);
+        if (val == null) {
+            return Double.NaN;
+        }
+        return val.doubleValue();
+    }
+
+    public static double validationGrossEarnings(int year, Gender gender, Education education) {
+        var label = String.join("_", "grossearnings", genderStr(gender), eduStr(education));
+        return nanIfNull(validationGrossEarningsByGenderAndEducation, year, label);
+    }
+
+    public static double validationLhw(int year, Gender gender) {
+        var label = String.join("_", "lhw", genderStr(gender));
+        return nanIfNull(validationLhwByGenderAndEducation, year, label);
+    }
+
+    public static double validationLhw(int year, Gender gender, Education education) {
+        var label = String.join("_", "lhw", genderStr(gender), eduStr(education));
+        return nanIfNull(validationLhwByGenderAndEducation, year, label);
+    }
+
+    public static double validationHourlyWage(int year, Gender gender, Education education) {
+        var label = String.join("_", "hourlywage", genderStr(gender), eduStr(education));
+        return nanIfNull(hourlyWageByGenderAndEducation, year, label);
     }
 
     ///////////////////////////////////////////GETTERS FOR COVID-19 LABOUR TRANSITIONS//////////////////////////////////
-    public static BinomialRegression getRegC19LS_SE() {
+    public static BinomialRegression<Indicator> getRegC19LS_SE() {
         return regC19LS_SE;
     }
 
-    public static MultinomialRegression getRegC19LS_E1() {return regC19LS_E1;}
-    public static MultinomialRegression getRegC19LS_FF1() {return regC19LS_FF1;}
-    public static MultinomialRegression getRegC19LS_FX1() {return regC19LS_FX1;}
-    public static MultinomialRegression getRegC19LS_S1() {return regC19LS_S1;}
-    public static MultinomialRegression getRegC19LS_U1() {return regC19LS_U1;}
+    public static MultinomialRegression<Les_transitions_E1> getRegC19LS_E1() {return regC19LS_E1;}
+    public static MultinomialRegression<Les_transitions_FF1> getRegC19LS_FF1() {return regC19LS_FF1;}
+    public static MultinomialRegression<Les_transitions_FX1> getRegC19LS_FX1() {return regC19LS_FX1;}
+    public static MultinomialRegression<Les_transitions_S1> getRegC19LS_S1() {return regC19LS_S1;}
+    public static MultinomialRegression<Les_transitions_U1> getRegC19LS_U1() {return regC19LS_U1;}
 
     public static LinearRegression getRegC19LS_E2a() {
         return regC19LS_E2a;
@@ -2615,7 +2700,7 @@ public class Parameters {
         return regC19LS_U2a;
     }
 
-    public static BinomialRegression getRegC19LS_S3() {
+    public static BinomialRegression<Indicator> getRegC19LS_S3() {
         return regC19LS_S3;
     }
 
@@ -2660,26 +2745,29 @@ public class Parameters {
         priceMapRealMortgageRates = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_mortgage_rates", 1, 1);
         priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
         priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
+        priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "saving_returns", 1, 1);
+        priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_low", 1, 1);
+        priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "debt_cost_hi", 1, 1);
 
         // load demYear varying wage rates
-        wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_carer_hourly_wage", 1, 1);
+        wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "carer_hourly_wage", 1, 1);
 
         // load demYear varying indices
-        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
-        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
-        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
-        socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_care_adjustment", 1, 1);
-        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_cohabitation_adjustment", 1, 1);
-        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() +"_students_adjustment", 1, 1);
-        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_fertility_adjustment", 1, 1);
-        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_smales", 1, 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_sfemales", 1, 1);
-        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_acmales", 1, 1);
-        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_acfemales", 1, 1);
+        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "gdp", 1, 1);
+        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "inflation", 1, 1);
+        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "wage_growth", 1, 1);
+        socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "care_adjustment", 1, 1);
+        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "cohabitation_adjustment", 1, 1);
+        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "students_adjustment", 1, 1);
+        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "fertility_adjustment", 1, 1);
+        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_smales", 1, 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_sfemales", 1, 1);
+        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_acmales", 1, 1);
+        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_acfemales", 1, 1);
 
-        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_couples", 1, 1);
-        utilityTimeAdjustmentSingleDepMen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_singledepmen", 1, 1);
-        utilityTimeAdjustmentSingleDepWomen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_utility_adj_singledepwomen", 1, 1);
+        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_couples", 1, 1);
+        utilityTimeAdjustmentSingleDepMen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_singledepmen", 1, 1);
+        utilityTimeAdjustmentSingleDepWomen = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_adjustment_series.xlsx", "utility_adj_singledepwomen", 1, 1);
 
 
         // rebase indices to base year defined by BASE_PRICE_YEAR
@@ -2687,23 +2775,23 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.Inflation);
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
-        //studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "students", 1,1);
-        studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "inSchool_targets.xlsx", "students", 1,1);
+        //studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "students", 1,1);
+        studentShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_inSchool.xlsx", "students", 1,1);
 
-        // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "social care", 1, 8);
-        partneredShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "partnered_share_targets.xlsx", "partnered_share", 1, 1);
-        //employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_smales", 1, 1);
-        //employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_sfemales", 1, 1);
-        //employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "policy parameters.xlsx", "employment_couples", 1, 1);
+        // load year-specific social care policy parameters
+        socialCarePolicy = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "social care", 1, 8);
+        partneredShare = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_partnered_share.xlsx", "partnered_share", 1, 1);
+        //employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_smales", 1, 1);
+        //employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_sfemales", 1, 1);
+        //employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "social_care_parameters.xlsx", "employment_couples", 1, 1);
 
-        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "Single_male", 1,1);
-        employedShareACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleAC_Males", 1,1);
-        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() +  "employment_targets.xlsx", "Single_female", 1,1);
-        employedShareACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleAC_Females", 1,1);
-        employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "Couples", 1,1);
-        employedShareSingleDepMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleDep_Males", 1,1);
-        employedShareSingleDepFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "employment_targets.xlsx", "SingleDep_Females", 1,1);
+        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "Single_male", 1,1);
+        employedShareACMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleAC_Males", 1,1);
+        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() +  "alignment_targets_employment.xlsx", "Single_female", 1,1);
+        employedShareACFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleAC_Females", 1,1);
+        employedShareCouples = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "Couples", 1,1);
+        employedShareSingleDepMales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleDep_Males", 1,1);
+        employedShareSingleDepFemales = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "alignment_targets_employment.xlsx", "SingleDep_Females", 1,1);
 
     }
 
@@ -2721,15 +2809,15 @@ public class Parameters {
         TimeSeriesVariable index = getTimeSeriesVariable(UpratingCase.TaxDonor);
         switch (index) {
             case GDP -> {
-                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
+                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "gdp", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.GDP);
             }
             case WageGrowth -> {
-                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
+                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "wage_growth", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.WageGrowth);
             }
             case Inflation -> {
-                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
+                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(Parameters.getInputDirectory() + "economic_time_series.xlsx", "inflation", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.Inflation);
             }
         }
@@ -2743,7 +2831,7 @@ public class Parameters {
 
         MultiKeyCoefficientMap map = getTimeSeriesValueMap(timeSeriesVariable);
         double valueBase = getTimeSeriesValue(baseYear, timeSeriesVariable);
-        for (Object key: map.keySet()) {
+        for (var key : map.keySet()) {
 
             double valueHere = ((Number) map.getValue(key)).doubleValue();
             if (ratioAdjust) {
@@ -2812,9 +2900,6 @@ public class Parameters {
             }
             case LowEducationRate -> {
                 map = projectionsLowEdu;
-            }
-            case EmploymentAlignment -> {
-                map = employmentAlignment;
             }
             case FixedRetirementAge -> {
                 map = fixedRetireAge;
@@ -3580,26 +3665,24 @@ public class Parameters {
         if (map == null) return;
 
         // Get the values read from the REGRESSOR column by ExcelAssistant (excludes 'Constant')
-        Set<Object> regressorNames = map.keySet();
+        var regressorNames = map.keySet();
 
         // Check across all
-        for (Object regressor : regressorNames) {
-            if (regressor instanceof MultiKey mk) {
-                String keyName = mk.getKey(0).toString();
+        for (var mk : regressorNames) {
+            String keyName = mk.getKey(0).toString();
 
-                // Test if a Person Enum
+            // Test if a Person Enum
+            try {
+                Person.Variables.valueOf(keyName);
+            } catch (IllegalArgumentException e) {
                 try {
-                    Person.Variables.valueOf(keyName);
-                } catch (IllegalArgumentException e) {
-                    try {
-                        BenefitUnit.Variables.valueOf(keyName);
-                    } catch (IllegalArgumentException e2) {
+                    BenefitUnit.Variables.valueOf(keyName);
+                } catch (IllegalArgumentException e2) {
 
-                        // This fires if the string isn't in the Enum
-                        throw new RuntimeException("Validation failed for " + excelFileName + " in " + sheetName +
-                                ": Regressor '" + keyName + "' not found in Person.DoublesVariables. " +
-                                "Check for typos in Excel or missing Enums in Person.java.");
-                    }
+                    // This fires if the string isn't in the Enum
+                    throw new RuntimeException("Validation failed for " + excelFileName + " in " + sheetName +
+                            ": Regressor '" + keyName + "' not found in Person.DoublesVariables. " +
+                            "Check for typos in Excel or missing Enums in Person.java.");
                 }
             }
         }
@@ -3714,11 +3797,9 @@ public class Parameters {
             System.out.println("Bootstrap validation: missing COEFFICIENT column for " + name);
         }
         int issueCount = 0;
-        MapIterator<Object, Object> it = map.mapIterator();
-        while (it.hasNext()) {
-            it.next();
-            MultiKey key = (MultiKey) it.getKey();
-            Object rowObj = map.getValue(new Object[]{key});
+        for (var mapEntry : map.entrySet()) {
+            var key = mapEntry.getKey();
+            var rowObj = mapEntry.getValue();
             Object[] rowValues;
             if (rowObj instanceof Object[]) {
                 rowValues = (Object[]) rowObj;

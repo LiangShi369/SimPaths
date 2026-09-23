@@ -26,7 +26,7 @@ log using "${dir_log}/reg_education.log", replace
 
 /******************************* SET EXCEL FILE *******************************/
 
-putexcel set "$dir_results/reg_education", sheet("Info") replace
+putexcel set "$dir_results/reg_education", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing projection of education status"
 putexcel A2 = "Authors:"
@@ -79,34 +79,55 @@ do "${dir_do}/programs.do"
 /****************** E1a: PROBABILITY OF REMAINING IN EDUCATION ****************/
 display "${e1a_if_condition}"	
 
-	
+/*
+probit Dst i.Dgn Dag Dag_sq /*Dag_c Dag_c_sq Dag_post18_sq*/  li.Ded  ///
+	li.Dehmf_c3_Medium li.Dehmf_c3_Low ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${e1a_if_condition} [pw=${weight}], vce(robust)	
+
+process_regression, domain("education") process("E1a") sheet("E1a_orig") ///
+	title("Process E1a: Prob. remain in education") ///
+	gofrow(3) goflabel("E1a - Remain in education") ///
+	ifcond("${e1a_if_condition}") probit	
+	*/
 probit Dst ///
     demMaleFlag demAge demAgeSq eduSampleFlagL1  ///
 	eduHighestParentC3MediumL1 eduHighestParentC3LowL1  ///
 	yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
-	$regions demYear demYear2020 demYear2021 $ethnicity ///
+	$regions demYearTransformed demYear2020 demYear2021 $ethnicity ///
 	if ${e1a_if_condition} [pw=${weight}], vce(robust)	
-
 
 process_regression, domain("education") process("E1a") sheet("E1a") ///
 	title("Process E1a: Prob. remain in education") ///
 	gofrow(3) goflabel("E1a - Remain in education") ///
 	ifcond("${e1a_if_condition}") probit	 	
 	
- 
 
 /****************** E1b: PROBABILITY OF RETURNING TO EDUCATION ****************/
 display "${e1b_if_condition}"	
 
+/*
+probit der i.Dgn Dag Dag_sq li.Dcpst_Partnered ///
+	li.Deh_c4_High li.Deh_c4_Low li.Dehmf_c3_Medium li.Dehmf_c3_Low ///
+	li.Les_c3_NotEmployed li.Les_c3_Employed l.Dnc l.Dnc02 ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${e1b_if_condition} [pw=${weight}], vce(robust)
+
+process_regression, domain("education") process("E1b") sheet("E1b_orig") ///
+	title("Process E1b: Prob. return to education") ///
+	gofrow(7) goflabel("E1b - Return to education") ///
+	ifcond("${e1b_if_condition}") probit	
+	*/
 probit der ///
     demMaleFlag demAge demAgeSq  demPartnerStatusPartneredL1 ///
 	eduHighestC4HighL1 eduHighestC4LowL1 ///
 	eduHighestParentC3MediumL1 eduHighestParentC3LowL1 ///
-	labStatusC3NotEmployedL1 /*labStatusC3EmployedL1*/ ///
+	labStatusC3NotEmployedL1 labStatusC3EmployedL1 ///
 	demNChildL1 demNChild0to2L1 ///
-	$regions demYear demYear2020 demYear2021 $ethnicity ///
+	$regions demYearTransformed demYear2020 demYear2021 $ethnicity ///
 	if ${e1b_if_condition} [pw=${weight}], vce(robust)
-
+	
 process_regression, domain("education") process("E1b") sheet("E1b") ///
 	title("Process E1b: Prob. return to education") ///
 	gofrow(7) goflabel("E1b - Return to education") ///
@@ -116,13 +137,24 @@ process_regression, domain("education") process("E1b") sheet("E1b") ///
 /****************** E2: EDUCATION ATTAINMENT WHEN LEAVE SCHOOL ****************/
 display "${e2_if_condition}"	
 
+/*
+gologit2 deh_c3_recoded i.Dgn Dag Dag_sq ///
+	i.L_Dehmf_c3_Medium i.L_Dehmf_c3_Low ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${e2_if_condition} [pw=${weight}], autofit 
+
+process_gologit, domain("education") process("E2") sheet("E2_orig") ///
+    title("Process E2: Educational Attainment When Leave School") ///
+    gofrow(11) goflabel("E2 - Education attainment") ///
+    outcomes(3) ///
+    ifcond("${e2_if_condition}")
+	*/
 gologit2 deh_c3_recoded ///
     demMaleFlag demAge demAgeSq ///
 	eduHighestParentC3MediumL1 eduHighestParentC3LowL1 ///
-	$regions demYear demYear2020 demYear2021 $ethnicity ///
+	$regions demYearTransformed demYear2020 demYear2021 $ethnicity ///
 	if ${e2_if_condition} [pw=${weight}] , autofit 
 
-	
 process_gologit, domain("education") process("E2") sheet("E2") ///
     title("Process E2: Educational Attainment When Leave School") ///
     gofrow(11) goflabel("E2 - Education attainment") ///
@@ -132,5 +164,5 @@ process_gologit, domain("education") process("E2") sheet("E2") ///
 		 
 display "Education analysis complete!"
 		 
-
+		 
 capture log close

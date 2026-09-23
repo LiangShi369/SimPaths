@@ -3,7 +3,12 @@ package simpaths.experiment;
 
 // import Java packages
 import java.awt.Dimension;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.Converter;
 import org.apache.commons.cli.*;
+import org.apache.commons.cli.help.HelpFormatter;
+
 import java.awt.Toolkit;
 import java.io.*;
 import java.util.Collection;
@@ -31,6 +36,7 @@ import microsim.gui.shell.MicrosimShell;
 
 // import SimPaths packages
 import simpaths.model.enums.Country;
+import simpaths.model.enums.UnionMatchingMethod;
 import simpaths.data.*;
 import simpaths.model.taxes.database.TaxDonorDataParser;
 
@@ -91,6 +97,19 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		// start the JAS-mine simulation engine
 		System.out.println("Starting simulation...");
+        ConvertUtils.register(new Converter() {
+            @Override
+            public <T> T convert(Class<T> type, Object value) {
+                if (value == null || value.toString().isBlank()) {
+                    return type.cast(UnionMatchingMethod.ParametricNoRegion);
+                }
+                try {
+                    return type.cast(UnionMatchingMethod.valueOf(value.toString()));
+                } catch (IllegalArgumentException e) {
+                    return type.cast(UnionMatchingMethod.ParametricNoRegion);
+                }
+            }
+        }, UnionMatchingMethod.class);
 		final SimulationEngine engine = SimulationEngine.getInstance();
 		MicrosimShell gui = null;
 		if (showGui) {
@@ -146,8 +165,7 @@ public class SimPathsStart implements ExperimentBuilder {
 		options.addOption(helpOption);
 
 		CommandLineParser parser = new DefaultParser();
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.setOptionComparator(null);
+		var formatter = HelpFormatter.builder().get();
 
 		try {
 			CommandLine cmd = parser.parse(options, args);
@@ -192,7 +210,7 @@ public class SimPathsStart implements ExperimentBuilder {
 			}
 		} catch (ParseException | IllegalArgumentException e) {
 			System.err.println("Error parsing command line arguments: " + e.getMessage());
-			formatter.printHelp("SimPathsStart", options);
+            printHelpMessage(formatter, options);
 			return false;
 		}
 
@@ -205,7 +223,11 @@ public class SimPathsStart implements ExperimentBuilder {
 				"and exit before starting the first run. " +
 				"It takes the following options:";
 		String footer = "When running with no display, `-g` must be set to `false`.";
-		formatter.printHelp("SimPathsStart", header, options, footer, true);
+        try {
+            formatter.printHelp("SimPathsStart", header, options, footer, true);
+        } catch (IOException e) {
+            System.err.println("failed to print CLI help: " + e.getMessage());
+        }
 	}
 
 
@@ -218,6 +240,8 @@ public class SimPathsStart implements ExperimentBuilder {
 	 */
 	@Override
 	public void buildExperiment(SimulationEngine engine) {
+
+		Parameters.validateStartYear(startYear);
 
 		// instantiate simulation processes
 		SimPathsModel model = new SimPathsModel(country, startYear);
@@ -233,10 +257,12 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	private static void runGUIlessSetup(int option) throws FileNotFoundException {
 
-		// Detect if data available; set to testing data if not
+		// Detect if data available; set to training data if not.
 		Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations()), new String[]{"csv"}, false);
 		if (testList.size()==0)
 			Parameters.setTrainingFlag(true);
+
+		Parameters.validateStartYear(startYear);
 
 		// Create EUROMODPolicySchedule input from files
 		if (!rewritePolicySchedule &&
