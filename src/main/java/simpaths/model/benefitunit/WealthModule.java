@@ -68,11 +68,17 @@ public final class WealthModule {
      * matches the modelled components retained by the revised Stata compiler:
      * earnings/self-employment, private pensions and investment/capital income.
      * Taxes and transfers are excluded, and the amount is not equivalised.
+     * The amount is stored at the same time so that the annual update can
+     * carry it into the fully lagged HW2b burden in the next interval.
     */
     public void assignMortgageIncomeQuintiles(Collection<BenefitUnit> benefitUnits) {
+        for (BenefitUnit benefitUnit : benefitUnits) {
+            benefitUnit.setWealthPrivateIncomeMonthly(
+                    mortgagePrivateIncomeMonthlyForRanking(benefitUnit));
+        }
         Map<BenefitUnit, Integer> incomeRanks = WeightedQuantileRanks.assign(
                 benefitUnits,
-                WealthModule::mortgagePrivateIncomeMonthlyForRanking,
+                BenefitUnit::getWealthPrivateIncomeMonthly,
                 BenefitUnit::getWeight,
                 5);
         incomeRanks.forEach(BenefitUnit::setWealthPrivateIncomeQuintile);
