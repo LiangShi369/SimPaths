@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import microsim.data.ExportCSV;
 import microsim.engine.SimulationEngine;
+import simpaths.data.HealthCostProfile;
 import simpaths.data.Parameters;
 import simpaths.model.SimPathsModel;
 
@@ -75,7 +76,7 @@ public class OutputReadme {
                 writeHeader(out, model);
                 writeRunConfiguration(out, model);
                 writeModelOptions(out, model);
-                writeFileDescriptions(out, collector);
+                writeFileDescriptions(out, collector, model);
                 writeConventions(out);
             }
         } catch (IOException | RuntimeException e) {
@@ -154,7 +155,8 @@ public class OutputReadme {
         out.println();
     }
 
-    private static void writeFileDescriptions(PrintWriter out, SimPathsCollector collector) {
+    private static void writeFileDescriptions(PrintWriter out, SimPathsCollector collector,
+                                              SimPathsModel model) {
 
         out.println("## Files in this folder");
         out.println();
@@ -175,6 +177,27 @@ public class OutputReadme {
         describe(out, collector.isPersistHealthStatistics(), "HealthStatistics.csv", "one row per year",
                 "Population health by age band: average self-rated health and the share reporting a "
                         + "long-term disability.");
+
+        boolean healthSpendingOutput = collector.isPersistHealthSpendingStatistics()
+                && model.getEndYear() >= HealthCostProfile.FIRST_YEAR;
+        describe(out, healthSpendingOutput, "HealthSpendingStatistics.csv", "one row per year, from 2028",
+                "Annual UK public health spending in real-2015 pounds: expanded population, "
+                        + "benchmark expenditure, expenditure with 2028 single-age shares fixed, and "
+                        + "their difference (the ageing effect). Fixed-age expenditure and ageing "
+                        + "effect are `null` if this run has no 2028 population snapshot.");
+
+        describe(out, healthSpendingOutput, "HealthSpendingByAge.csv",
+                "one row per simulated year and actual single-year age, from 2028",
+                "Expanded people, annual real-2015 pounds per person, and annual real-2015 "
+                        + "expenditure. Ages 102+ remain distinct rows but use the age-101 cost. "
+                        + "The expenditure rows sum to that year's benchmark in "
+                        + "`HealthSpendingStatistics.csv`.");
+        if (healthSpendingOutput) {
+            out.println("These fiscal outputs use the unscaled (`s=1`) OBR September 2024 age profile");
+            out.println("prepared in `input/age_health_cost_profile.xlsx`; its 2015-price conversion,");
+            out.println("morbidity shift and non-demographic growth are already in the input costs.");
+            out.println();
+        }
 
         describe(out, collector.isPersistLabourStatistics(), "LabourStatistics.csv", "one row per year",
                 "Labour market outcomes. Employment and unemployment shares for ages 16-64 and the "
@@ -224,6 +247,10 @@ public class OutputReadme {
         out.println("- Remaining columns are ordered alphabetically by variable name, not by topic.");
         out.println("- Financial variables are in real prices of the base price year given above,");
         out.println("  and are monthly and equivalised unless the variable name says otherwise.");
+        out.println("- The two `HealthSpending` files are annual, not equivalised, and in real-2015 pounds.");
+        out.println("  Their `time` value is the starting calendar year of the corresponding financial");
+        out.println("  year: `2028` labels 2028-29. The age file uses actual single-year ages;");
+        out.println("  `id_HealthSpendingByAge` is actual age plus one.");
         out.println("- Variables carrying `WeeklyPerWorker` are weekly, averaged over workers rather than");
         out.println("  over the population, and are not equivalised.");
         out.println();

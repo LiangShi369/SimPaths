@@ -170,7 +170,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     //	@GUIparameter(description = "If checked, will align fertility")
     private boolean alignFertility = false;
-    private static final int FERTILITY_ALIGNMENT_END_YEAR = 2040;
+    private int FERTILITY_ALIGNMENT_END_YEAR = 2040;
     private Double lastFertilityAdjustment = null;
 
     private boolean alignEducation = false; //Set to true to align level of education
@@ -180,7 +180,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private Double lastInSchoolAdjustment = null;
 
     private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
-    private static final int PARTNERSHIP_ALIGNMENT_END_YEAR = 2023;
+    private int PARTNERSHIP_ALIGNMENT_END_YEAR = 2023;
     private Double lastPartnershipAdjustment = null;
 
     private boolean alignEmployment = false; //Set to true to align employment share

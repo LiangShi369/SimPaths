@@ -2,6 +2,7 @@
 package simpaths.experiment;
 
 // import Java packages
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -9,7 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import simpaths.data.filters.Filters;
+import simpaths.data.HealthCostProfile;
 import simpaths.data.statistics.AgeBandAggregates;
+import simpaths.data.statistics.HealthSpendingCalculator;
+import simpaths.data.statistics.HealthSpendingByAge;
+import simpaths.data.statistics.HealthSpendingStatistics;
 import simpaths.data.statistics.LabourStatistics;
 import simpaths.data.statistics.HealthStatistics;
 import simpaths.data.statistics.WellbeingByGender;
@@ -65,6 +70,9 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     @GUIparameter(description="Report population health statistics by age band (HealthStatistics.csv)")
     private boolean persistHealthStatistics = true;
 
+    @GUIparameter(description="Calculate age-related public health spending (real 2015 pounds)")
+    private boolean persistHealthSpendingStatistics = false;
+
     @GUIparameter(description="Report wellbeing statistics by gender (WellbeingByGender.csv)")
     private boolean persistWellbeingByGender = true;
 
@@ -109,6 +117,16 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private HealthStatistics healthStats;
 
+    private HealthCostProfile healthCostProfile;
+
+    private HealthSpendingCalculator healthSpendingCalculator;
+
+    private HealthSpendingCalculator.SpendingResult latestHealthSpendingResult;
+
+    private HealthSpendingStatistics healthSpendingStats;
+
+    private HealthSpendingByAge healthSpendingAgeRow;
+
     private WellbeingByGender wellbeingByGender;
 
     private AgeBandAggregates ageBandAggregates;
@@ -139,6 +157,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private DataExport exportHealthStatistics;
 
+    private DataExport exportHealthSpendingStatistics;
+
+    private DataExport exportHealthSpendingByAge;
+
     private DataExport exportWellbeingByGender;
 
     /**
@@ -167,6 +189,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         DumpAlignmentStatistics,
         DumpLabourStatistics,
         DumpHealthStatistics,
+        DumpHealthSpending,
         DumpWellbeingByGender
     }
 
@@ -245,6 +268,32 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
                 log.error(e.getMessage());
             }
             break;
+        case DumpHealthSpending:
+            int spendingYear = healthSpendingYear(SimulationEngine.getInstance().getTime());
+            if (healthSpendingCalculator == null) {
+                throw new IllegalStateException("Health spending calculator was not initialised");
+            }
+            var populationSnapshot = HealthSpendingCalculator.snapshot(spendingYear, model);
+            latestHealthSpendingResult = healthSpendingCalculator.calculate(
+                    populationSnapshot);
+            validateHealthSpendingDetail(populationSnapshot, latestHealthSpendingResult,
+                    healthCostProfile);
+            healthSpendingStats.update(latestHealthSpendingResult);
+            exportHealthSpendingStatistics.export();
+            for (var agePopulation : populationSnapshot.getPopulationByAge().entrySet()) {
+                int age = agePopulation.getKey();
+                healthSpendingAgeRow.update(age, agePopulation.getValue(),
+                        healthCostProfile.cost(spendingYear, age),
+                        latestHealthSpendingResult.getSpendingByAge().get(age));
+                exportHealthSpendingByAge.export();
+            }
+            log.info("Health spending, simulated year {}: benchmark={} real-2015 pounds; "
+                            + "fixed-2028-age-structure={}; ageing effect={}",
+                    spendingYear,
+                    latestHealthSpendingResult.getBenchmarkExpenditure(),
+                    latestHealthSpendingResult.getFixedAgeExpenditure(),
+                    latestHealthSpendingResult.getAgeingEffect());
+            break;
         case DumpWellbeingByGender:
             String[] genders = {"Total", "Male", "Female"};
             for (String gender_s: genders) {
@@ -275,6 +324,22 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         labourStats = new LabourStatistics();
         healthStats = new HealthStatistics();
         wellbeingByGender = new WellbeingByGender();
+
+        if (persistHealthSpendingStatistics &&
+                firstHealthSpendingYear(model.getStartYear(), model.getEndYear()) >= 0) {
+            try {
+                healthCostProfile = new HealthCostProfile();
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not load age-related health cost profile", e);
+            }
+            healthSpendingCalculator = new HealthSpendingCalculator(healthCostProfile);
+            healthSpendingStats = new HealthSpendingStatistics();
+            healthSpendingAgeRow = new HealthSpendingByAge();
+            exportHealthSpendingStatistics = new DataExport(
+                    List.of(healthSpendingStats), exportToDatabase, exportToCSV);
+            exportHealthSpendingByAge = new DataExport(
+                    List.of(healthSpendingAgeRow), exportToDatabase, exportToCSV);
+        }
 
         //For export to database or .csv files.
         if(persistPersons)
@@ -369,6 +434,15 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 			getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpHealthStatistics), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
         }
 
+        if (persistHealthSpendingStatistics) {
+            int firstYear = firstHealthSpendingYear(model.getStartYear(), model.getEndYear());
+            if (firstYear >= 0) {
+                getEngine().getEventQueue().scheduleRepeat(
+                        new SingleTargetEvent(this, Processes.DumpHealthSpending),
+                        firstYear, ordering, 1.0);
+            }
+        }
+
         if (persistWellbeingByGender){
 			getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpWellbeingByGender), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
         }
@@ -383,6 +457,55 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         if (persistHouseholds) {
             getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpHouseholds), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
+        }
+    }
+
+    /** Returns -1 if the run ends before health costs begin. */
+    static int firstHealthSpendingYear(int startYear, int endYear) {
+        if (endYear > HealthCostProfile.LAST_YEAR) {
+            throw new IllegalArgumentException("Health spending is enabled through " + endYear
+                    + ", but the cost profile ends in " + HealthCostProfile.LAST_YEAR);
+        }
+        return endYear < HealthCostProfile.FIRST_YEAR ? -1
+                : Math.max(startYear, HealthCostProfile.FIRST_YEAR);
+    }
+
+    /** Collector simulation time labels the year just completed; model.year has already advanced. */
+    static int healthSpendingYear(double simulationTime) {
+        if (!Double.isFinite(simulationTime) || simulationTime != Math.rint(simulationTime)
+                || simulationTime < HealthCostProfile.FIRST_YEAR
+                || simulationTime > HealthCostProfile.LAST_YEAR) {
+            throw new IllegalArgumentException("Unsupported health-spending simulation time: "
+                    + simulationTime);
+        }
+        return (int) simulationTime;
+    }
+
+    /** Validate the actual-age export against the same year's population and cost matrix. */
+    static void validateHealthSpendingDetail(
+            HealthSpendingCalculator.PopulationSnapshot population,
+            HealthSpendingCalculator.SpendingResult result, HealthCostProfile profile) {
+        if (population.getYear() != result.getYear()
+                || population.getTotalPopulation() != result.getTotalPopulation()
+                || population.getPopulationByAge().size() != result.getSpendingByAge().size()) {
+            throw new IllegalStateException("Health spending and population snapshots do not match");
+        }
+        double detailTotal = 0.0;
+        for (var entry : population.getPopulationByAge().entrySet()) {
+            Double expenditure = result.getSpendingByAge().get(entry.getKey());
+            double expected = entry.getValue() * profile.cost(result.getYear(), entry.getKey());
+            if (expenditure == null || !Double.isFinite(expected)
+                    || Math.abs(expenditure - expected) > Math.max(1.0, expected) * 1e-12) {
+                throw new IllegalStateException("Age-detail health spending differs from population × cost "
+                        + "for age " + entry.getKey() + " in year " + result.getYear());
+            }
+            detailTotal += expenditure;
+        }
+        if (!Double.isFinite(detailTotal) || Math.abs(detailTotal
+                - result.getBenchmarkExpenditure())
+                > Math.max(1.0, result.getBenchmarkExpenditure()) * 1e-12) {
+            throw new IllegalStateException("Age-detail health spending does not reconcile in year "
+                    + result.getYear());
         }
     }
 
@@ -848,6 +971,18 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     public void setPersistHealthStatistics(boolean persistHealthStatistics) {
         this.persistHealthStatistics = persistHealthStatistics;
+    }
+
+    public boolean isPersistHealthSpendingStatistics() {
+        return persistHealthSpendingStatistics;
+    }
+
+    public void setPersistHealthSpendingStatistics(boolean persistHealthSpendingStatistics) {
+        this.persistHealthSpendingStatistics = persistHealthSpendingStatistics;
+    }
+
+    public HealthSpendingCalculator.SpendingResult getLatestHealthSpendingResult() {
+        return latestHealthSpendingResult;
     }
 
     public boolean isPersistWellbeingByGender() {
