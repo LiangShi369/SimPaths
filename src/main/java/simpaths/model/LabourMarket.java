@@ -3,7 +3,7 @@ package simpaths.model;
 import java.util.*;
 import java.util.random.RandomGenerator;
 
-import simpaths.data.statistics.Statistics;
+import simpaths.data.statistics.WealthIncomeStatistics;
 import simpaths.experiment.SimPathsCollector;
 import simpaths.model.enums.*;
 
@@ -308,25 +308,18 @@ public class LabourMarket {
         }
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other Methods
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-
     public void updateGrossLabourIncomeBaseline_Xt5(LinkedHashSet<Person> personsInBenefitUnit) {
         for (Person person : personsInBenefitUnit) {
             if (person != null && person.getCovidYLabGrossXt5() == null) {
                 double covidModuleGrossLabourIncomeBaseline = person.getCovidYLabGross();
-                Statistics stats = ((SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName())).getStats();
-                if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP20()) {
+                WealthIncomeStatistics wealthIncomeStats = ((SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName())).getWealthIncomeStats();
+                if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP20()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q1);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP40()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP40()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q2);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP60()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP60()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q3);
-                } else if (covidModuleGrossLabourIncomeBaseline <= stats.getYLabFceEarningsP80()) {
+                } else if (covidModuleGrossLabourIncomeBaseline <= wealthIncomeStats.getLabFceEarningsP80()) {
                     person.setCovidYLabGrossXt5(Quintiles.Q4);
                 } else {
                     person.setCovidYLabGrossXt5(Quintiles.Q5);

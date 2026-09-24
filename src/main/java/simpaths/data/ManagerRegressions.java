@@ -70,6 +70,21 @@ public class ManagerRegressions {
             case LifeSatisfaction2Females -> {
                 return Parameters.getRegLifeSatisfaction2Females();
             }
+            case WealthHousingHW1c -> {
+                return Parameters.getRegHW1c();
+            }
+            case WealthHousingHW1d -> {
+                return Parameters.getRegHW1d();
+            }
+            case WealthHousingHW2c -> {
+                return Parameters.getRegHW2c();
+            }
+            case WealthHousingHW2d -> {
+                return Parameters.getRegHW2d();
+            }
+            case WealthFinancialFW2c -> {
+                return Parameters.getRegFW2c();
+            }
             case HealthEQ5D -> {
                 return Parameters.getRegEQ5D();
             }
@@ -78,12 +93,6 @@ public class ManagerRegressions {
             }
             case SocialCareS2e -> {
                 return Parameters.getRegFormalCareHoursS2e();
-            }
-            case SocialCareS3c -> {
-                return Parameters.getRegCareHoursProvS3c();
-            }
-            case SocialCareS3d -> {
-                return Parameters.getRegCareHoursProvS3d();
             }
             // case SocialCareS1b -> {
             //     return Parameters.getRegCareHoursS1b();
@@ -229,6 +238,12 @@ public class ManagerRegressions {
             case HealthHM1Case -> {
                 return Parameters.getRegHealthHM1Case();
             }
+            case SocialCareS3c -> {
+                return Parameters.getRegCareHoursProvS3c();
+            }
+            case SocialCareS3d -> {
+                return Parameters.getRegCareHoursProvS3d();
+            }
             default -> {
                 throw new RuntimeException("unrecognised regression (1)");
             }
@@ -353,6 +368,21 @@ public class ManagerRegressions {
             case WagesFemalesNE -> {
                 code = "Wages_FemalesNE";
             }
+            case WealthHousingHW1c -> {
+                code = "HW1c";
+            }
+            case WealthHousingHW1d -> {
+                code = "HW1d";
+            }
+            case WealthHousingHW2c -> {
+                code = "HW2c";
+            }
+            case WealthHousingHW2d -> {
+                code = "HW2d";
+            }
+            case WealthFinancialFW2c -> {
+                code = "FW2c";
+            }
             default -> {
                 throw new InvalidParameterException("RMSE requested for unrecognised regression equation");
             }
@@ -362,14 +392,14 @@ public class ManagerRegressions {
 
     public static double getRegressionCoeff(Enum<?> regression, String coeff) {
         Object oo = getRegressionCoeffObject(regression, coeff, false);
-        if (oo instanceof Double) {
-            return (double) oo;
+        if (oo instanceof Number number) {
+            return number.doubleValue();
         } else {
             oo = getRegressionCoeffObject(regression, coeff, true);
-            if (oo instanceof Double) {
-                return (double) oo;
+            if (oo instanceof Number number) {
+                return number.doubleValue();
             } else {
-                throw new RuntimeException("Regression coefficiant " + coeff + " not found in " + regression.name());
+                throw new RuntimeException("Regression coefficient " + coeff + " not found in " + regression.name());
             }
         }
     }

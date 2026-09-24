@@ -1,9 +1,11 @@
 package simpaths.data;
 
+import microsim.data.MultiKeyCoefficientMap;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ManagerRegressionsTest {
 
@@ -24,9 +26,24 @@ class ManagerRegressionsTest {
     }
 
     @Test
-    void rejectsInadmissibleBinaryPair() {
-        assertThrows(ArithmeticException.class,
-                () -> ManagerRegressions.recoverAnnualEntryPersistence(0.80, 0.20));
+    void usesFallbackWhenEntryIsNotBelowPersistence() {
+        double[] annual = ManagerRegressions.recoverAnnualEntryPersistence(0.80, 0.20);
+
+        assertEquals(0.40, annual[0], 1.0e-12);
+        assertEquals(Math.sqrt(0.20), annual[1], 1.0e-12);
+    }
+
+    @Test
+    void readsIntegerValuedRegressionCoefficientAsDouble() {
+        MultiKeyCoefficientMap rmse = new MultiKeyCoefficientMap(
+                new String[]{"REGRESSION"}, new String[]{"COEFFICIENT"});
+        rmse.putValue("HW2c", 0);
+
+        try (MockedStatic<Parameters> parameters = Mockito.mockStatic(Parameters.class)) {
+            parameters.when(Parameters::getCoefficientMapRMSE).thenReturn(rmse);
+            assertEquals(0.0,
+                    ManagerRegressions.getRegressionCoeff(RegressionName.RMSE, "HW2c"));
+        }
     }
 
     private double[][] multiply(double[][] first, double[][] second) {

@@ -25,7 +25,7 @@ log using "${dir_log}/reg_retirement.log", replace
 
 /********************************* SET EXCEL FILE *****************************/
 
-putexcel set "$dir_results/reg_retirement", sheet("Info") replace
+putexcel set "$dir_results/reg_retirement", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters governing projection of retirement"
 putexcel A2 = "Authors:	"
@@ -70,6 +70,21 @@ do "${dir_do}/programs.do"
 
 /****************** R1a: PROBABILITY OF RETIREMENT, SINLGE ********************/
 display "${r1a_if_condition}"
+/*
+probit drtren i.Dgn Dag Dag_sq ///
+     li.Deh_c4_Medium li.Deh_c4_Low li.Deh_c4_Na ///
+	l.Dhe_pcs l.Dhe_mcs  ///
+	i.Reached_Retirement_Age ///
+	li.Les_c3_NotEmployed ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 li.Dlltsd01 ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${r1a_if_condition} [pw=${weight}], vce(robust)
+	
+process_regression, domain("retirement") process("R1a") sheet("R1a_orig") ///
+	title("Process R1a: Prob. retire, singles") ///
+	gofrow(3) goflabel("R1a - Retire, singles") ///
+	ifcond("${r1a_if_condition}") probit	
+*/
 
 probit drtren ///
        demMaleFlag demAge demAgeSq ///  
@@ -79,7 +94,7 @@ probit drtren ///
 	   labStatusC3NotEmployedL1 ///
 	   yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
 	   healthDsblLongtermFlagL1 ///
-	   $regions demYear demYear2020 demYear2021 $ethnicity /// 
+	   $regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 	if ${r1a_if_condition} [pw=${weight}], vce(robust)
 	
 process_regression, domain("retirement") process("R1a") sheet("R1a") ///
@@ -91,16 +106,33 @@ process_regression, domain("retirement") process("R1a") sheet("R1a") ///
 	
 /***************** R1b: PROBABILITY OF RETIREMENT, PARTNERED ******************/
 display "${r1b_if_condition}"
+	/*
+probit drtren i.Dgn Dag Dag_sq ///
+     li.Deh_c4_Medium li.Deh_c4_Low li.Deh_c4_Na ///
+	l.Dhe_pcs l.Dhe_mcs  ///
+	i.Reached_Retirement_Age i.Reached_Retirement_Age_Les ///
+	li.Les_c3_NotEmployed li.Lessp_c3_NotEmployed ///
+	i.Reached_Retirement_Age_Sp ///
+	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
+	li.Dlltsd01 ///
+	$regions Year_transformed Y2020 Y2021 $ethnicity ///
+	if ${r1b_if_condition} [pw=${weight}], vce(robust)	
 	
+process_regression, domain("retirement") process("R1b") sheet("R1b_orig") ///
+	title("Process R1b: Prob. retire, partnered") ///
+	gofrow(7) goflabel("R1a - Retire, partnered") ///
+	ifcond("${r1b_if_condition}") probit	
+	*/
 probit drtren ///
        demMaleFlag demAge demAgeSq ///  
        eduHighestC4MediumL1 eduHighestC4LowL1 eduHighestC4NaL1 ///
        healthPhysicalPcsL1 healthMentalMcsL1 ///
        demPensAgeFlag demPensAgeFlag_NotEmployed ///
-       labStatusC3NotEmployedL1 labStatusPartnerC3NotEmplL1 ///
+       labStatusC3NotEmployedL1 labStatusPartnerC3NotEmployedL1 ///
 	   demPensPartnerAgeFlag ///
 	   yHhQuintilesMonthC5Q2L1 yHhQuintilesMonthC5Q3L1 yHhQuintilesMonthC5Q4L1 yHhQuintilesMonthC5Q5L1 ///
-	   $regions demYear demYear2020 demYear2021 $ethnicity /// 
+	   healthDsblLongtermFlagL1 ///
+	   $regions demYearTransformed demYear2020 demYear2021 $ethnicity /// 
 	if ${r1b_if_condition} [pw=${weight}], vce(robust)	
 	
 process_regression, domain("retirement") process("R1b") sheet("R1b") ///

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import microsim.data.db.PanelEntityKey;
 import org.hibernate.annotations.Fetch;
+import simpaths.data.filters.Filters;
 import simpaths.data.ManagerRegressions;
 import simpaths.data.MultiValEvent;
 import simpaths.model.annotations.Lag;
@@ -19,7 +20,8 @@ import org.apache.commons.collections4.map.MultiKeyMap;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import simpaths.data.Parameters;
 import simpaths.model.decisions.DecisionParams;
@@ -37,7 +39,7 @@ import static java.lang.StrictMath.min;
 @Entity
 public class BenefitUnit implements EventListener, IDoubleSource, Weight, Comparable<BenefitUnit> {
 
-    @Transient private static Logger log = Logger.getLogger(BenefitUnit.class);
+    @Transient private static Logger log = LogManager.getLogger(BenefitUnit.class);
     @Transient private final SimPathsModel model;
     @Transient private final SimPathsCollector collector;
     @Transient public static long benefitUnitIdCounter = 1L;
@@ -122,6 +124,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @NullInitialised @Transient private Integer i_labHrsWork2Week;
     @NullInitialised @Transient private Integer i_wealthFinancialDecile;
     @NullInitialised @Transient private Integer i_yPrivateDecile;
+    @NullInitialised @Transient private Integer i_yWealthPrivateIncomeQuintile;
+    @NullInitialised @Transient private Double i_yWealthPrivateIncomeMonth;
+    @Lag(field = "i_yWealthPrivateIncomeMonth") @Transient private Double i_yWealthPrivateIncomeMonthL1;
 
     // ================= At Risk of Work cache to avoid unnecessary atRiskOfWork() calls =================
     @NullInitialised @Transient private Boolean cachedMaleAtRiskOfWork = null;
@@ -307,6 +312,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             wealthNonPension = new WealthNonPension(originalBenefitUnit.wealthNonPension);
         if (originalBenefitUnit.wealthNonPensionL1 != null)
             wealthNonPensionL1 = new WealthNonPension(originalBenefitUnit.wealthNonPensionL1);
+        i_yWealthPrivateIncomeMonth = originalBenefitUnit.i_yWealthPrivateIncomeMonth;
+        i_yWealthPrivateIncomeMonthL1 = originalBenefitUnit.i_yWealthPrivateIncomeMonthL1;
 //        if (wealthNonPension.getWealthHousing().getWealthNetInnovation() == 0.0) {
 //            double rmse = Parameters.getRMSEForRegression("HW1c");
 //            double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(statInnovations.getDoubleDraw(9));
@@ -333,52 +340,16 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    /******************************************************************
-     * method to generate additional benefit unit level characteristics
-     * for initialisation population
-     ******************************************************************/
-    public void setAdditionalFieldsInInitialPopulation() {
-
-        wealthNonPension = new WealthNonPension(
-                Objects.requireNonNullElse(wealthTotValue, 0.0),
-                Objects.requireNonNullElse(wealthPrptyValue, 0.0),
-                Objects.requireNonNullElse(wealthMortgageDebtValue, 0.0),
-                Objects.requireNonNullElse(wealthPensValue, 0.0),
-                Objects.requireNonNullElse(wealthUnsecuredDebtLowValue, 0.0),
-                Objects.requireNonNullElse(wealthUnsecuredDebtHighValue, 0.0));
+    /**
+     * Attaches wealth state prepared by the population-initialisation module.
+     * Regression scoring and residual-state construction deliberately live in
+     * the wealth component rather than in this entity.
+     */
+    public void setWealthNonPensionForPopulationInitialization(WealthNonPension wealthNonPension) {
+        this.wealthNonPension = Objects.requireNonNull(wealthNonPension);
         wealthUnsecuredDebtLowValue = wealthNonPension.getWealthFinancial().getWealthUnsecuredDebtLowValue();
         wealthUnsecuredDebtHighValue = wealthNonPension.getWealthFinancial().getWealthUnsecuredDebtHighValue();
         wealthPrptyFlag = (Objects.requireNonNullElse(wealthPrptyValue, 0.0) > 0.0);
-        if (Parameters.projectNonPensionWealth) {
-            initializeWealthResidualStates();
-        }
-    }
-
-    private void initializeWealthResidualStates() {
-        IDoubleSource zeroPersistenceSource = variableID -> {
-            if (Variables.HousingPersistence.equals(variableID) ||
-                    Variables.MortgagePersistence.equals(variableID) ||
-                    Variables.HighCostDebtPersistence.equals(variableID)) {
-                return 0.0;
-            }
-            return getDoubleValue(variableID);
-        };
-
-        if (wealthNonPension.getWealthHousing().isHomeOwner()) {
-            double score = Parameters.getRegHW1c().getScore(zeroPersistenceSource, Variables.class);
-            double residual = Parameters.asinh(wealthNonPension.getWealthHousing().getWealthNetHousing()) - score;
-            wealthNonPension.getWealthHousing().setWealthNetInnovation(residual);
-        }
-        if (wealthNonPension.getWealthHousing().isMortgageHolder()) {
-            double score = Parameters.getRegHW2c().getScore(zeroPersistenceSource, Variables.class);
-            double residual = Math.log(wealthNonPension.getWealthMortgageDebtValue()) - score;
-            wealthNonPension.getWealthHousing().setWealthMortgageDebtInnovation(residual);
-        }
-        if (wealthNonPension.getWealthFinancial().hasHighCostDebt()) {
-            double score = Parameters.getRegFW2c().getScore(zeroPersistenceSource, Variables.class);
-            double residual = Parameters.asinh(wealthNonPension.getWealthFinancial().getWealthUnsecuredDebtHighValue()) - score;
-            wealthNonPension.getWealthFinancial().setWealthUnsecuredDebtHighInnovation(residual);
-        }
     }
 
 
@@ -526,7 +497,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
     public void updateHousingWealth() {
 
-        wealthNonPension.projectHousingWealth(this, wealthNonPensionL1,
+        model.getWealthModule().projectHousingValues(this, wealthNonPension, wealthNonPensionL1,
                 statInnovations.getDoubleDraw(7), statInnovations.getDoubleDraw(9),
                 statInnovations.getDoubleDraw(10), statInnovations.getDoubleDraw(11));
         wealthPrptyValue = wealthNonPension.getWealthPrptyValue();
@@ -2017,13 +1988,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         return logSumExp;
     }
 
-    /////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
-
     protected void calculateBUIncome() {
 
         /*
@@ -2071,20 +2035,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             double tmpHHYpnbihs_dv = (ypnbihsMaleMonthly + ypnbihsFemaleMonthly) / equivalisedWeight; //Equivalised
             setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-            //Based on the percentiles calculated by the collector, assign household to one of the quintiles of (equivalised) income distribution
-            if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                } else {
-                    yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                }
-            }
         } else if(getOccupancy().equals(Occupancy.Single_Male)) {
 
             if (male != null) {
@@ -2099,19 +2049,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 double tmpHHYpnbihs_dv = ypnbihsMaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
             } else
                 throw new RuntimeException("single male unit does not include a single male");
         } else {
@@ -2129,22 +2066,24 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 double tmpHHYpnbihs_dv = ypnbihsFemaleMonthly / equivalisedWeight; //Equivalised
                 setI_yNonBenHhGrossAsinh(asinh(tmpHHYpnbihs_dv)); //Asinh transformation of HH non-benefit income
 
-                if(collector.getStats() != null) { //Collector only gets initialised when simulation starts running
-
-                    if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P20()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q1;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P40()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q2;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P60()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q3;
-                    } else if(getI_yNonBenHhGrossAsinh() <= collector.getStats().getYHhQuintilesC5P80()) {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q4;
-                    } else {
-                        yHhQuintilesMonthC5 = Ydses_c5.Q5;
-                    }
-                }
             } else
                 throw new RuntimeException("single female unit does not include a single male");
+        }
+    }
+
+    public void updateIncomeQuintile() {
+        if (collector.getWealthIncomeStats() != null) {
+            if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P20()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q1;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P40()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q2;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P60()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q3;
+            } else if (getI_yNonBenHhGrossAsinh() <= collector.getWealthIncomeStats().getYHhQuintilesC5P80()) {
+                yHhQuintilesMonthC5 = Ydses_c5.Q4;
+            } else {
+                yHhQuintilesMonthC5 = Ydses_c5.Q5;
+            }
         }
     }
 
@@ -2203,6 +2142,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         AlignmentSingleDepMen,
         AlignmentSingleDepWomen,
         AsinhLagMortgageDebtToAnnualPrivateIncome,
+        AsinhLagMortgageDebtToLagAnnualPrivateIncome,
         AsinhNetFinancialWealth,
         AsinhNetHousingWealth,
         AsinhNetNonPensionWealth,
@@ -2616,6 +2556,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         PrivateIncomeQuintile3,
         PrivateIncomeQuintile4,
         PrivateIncomeQuintile5,
+        WealthPrivateIncomeQuintile2,
+        WealthPrivateIncomeQuintile3,
+        WealthPrivateIncomeQuintile4,
+        WealthPrivateIncomeQuintile5,
         PrivatePensionIncome,
         ReferencePersonEmployed,
         ReferencePersonGraduate,
@@ -2757,6 +2701,14 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for AsinhLagMortgageDebtToAnnualPrivateIncome");
                 double annualPrivateIncome = Math.max(1.0, Objects.requireNonNullElse(yGrossMonth, 0.0) * 12.0);
                 return Parameters.asinh(wealthNonPensionL1.getWealthMortgageDebtValue() / annualPrivateIncome);
+            }
+            case AsinhLagMortgageDebtToLagAnnualPrivateIncome -> {
+                if (wealthNonPensionL1 == null)
+                    throw new IllegalArgumentException("wealthNonPensionL1 not initialised prior to request for AsinhLagMortgageDebtToLagAnnualPrivateIncome");
+                if (i_yWealthPrivateIncomeMonthL1 == null)
+                    throw new IllegalArgumentException("lagged benefit-unit private income not initialised prior to request for AsinhLagMortgageDebtToLagAnnualPrivateIncome");
+                double lagAnnualPrivateIncome = Math.max(1.0, i_yWealthPrivateIncomeMonthL1 * 12.0);
+                return Parameters.asinh(wealthNonPensionL1.getWealthMortgageDebtValue() / lagAnnualPrivateIncome);
             }
             case AsinhLagHighCostDebt -> {
                 if (wealthNonPensionL1 == null)
@@ -4335,6 +4287,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 int currentQuintile = (getPrivateIncomeDecile() + 1) / 2;
                 return currentQuintile == requestedQuintile ? 1.0 : 0.0;
             }
+            case WealthPrivateIncomeQuintile2, WealthPrivateIncomeQuintile3,
+                    WealthPrivateIncomeQuintile4, WealthPrivateIncomeQuintile5 -> {
+                int requestedQuintile = variableID.ordinal()
+                        - Variables.WealthPrivateIncomeQuintile2.ordinal() + 2;
+                return getWealthPrivateIncomeQuintile() == requestedQuintile ? 1.0 : 0.0;
+            }
             case ReferencePersonEmployed -> {
                 return Les_c4.EmployedOrSelfEmployed.equals(getRefPerson().getLabC4()) ? 1.0 : 0.0;
             }
@@ -4479,12 +4437,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
     //	Override equals and hashCode to make unique BenefitUnit determined by Key.getId()
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public boolean equals(Object o) {
 
@@ -4514,11 +4467,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Other methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
     public boolean getAtRiskOfWork() {
 
         boolean atRiskOfWork = false;
@@ -4609,14 +4557,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         return yearlyChangeInLogEquivalisedDisposableIncome;
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////////
-    //
-    //	Access Methods
-    //
-    ////////////////////////////////////////////////////////////////////////////////
-
-
     /**
      *
      * Returns a defensive copy of the field.
@@ -4701,6 +4641,20 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
 
     public void setWealthPrptyValue(Double wealthPrptyValue) {
         this.wealthPrptyValue = wealthPrptyValue;
+    }
+
+    public double getWealthMortgageDebtValue() {
+        return getWealthMortgageDebtValue(true);
+    }
+
+    public double getWealthMortgageDebtValue(boolean throwError) {
+        if (!Parameters.isFinite(wealthMortgageDebtValue)) {
+            if (throwError)
+                throw new RuntimeException("Call to get benefit unit mortgage debt before it is initialised.");
+            else
+                return 0.0;
+        }
+        return wealthMortgageDebtValue;
     }
 
     public double getWealthUnsecuredDebtLowValue() {
@@ -4840,16 +4794,13 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         }
         return nChildren;
     }
+
+    /// Whether the Person has children in the given age range (both ends included).
     public Indicator getIndicatorChildren(int minAge, int maxAge) {
-        Indicator flag = Indicator.False;
-        for (int aa=minAge; aa<=maxAge; aa++) {
-            if (getNumberChildrenByAge(aa) > 0) {
-                flag = Indicator.True;
-                break;
-            }
-        }
-        return flag;
+        var found = this.members.stream().anyMatch(Filters.ageRange(minAge, maxAge));
+        return found ? Indicator.True : Indicator.False;
     }
+
     public Indicator getIndicatorChildren0to3() {
 
         return getIndicatorChildren(0,3);
@@ -5805,6 +5756,30 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         i_yPrivateDecile = decile;
     }
 
+    public void setWealthPrivateIncomeQuintile(int quintile) {
+        if (quintile < 1 || quintile > 5)
+            throw new IllegalArgumentException("Wealth private-income quintile must be in [1, 5]");
+        i_yWealthPrivateIncomeQuintile = quintile;
+    }
+
+    public void setWealthPrivateIncomeMonthly(double monthlyIncome) {
+        if (!Double.isFinite(monthlyIncome))
+            throw new IllegalArgumentException("Wealth private income must be finite");
+        i_yWealthPrivateIncomeMonth = monthlyIncome;
+    }
+
+    public double getWealthPrivateIncomeMonthly() {
+        if (i_yWealthPrivateIncomeMonth == null)
+            throw new IllegalStateException("Current wealth private income has not been assigned");
+        return i_yWealthPrivateIncomeMonth;
+    }
+
+    public double getWealthPrivateIncomeMonthlyL1() {
+        if (i_yWealthPrivateIncomeMonthL1 == null)
+            throw new IllegalStateException("Lagged wealth private income has not been assigned");
+        return i_yWealthPrivateIncomeMonthL1;
+    }
+
     public int getNetFinancialWealthDecile() {
         if (i_wealthFinancialDecile == null)
             throw new IllegalStateException("Current financial-wealth decile has not been assigned");
@@ -5815,6 +5790,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         if (i_yPrivateDecile == null)
             throw new IllegalStateException("Current private-income decile has not been assigned");
         return i_yPrivateDecile;
+    }
+
+    public int getWealthPrivateIncomeQuintile() {
+        if (i_yWealthPrivateIncomeQuintile == null)
+            throw new IllegalStateException("Current wealth private-income quintile has not been assigned");
+        return i_yWealthPrivateIncomeQuintile;
     }
 
     public SimPathsCollector getCollector() { return collector; }

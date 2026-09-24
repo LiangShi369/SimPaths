@@ -73,21 +73,24 @@ public class WealthHousing {
             double netHousing;
             double score, rmse, gauss;
             boolean continuingHomeOwner = wealthHousingL1.isHomeOwner();
-            if (continuingHomeOwner) {
-                score = Parameters.getRegHW1c().getScore(benefitUnit, BenefitUnit.Variables.class);
-                rmse = Parameters.getRMSEForRegression("HW1c");
-            } else {
-                score = Parameters.getRegHW1d().getScore(benefitUnit, BenefitUnit.Variables.class);
-                rmse = Parameters.getRMSEForRegression("HW1d");
-            }
+            RegressionName housingValueRegression = continuingHomeOwner
+                    ? RegressionName.WealthHousingHW1c
+                    : RegressionName.WealthHousingHW1d;
+            score = ManagerRegressions.getLinearRegression(housingValueRegression)
+                    .getScore(benefitUnit, BenefitUnit.Variables.class);
+            rmse = ManagerRegressions.getRmse(housingValueRegression);
             gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovNetValue);
             double shock = gauss * rmse;
             double transformedNetHousing = score + shock;
             if (continuingHomeOwner) {
-                double persistence = Parameters.getRegHW1c().getCoefficient("HousingPersistence");
+                double persistence = ManagerRegressions
+                        .getLinearRegression(RegressionName.WealthHousingHW1c)
+                        .getCoefficient("HousingPersistence");
                 wealthNetInnovation = persistence * wealthHousingL1.getWealthNetInnovation() + shock;
             } else {
-                double continuationScore = Parameters.getRegHW1c().getScore(benefitUnit, BenefitUnit.Variables.class);
+                double continuationScore = ManagerRegressions
+                        .getLinearRegression(RegressionName.WealthHousingHW1c)
+                        .getScore(benefitUnit, BenefitUnit.Variables.class);
                 wealthNetInnovation = transformedNetHousing - continuationScore;
             }
             netHousing = Math.sinh(transformedNetHousing);
@@ -111,21 +114,24 @@ public class WealthHousing {
             }
             if (mortgageHolder) {
                 boolean continuingMortgage = wealthHousingL1.isMortgageHolder();
-                if (continuingMortgage) {
-                    score = Parameters.getRegHW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
-                    rmse = Parameters.getRMSEForRegression("HW2c");
-                } else {
-                    score = Parameters.getRegHW2d().getScore(benefitUnit, BenefitUnit.Variables.class);
-                    rmse = Parameters.getRMSEForRegression("HW2d");
-                }
+                RegressionName mortgageValueRegression = continuingMortgage
+                        ? RegressionName.WealthHousingHW2c
+                        : RegressionName.WealthHousingHW2d;
+                score = ManagerRegressions.getLinearRegression(mortgageValueRegression)
+                        .getScore(benefitUnit, BenefitUnit.Variables.class);
+                rmse = ManagerRegressions.getRmse(mortgageValueRegression);
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovMortgageValue);
                 shock = gauss * rmse;
                 double transformedMortgageDebt = score + shock;
                 if (continuingMortgage) {
-                    double persistence = Parameters.getRegHW2c().getCoefficient("MortgagePersistence");
+                    double persistence = ManagerRegressions
+                            .getLinearRegression(RegressionName.WealthHousingHW2c)
+                            .getCoefficient("MortgagePersistence");
                     wealthMortgageDebtInnovation = persistence * wealthHousingL1.getWealthMortgageDebtInnovation() + shock;
                 } else {
-                    double continuationScore = Parameters.getRegHW2c().getScore(benefitUnit, BenefitUnit.Variables.class);
+                    double continuationScore = ManagerRegressions
+                            .getLinearRegression(RegressionName.WealthHousingHW2c)
+                            .getScore(benefitUnit, BenefitUnit.Variables.class);
                     wealthMortgageDebtInnovation = transformedMortgageDebt - continuationScore;
                 }
                 double mortgageDebt = Math.exp(transformedMortgageDebt);
@@ -136,7 +142,6 @@ public class WealthHousing {
             wealthPrptyValue = netHousing + wealthMortgageDebtValue;
         }
     }
-
 
     /**************************************************************
      * GETTERS AND SETTERS

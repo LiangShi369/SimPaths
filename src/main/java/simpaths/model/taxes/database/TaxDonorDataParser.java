@@ -622,7 +622,7 @@ public class TaxDonorDataParser {
         EntityTransaction txn = null;
         try {
             // access database and obtain donor pool
-            Map propertyMap = new HashMap();
+            var propertyMap = new HashMap<String, String>();
             propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + Parameters.getInputDirectory() + "input" + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE");
             EntityManager em = Persistence.createEntityManagerFactory("tax-database", propertyMap).createEntityManager();
             txn = em.getTransaction();

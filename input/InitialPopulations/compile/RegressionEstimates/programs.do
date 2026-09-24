@@ -195,6 +195,14 @@ void export_labels_gologit(string scalar domain, string scalar sheet) {
     // Add category suffix only for non-prop odds vars (unique_flag == 1)
     labels_no_bl = labels_no_bl :+
         (("_" :+ catnames_no_bl) :* (unique_flag[1::rows(labels_no_bl)] :== 1))
+		
+	// Add _ to end of vars with common coefs
+    real matrix is_unique, is_common
+    is_common = (unique_flag[1::rows(labels_no_bl)] :== 0)
+    
+    labels_no_bl = labels_no_bl :+ (
+        (("_") :* is_common)
+    )			
 
     // Filter by structure
     final_labels = select(labels_no_bl, structure[1::rows(labels_no_bl)] :== 1)

@@ -63,7 +63,7 @@ log using "${dir_log}/reg_socialcare.log", replace
 
 /********************************* SET EXCEL FILE *****************************/
 
-putexcel set "$dir_results/reg_socialcare", sheet("Info") replace
+putexcel set "$dir_results/reg_socialcare", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "Model parameters for social care module"
 putexcel A2 = "Authors:"
@@ -134,6 +134,25 @@ table stm, c(count provide_informal_care mean provide_informal_care)
 
 
 /************************ Probit need care (S2a) ******************************/
+display "${s2a_if_condition}"
+/*
+probit NeedCare ///
+    NeedCare_L1 ///
+	Dgn ///
+	Age67to68 Age69to70 Age71to72 Age73to74 Age75to76 ///
+	Age77to78 Age79to80 Age81to82 Age83to84 Age85plus ///	
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Partnered ///
+	Deh_c4_Medium Deh_c4_Low ///
+	Y2020 Y2021  ${regions} ${ethnicity} ///
+	if ${s2a_if_condition} [pw=${weight}], vce(r)
+	
+process_regression, domain("socialcare") process("S2a") sheet("S2a_orig") ///
+	title("Process S2a: Prob. need care") ///
+	gofrow(3) goflabel("S2a - Need care") ///
+	ifcond("${s2a_if_condition}") probit
+*/
+
 
 probit careNeedFlag ///
     careNeedFlagL1 ///
@@ -142,8 +161,8 @@ probit careNeedFlag ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///	
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
 	demPartnerStatusPartnered ///
-	eduHighestC4Low eduHighestC4Medium ///
-	$regions demYear2020 demYear2021 $ethnicity /// 
+	eduHighestC4Medium eduHighestC4Low ///
+	demYear2020 demYear2021 $regions  $ethnicity /// 
   if ${s2a_if_condition} [pw=${weight}], vce(r)
 	
 process_regression, domain("socialcare") process("S2a") sheet("S2a") ///
@@ -153,7 +172,26 @@ process_regression, domain("socialcare") process("S2a") sheet("S2a") ///
 
 
 /************************ Probit receive care (S2b) ***************************/
+display "${s2b_if_condition}"
+/*
+probit ReceiveCare ///
+    ReceiveCare_L1 ///
+	Dgn ///
+	Age67to68 Age69to70 Age71to72 Age73to74 Age75to76 ///
+	Age77to78 Age79to80 Age81to82 Age83to84 Age85plus ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Partnered ///
+	Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s2b_if_condition} [pw=${weight}], vce(r)
 
+process_regression, domain("socialcare") process("S2b") sheet("S2b_orig") ///
+	title("Process S2b: Prob. receive care") ///
+	gofrow(7) goflabel("S2b - Receive care") ///
+	ifcond("${s2b_if_condition}") probit
+	*/
+	
 probit careReceivedFlag ///
     careReceivedFlagL1 ///
     demMaleFlag ///
@@ -161,9 +199,9 @@ probit careReceivedFlag ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///	
 	demPartnerStatusPartnered ///	
-	eduHighestC4Low eduHighestC4Medium ///
+	eduHighestC4Medium eduHighestC4Low ///
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///
-	$regions demYear2020 demYear2021 $ethnicity /// 
+	demYear2020 demYear2021 $regions  $ethnicity /// 
   if ${s2b_if_condition} [pw=${weight}], vce(r)
 
 process_regression, domain("socialcare") process("S2b") sheet("S2b") ///
@@ -173,10 +211,29 @@ process_regression, domain("socialcare") process("S2b") sheet("S2b") ///
 
 
 /************************ Mlogit formal/informal (S2c) ************************/
+
+display "${s2c_if_condition}"
 /*  
 	Informal is base outcome
 	Mixed is 1st outcome
 	Formal is 2nd outcomes
+*/
+/*
+mlogit CareMarket CareMarketFormal_L1 CareMarketInformal_L1 CareMarketMixed_L1 Dgn ///
+	Age67to68 Age69to70 Age71to72 Age73to74 Age75to76 ///
+	Age77to78 Age79to80 Age81to82 Age83to84 Age85plus ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Partnered ///
+	Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///	
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s2c_if_condition} [pw=${weight}], vce(r) base(2)
+	
+process_gologit, domain("socialcare") process("S2c") sheet("S2c_orig") ///
+    title("Process S2c: Formal vs Informal") ///
+    gofrow(11) goflabel("S2c - Formal vs Informal") ///
+    outcomes(3) ///
+    ifcond("${s2c_if_condition}")	
 */
 	
 mlogit CareMarket ///
@@ -186,9 +243,9 @@ mlogit CareMarket ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///	
 	demPartnerStatusPartnered ///		
-	eduHighestC4Low eduHighestC4Medium ///	
+	eduHighestC4Medium eduHighestC4Low  ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-    $regions demYear2020 demYear2021 $ethnicity /// 
+    demYear2020 demYear2021 $regions  $ethnicity /// 
   if ${s2c_if_condition} [pw=${weight}], vce(r) base(2)
 	
 process_gologit, domain("socialcare") process("S2c") sheet("S2c") ///
@@ -199,6 +256,22 @@ process_gologit, domain("socialcare") process("S2c") sheet("S2c") ///
 	
 
 /******************** OLS informal care hours received (S2d) ******************/
+display "${s2d_if_condition}"
+/*
+reg HrsReceivedInformalIHS HrsReceivedInformalIHS_L1 CareMarketMixed Dgn ///
+	Age AgeSquared ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Partnered ///
+	Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} /*${ethnicity} Ethn_White*/ ///
+	if ${s2d_if_condition} [pweight=${weight}], vce(r)
+	
+process_regression, domain("socialcare") process("S2d") sheet("S2d_orig") ///
+	title("Process S2d: Informal care hours received") ///
+	gofrow(15) goflabel("S2d - Hours of informal care received") ///
+	ifcond("${s2d_if_condition}")
+*/
 
 reg careHrsInformalIhs ///
     careHrsInformalIhsL1 ///
@@ -207,9 +280,9 @@ reg careHrsInformalIhs ///
 	demAge demAgeSq ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
 	demPartnerStatusPartnered ///		
-	eduHighestC4Low eduHighestC4Medium ///	
+	 eduHighestC4Medium eduHighestC4Low ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-	$regions demYear2020 demYear2021 /*$ethnicity*/ /// 
+	demYear2020 demYear2021 $regions  /*$ethnicity*/ /// 
   if ${s2d_if_condition} [pweight=${weight}], vce(r)
 	
 process_regression, domain("socialcare") process("S2d") sheet("S2d") ///
@@ -236,16 +309,31 @@ putexcel A9 = ("S2d") B9 = (rmse)
 restore	
 
 /********************* OLS formal care hours received (S2e) *******************/
+display "${s2e_if_condition}"
+/*
+reg HrsReceivedFormalIHS HrsReceivedFormalIHS_L1 CareMarketMixed Dgn ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Partnered ///
+	Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s2e_if_condition} [pweight=${weight}], vce(r)
 
+process_regression, domain("socialcare") process("S2e") sheet("S2e_orig") ///
+	title("Process S2e: Formal care hours received") ///
+	gofrow(19) goflabel("S2e - Hours of formal care received") ///
+	ifcond("${s2e_if_condition}")
+	*/
+	
 reg careHrsFormalIhs ///
     careHrsFormalIhsL1 ///
 	careMarketMixed ///
 	demMaleFlag ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
 	demPartnerStatusPartnered ///	
-	eduHighestC4Low eduHighestC4Medium ///	
+	eduHighestC4Medium eduHighestC4Low ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-	$regions demYear2020 demYear2021 $ethnicity /// 
+	demYear2020 demYear2021 $regions $ethnicity /// 
   if ${s2e_if_condition} [pweight=${weight}], vce(r)
 
 process_regression, domain("socialcare") process("S2e") sheet("S2e") ///
@@ -273,6 +361,23 @@ restore
 
 /***************** Probit provide care, Singles (S3a) *************************/
 
+display "${s3a_if_condition}"
+/*
+probit ProvideCare ProvideCare_L1 NeedCare ReceiveCare Dgn ///
+	Age30to34 Age35to39 Age40to44 Age45to49 Age50to54 ///
+	Age55to59 Age60to64 Age65to69 Age70to74 Age75to79 Age80to84 Age85plus ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Deh_c4_High Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s3a_if_condition} [pweight=${weight}], vce(r)
+	
+process_regression, domain("socialcare") process("S3a") sheet("S3a_orig") ///
+	title("Process S3a: Prob. provide care, Singles") ///
+	gofrow(23) goflabel("S3a - Provide care, Singles") ///
+	ifcond("${s3a_if_condition}") probit
+*/
+
 probit careProvidedFlag ///
     careProvidedFlagL1 ///
 	careNeedFlag careReceivedFlag ///
@@ -280,9 +385,9 @@ probit careProvidedFlag ///
 	demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
-	eduHighestC4Low eduHighestC4Medium eduHighestC4High ///	
+	eduHighestC4High eduHighestC4Medium eduHighestC4Low   ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-	$regions demYear2020 demYear2021 $ethnicity /// 
+	demYear2020 demYear2021 $regions $ethnicity /// 
    if ${s3a_if_condition} [pweight=${weight}], vce(r)
 	
 process_regression, domain("socialcare") process("S3a") sheet("S3a") ///
@@ -298,18 +403,35 @@ tab CareMarket ProvideCare if ${s3b_if_condition}
 tab deh_c4 ProvideCare if ${s3b_if_condition}
 deh_c4 =0 is excluded because there's just 1 obs providing care and probit would not converge 
 */
+display "${s3b_if_condition}"
+/*
+capture drop in_sample p
+probit ProvideCare ProvideCare_L1 NeedCare ReceiveCare Dgn ///
+	ReceiveCarePartner CareMarketFormalPartner CareMarketInformalPartner CareMarketMixedPartner ///
+	Dhe_Poor Dhe_Fair Dhe_Good Dhe_VeryGood ///
+	Dhesp_Fair Dhesp_Good Dhesp_VeryGood Dhesp_Excellent ///
+	Deh_c4_High Deh_c4_Medium  ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s3b_if_condition} [pweight=${weight}], vce(r)
+	
+process_regression, domain("socialcare") process("S3b") sheet("S3b_orig") ///
+	title("Process S3b: Prob. provide care, Partnered") ///
+	gofrow(27) goflabel("S3b - Provide care, Partnered") ///
+	ifcond("${s3b_if_condition}") probit
+*/
 
 //capture drop in_sample p
 probit careProvidedFlag ///
     careProvidedFlagL1 ///
 	careNeedFlag careReceivedFlag ///
     demMaleFlag ///
-    careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPsrtner ///
-    healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+    careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPartner ///
+    healthSelfRatedPoor healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood  ///
     healthPartnerSelfRatedFair healthPartnerSelfRatedGood healthPartnerSelfRatedVeryGood healthPartnerSelfRatedExcellent ///
-    eduHighestC4Medium eduHighestC4High ///	
+    eduHighestC4High eduHighestC4Medium  ///	
     yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-    $regions demYear2020 demYear2021 $ethnicity /// 
+    demYear2020 demYear2021 $regions  $ethnicity /// 
   if ${s3b_if_condition} [pweight=${weight}], vce(r)
 	
 process_regression, domain("socialcare") process("S3b") sheet("S3b") ///
@@ -317,81 +439,98 @@ process_regression, domain("socialcare") process("S3b") sheet("S3b") ///
 	gofrow(27) goflabel("S3b - Provide care, Partnered") ///
 	ifcond("${s3b_if_condition}") probit
 	
-		
+			
 	
-	
-/******************* OLS care hours provided, Singles  (S3c) ******************/
+/************** Ordered logit care hours provided, Singles (S3c) **************/
+display "${s3c_if_condition}"
+/*
+reg HrsProvidedInformalIHS HrsProvidedInformalIHS_L1 Dgn ///
+	Age20to24 Age25to29 Age30to34 Age35to39 Age40to44 Age45to49 Age50to54 ///
+	Age55to59 Age60to64 Age65to69 Age70to74 Age75to79 Age80to84 Age85plus ///
+	Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+	Deh_c4_High Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s3c_if_condition} [pweight=${weight}], vce(r)
 
-reg careHrsProvidedWeekIhs ///
+process_regression, domain("socialcare") process("S3c") sheet("S3c_orig") ///
+	title("Process S3c: Informal care hours provided, Singles") ///
+	gofrow(31) goflabel("S3c - Hours of informal care provided, Singles") ///
+	ifcond("${s3c_if_condition}")
+	*/
+
+* Ordered outcome for weekly informal-care hours provided.  The category values
+* are representative hours for the seven bands: 2, 7, 14.5, 27, 42, 74.5, 120.
+cap drop careHrsProvidedWeekCategory
+gen byte careHrsProvidedWeekCategory = .
+replace careHrsProvidedWeekCategory = 1 if careHoursProvidedWeekly > 0 & careHoursProvidedWeekly <= 4
+replace careHrsProvidedWeekCategory = 2 if careHoursProvidedWeekly > 4 & careHoursProvidedWeekly <= 9
+replace careHrsProvidedWeekCategory = 3 if careHoursProvidedWeekly > 9 & careHoursProvidedWeekly <= 19
+replace careHrsProvidedWeekCategory = 4 if careHoursProvidedWeekly > 19 & careHoursProvidedWeekly <= 34
+replace careHrsProvidedWeekCategory = 5 if careHoursProvidedWeekly > 34 & careHoursProvidedWeekly <= 49
+replace careHrsProvidedWeekCategory = 6 if careHoursProvidedWeekly > 49 & careHoursProvidedWeekly <= 99
+replace careHrsProvidedWeekCategory = 7 if careHoursProvidedWeekly >= 100 & careHoursProvidedWeekly < .
+label define careHrsProvidedWeekCategoryLabel 1 "2" 2 "7" 3 "14.5" 4 "27" 5 "42" 6 "74.5" 7 "120", replace
+label values careHrsProvidedWeekCategory careHrsProvidedWeekCategoryLabel
+
+ologit careHrsProvidedWeekCategory ///
     careHrsProvidedWeekIhsL1 ///
     demMaleFlag ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
 	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
-	eduHighestC4Low eduHighestC4Medium eduHighestC4High ///	
+	eduHighestC4High eduHighestC4Medium eduHighestC4Low   ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-	$regions demYear2020 demYear2021 $ethnicity /// 
-  if ${s3c_if_condition} [pweight=${weight}], vce(r)
+	demYear2020 demYear2021 $regions  $ethnicity /// 
+  if ${s3c_if_condition} [pweight=${weight}], vce(robust)
 
-process_regression, domain("socialcare") process("S3c") sheet("S3c") ///
+process_ologit, domain("socialcare") process("S3c") sheet("S3c") ///
 	title("Process S3c: Informal care hours provided, Singles") ///
 	gofrow(31) goflabel("S3c - Hours of informal care provided, Singles") ///
 	ifcond("${s3c_if_condition}")
-	
-* Calculate RMSE
-cap drop residuals squared_residuals  
-predict residuals, residuals
-gen squared_residuals = residuals^2
 
-preserve
-keep if ${s3c_if_condition}
-
-sum squared_residuals [w=${weight}], meanonly
-scalar rmse = sqrt(r(mean))
-di "RMSE for Informal care hours provided, Singles: " rmse
-
-putexcel set "$dir_results/reg_RMSE.xlsx", sheet("UK") modify
-putexcel A11 = ("S3c") B11 = (rmse)
-
-restore	
+	* RMSE is not defined for the ordered-logit outcome.
 		
 
-/****************** OLS care hours provided, Partnered  (S3d) *****************/
+/************* Ordered logit care hours provided, Partnered (S3d) *************/
+display "${s3d_if_condition}"
+/*
+reg HrsProvidedInformalIHS HrsProvidedInformalIHS_L1 Dgn ///
+	Age20to24 Age25to29 Age30to34 Age35to39 Age40to44 Age45to49 Age50to54 ///
+	Age55to59 Age60to64 Age65to69 Age70to74 Age75to79 Age80to84 Age85plus ///
+	ReceiveCarePartner CareMarketFormalPartner CareMarketInformalPartner CareMarketMixedPartner ///
+	Dhe_Poor Dhe_Fair Dhe_Good Dhe_VeryGood ///
+	Dhesp_Fair Dhesp_Good Dhesp_VeryGood Dhesp_Excellent ///
+	Deh_c4_High Deh_c4_Medium Deh_c4_Low ///
+	HHincomeQ2 HHincomeQ3 HHincomeQ4 HHincomeQ5 ///
+	Y2020 Y2021 ${regions} ${ethnicity} ///
+	if ${s3d_if_condition} [pweight=${weight}], vce(r)
 
-reg careHrsProvidedWeekIhs ///
+process_regression, domain("socialcare") process("S3d") sheet("S3d_orig") ///
+	title("Process S3d: Informal care hours provided, Partnered") ///
+	gofrow(35) goflabel("S3d - Hours of informal care provided, Partnered") ///
+	ifcond("${s3d_if_condition}")
+	*/
+
+ologit careHrsProvidedWeekCategory ///
     careHrsProvidedWeekIhsL1 ///
 	demMaleFlag ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
-    careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPsrtner ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+    careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPartner ///
+	healthSelfRatedPoor healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood  ///
 	healthPartnerSelfRatedFair healthPartnerSelfRatedGood healthPartnerSelfRatedVeryGood healthPartnerSelfRatedExcellent ///
-	eduHighestC4Low eduHighestC4Medium eduHighestC4High ///	
+	eduHighestC4High eduHighestC4Medium  ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
-	$regions demYear2020 demYear2021 $ethnicity /// 
-   if ${s3d_if_condition} [pweight=${weight}], vce(r)
+	demYear2020 demYear2021 $regions  $ethnicity /// 
+   if ${s3d_if_condition} [pweight=${weight}], vce(robust)
 
-process_regression, domain("socialcare") process("S3d") sheet("S3d") ///
+process_ologit, domain("socialcare") process("S3d") sheet("S3d") ///
 	title("Process S3d: Informal care hours provided, Partnered") ///
 	gofrow(35) goflabel("S3d - Hours of informal care provided, Partnered") ///
 	ifcond("${s3d_if_condition}")
 	
-	* Calculate RMSE
-cap drop residuals squared_residuals  
-predict residuals, residuals
-gen squared_residuals = residuals^2
-
-preserve
-keep if ${s3d_if_condition}
-
-sum squared_residuals [w=${weight}], meanonly
-scalar rmse = sqrt(r(mean))
-di "RMSE for Informal care hours provided, Partnered: " rmse
-
-putexcel set "$dir_results/reg_RMSE.xlsx", sheet("UK") modify
-putexcel A12 = ("S3d") B12 = (rmse)
-
-restore		
+	* RMSE is not defined for the ordered-logit outcome.
 	
 
 display "Social care analysis complete!"

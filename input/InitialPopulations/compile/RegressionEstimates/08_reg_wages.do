@@ -4,7 +4,7 @@
 * OBJECT: 			Heckman regressions
 * AUTHORS:			Patryk Bronka, Daria Popova, Justin van de Ven, 
 * 					Aleksandra Kolndrekaj, Ashley Burdett
-* LAST UPDATE:		28 April 2026 (DP) 
+* LAST UPDATE:		19 May 2026 (DP) 
 ********************************************************************************
 ********************************************************************************
 * NOTES: 			Strategy:
@@ -39,12 +39,12 @@ do "${dir_do}/programs.do"
 ********************************************************************************
 * Set Excel file
 * Info sheet - first stage
-putexcel set "$dir_results/reg_employment_selection", sheet("Info") replace
+putexcel set "$dir_results/reg_employment_selection", sheet("Info") modify //replace
 putexcel A1 = "Description:", bold
 putexcel B1 = "This file contains regression estimates from the first stage of the Heckman selection model used to estimates wages."
 putexcel A2 = "Authors:", bold
 putexcel B2 = "Patryk Bronka, Justin Van de Ven, Daria Popova, Aleksandra Kolndrekaj, Ashley Burdett"
-putexcel A3 = "Last edit: 28 April 2026 (DP) "
+putexcel A3 = "Last edit: 19 May 2026 (DP) "
 
 putexcel A5 = "Process:", bold
 putexcel B5 = "Description:", bold
@@ -63,12 +63,12 @@ putexcel B12 = "Predicted wages used as input into union parameters and income p
 putexcel B13 = "Two-step Heckman command is used which does not permit weights"
 
 * Info sheet - second stage
-putexcel set "$dir_results/reg_wages", sheet("Info") replace
+putexcel set "$dir_results/reg_wages", sheet("Info") modify //replace
 putexcel A1 = "Description:"
 putexcel B1 = "This file contains regression estimates used to calculate potential wages for males and females in the simulation."
 putexcel A2 = "Authors:", bold
 putexcel B2 = "Patryk Bronka, Justin Van de Ven, Daria Popova, Aleksandra Kolndrekaj, Ashley Burdett"
-putexcel A3 = "Last edit: 28 April 2026 (DP) "
+putexcel A3 = "Last edit: 19 May 2026 (DP) "
 
 putexcel A5 = "Process:", bold
 putexcel B5 = "Description:", bold
@@ -113,7 +113,7 @@ do "${dir_do}/variable_update.do"
 * Merge in real growth index
 merge m:1 stm using "$dir_external_data/growth_rates", keep(3) nogen ///
 	keepusing(real_wage_growth)
-rename real_wage_growth realWageGrowth
+gen realWageGrowth = real_wage_growth 
 
 * Set data
 xtset idperson swv
@@ -171,50 +171,67 @@ gen pred_hourly_wage = .
 do "${dir_do}/programs.do" 
 
 /******************** WAGES: WOMEN, NO PREV WAGE OBSERVED *********************/
+/*
+global wage_eqn "lwage_hour dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 dlltsd01 l.dhe_pcs l.dhe_mcs ib8.drgn1 pt real_wage_growth y2020 y2021 i.dot"
+global seln_eqn "i.L1les_c3 dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 mar child dlltsd01 l.dhe_pcs l.dhe_mcs ib8.drgn1 y2020 y2021 i.dot"
+
+local filter = "${wages_f_no_prev_if_condition}"
+
+heckman $wage_eqn if `filter', select($seln_eqn) twostep mills(lambda)
+
+process_heckman,  ///
+    process("W1fa_orig") ///
+    ifcond("`filter'") ///
+    savefile("Female_NPW_sample") ///
+    graphsubtitle("Females, No previously observed wage") ///
+    wordfile("$dir_raw_results/wages/Output_NWW.doc") ///
+    wordtitle("Heckman-corrected wage equation: women not in employment last year") ///
+    wordctitle("Not working women") ///
+    sheet2("W1fa_orig") sheet1("W1fa-sel_orig") ///
+    rmserow(2)
+*/
+
 #delimit ;
 global wage_eqn 
 lwage_hour 
 demAge 
 demAgeSq 
-eduHighestC4LowL1 
-eduHighestC4MediumL1 
-eduHighestC4HighL1 
-eduHighestC4LowL1_demAge
-eduHighestC4MediumL1_demAge
-eduHighestC4HighL1_demAge
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
 eduHighestParentC3Medium
-eduHighestParentC3High
+eduHighestParentC3Low
 healthDsblLongtermFlag
-healthPhysicalPcsL1 
+healthPhysicalPcsL1
 healthMentalMcsL1
+$regions 
 labPt
 realWageGrowth
-$regions 
 demYear2020 
 demYear2021 
 $ethnicity 
 ;
 #delimit cr 
 
+
 #delimit ;
 global seln_eqn
-labStatusC3StudentL1
+labStatusC3StudentL1 
 labStatusC3NotEmployedL1 
 demAge 
 demAgeSq 
-eduHighestC4LowL1 
-eduHighestC4MediumL1 
-eduHighestC4HighL1 
-eduHighestC4LowL1_demAge
-eduHighestC4MediumL1_demAge
-eduHighestC4HighL1_demAge
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
 eduHighestParentC3Medium
-eduHighestParentC3High
-healthDsblLongtermFlag
-healthPhysicalPcsL1 
-healthMentalMcsL1
+eduHighestParentC3Low
 demPartnerStatusPartnered
-demNChild
+demDChild
+healthDsblLongtermFlag
+healthPhysicalPcsL1
+healthMentalMcsL1
 $regions 
 demYear2020 
 demYear2021 
@@ -238,8 +255,77 @@ process_heckman,  ///
     rmserow(2)
 
 
+	
 /********************** WAGES: MEN, NO PREV WAGE OBSERVED *********************/
+
+/*
+global wage_eqn "lwage_hour dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 dlltsd01 l.dhe_pcs l.dhe_mcs  ib8.drgn1 pt real_wage_growth y2020 y2021 i.dot"
+global seln_eqn "i.L1les_c3 dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 mar child dlltsd01 l.dhe_pcs l.dhe_mcs ib8.drgn1 y2020 y2021 i.dot"
+
+local filter = "${wages_m_no_prev_if_condition}"
+
+heckman $wage_eqn if `filter', select($seln_eqn) twostep mills(lambda)
+
+process_heckman, ///
+    process("W1ma_orig") ///
+    ifcond("`filter'") ///
+    savefile("Male_NPW_sample") ///
+    graphsubtitle("Males, No previously observed wage") ///
+    wordfile("$dir_raw_results/wages/Output_NWM.doc") ///
+    wordtitle("Heckman-corrected wage equation: men not in employment last year") ///
+    wordctitle("Not working men") ///
+    sheet2("W1ma_orig") sheet1("W1ma-sel_orig") ///
+    rmserow(3)
+*/
+
 * globals are the same as for women 
+#delimit ;
+global wage_eqn 
+lwage_hour 
+demAge 
+demAgeSq 
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
+eduHighestParentC3Medium
+eduHighestParentC3Low
+healthDsblLongtermFlag
+healthPhysicalPcsL1
+healthMentalMcsL1
+$regions 
+labPt
+realWageGrowth
+demYear2020 
+demYear2021 
+$ethnicity 
+;
+#delimit cr 
+
+
+#delimit ;
+global seln_eqn
+labStatusC3StudentL1 
+labStatusC3NotEmployedL1 
+demAge 
+demAgeSq 
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
+eduHighestParentC3Medium
+eduHighestParentC3Low
+demPartnerStatusPartnered
+demDChild
+healthDsblLongtermFlag
+healthPhysicalPcsL1
+healthMentalMcsL1
+$regions 
+demYear2020 
+demYear2021 
+$ethnicity 
+;
+#delimit cr 
 
 local filter = "${wages_m_no_prev_if_condition}"
 
@@ -258,6 +344,25 @@ process_heckman, ///
 
 
 /********************** WAGES: WOMEN, PREV WAGE OBSERVED **********************/
+/*
+global wage_eqn "lwage_hour L1.lwage_hour dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag  i.dehmf_c3 dlltsd01 l.dhe_pcs l.dhe_mcs  ib8.drgn1 pt real_wage_growth y2020 y2021 i.dot"
+global seln_eqn "dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 mar child dlltsd01 l.dhe_pcs l.dhe_mcs ib8.drgn1 y2020 y2021 i.dot"
+
+local filter = "${wages_f_prev_if_condition}"
+
+heckman $wage_eqn if `filter', select($seln_eqn) twostep mills(lambda)
+
+process_heckman, ///
+    process("W1fb_orig") ///
+    ifcond("`filter'") ///
+    savefile("Female_PW_sample") ///
+    graphsubtitle("Females, Previously observed wage") ///
+    wordfile("$dir_raw_results/wages/Output_WW.doc") ///
+    wordtitle("Heckman-corrected wage equation: women in employment last year") ///
+    wordctitle("Working women") ///
+    sheet2("W1fb_orig") sheet1("W1fb-sel_orig") ///
+    rmserow(4)
+*/
 
 #delimit ;
 global wage_eqn2
@@ -265,43 +370,40 @@ lwage_hour
 labWageHrlyLogL1 
 demAge 
 demAgeSq 
-eduHighestC4LowL1 
-eduHighestC4MediumL1 
-eduHighestC4HighL1 
-eduHighestC4LowL1_demAge
-eduHighestC4MediumL1_demAge
-eduHighestC4HighL1_demAge
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
 eduHighestParentC3Medium
-eduHighestParentC3High
+eduHighestParentC3Low
 healthDsblLongtermFlag
 healthPhysicalPcsL1 
 healthMentalMcsL1
+$regions 
 labPt
 realWageGrowth
-$regions 
 demYear2020 
 demYear2021 
 $ethnicity 
 ;
 #delimit cr 
 
+
 #delimit ;
 global seln_eqn2
 demAge 
 demAgeSq 
-eduHighestC4LowL1 
-eduHighestC4MediumL1 
-eduHighestC4HighL1 
-eduHighestC4LowL1_demAge
-eduHighestC4MediumL1_demAge
-eduHighestC4HighL1_demAge
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
 eduHighestParentC3Medium
-eduHighestParentC3High
+eduHighestParentC3Low
+demPartnerStatusPartnered
+demDChild
 healthDsblLongtermFlag
 healthPhysicalPcsL1 
 healthMentalMcsL1
-demPartnerStatusPartnered
-demNChild
 $regions 
 demYear2020 
 demYear2021 
@@ -326,7 +428,73 @@ process_heckman, ///
 
 
 /********************** WAGES: MEN, PREV WAGE OBSERVED ************************/
+/*
+global wage_eqn "lwage_hour L1.lwage_hour dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dehmf_c3 dlltsd01 l.dhe_pcs l.dhe_mcs  ib8.drgn1 pt real_wage_growth y2020 y2021 i.dot"
+global seln_eqn "dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag  i.dehmf_c3 mar child dlltsd01 l.dhe_pcs l.dhe_mcs ib8.drgn1 y2020 y2021 i.dot"
+
+local filter = "${wages_m_prev_if_condition}"
+
+heckman $wage_eqn if `filter', select($seln_eqn) twostep mills(lambda)
+
+process_heckman, ///
+    process("W1mb_orig") ///
+    ifcond("`filter'") ///
+    savefile("Male_PW_sample") ///
+    graphsubtitle("Male, Previously observed wage") ///
+    wordfile("$dir_raw_results/wages/Output_WM.doc") ///
+    wordtitle("Heckman-corrected wage equation: men in employment last year") ///
+    wordctitle("Working men") ///
+    sheet2("W1mb_orig") sheet1("W1mb-sel_orig") ///
+    rmserow(5)
+*/
+
 * globals are the same as for women 
+#delimit ;
+global wage_eqn2
+lwage_hour 
+labWageHrlyLogL1 
+demAge 
+demAgeSq 
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
+eduHighestParentC3Medium
+eduHighestParentC3Low
+healthDsblLongtermFlag
+healthPhysicalPcsL1 
+healthMentalMcsL1
+$regions 
+labPt
+realWageGrowth
+demYear2020 
+demYear2021 
+$ethnicity 
+;
+#delimit cr 
+
+
+#delimit ;
+global seln_eqn2
+demAge 
+demAgeSq 
+eduHighestC4Medium
+eduHighestC4Low
+eduHighestC4Medium_demAge
+eduHighestC4Low_demAge
+eduHighestParentC3Medium
+eduHighestParentC3Low
+demPartnerStatusPartnered
+demDChild
+healthDsblLongtermFlag
+healthPhysicalPcsL1 
+healthMentalMcsL1
+$regions 
+demYear2020 
+demYear2021 
+$ethnicity 
+;
+#delimit cr 
 
 local filter = "${wages_m_prev_if_condition}"
 
