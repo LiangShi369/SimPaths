@@ -37,6 +37,7 @@ import simpaths.data.Parameters;
 import simpaths.data.statistics.AlignmentStatistics;
 import simpaths.data.statistics.WealthIncomeStatistics;
 import simpaths.data.statistics.DemographicStatistics;
+import simpaths.data.statistics.WealthValidationStats;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
 
@@ -74,6 +75,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     @GUIparameter(description="Toggle to turn export to .csv files on/off")
     private boolean exportToCSV = true;
 
+    private boolean persistWealthValidationStatistics = false;
+
     @GUIparameter(description="Toggle to turn persistence of statistics on/off")
     private boolean persistWealthIncomeStatistics = true;
 
@@ -98,6 +101,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private int ordering = Parameters.COLLECTOR_ORDERING;
 
     private SimPathsModel model;
+
+    private WealthValidationStats wealthValidationStats;
 
     private WealthIncomeStatistics wealthIncomeStats;
 
@@ -130,6 +135,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private DataExport exportBenefitUnits;
 
     private DataExport exportHouseholds;
+
+    private DataExport exportWealthValidationStatistics;
 
     private DataExport exportWealthIncomeStatistics;
 
@@ -164,6 +171,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         DumpPersons,
         DumpBenefitUnits,
         DumpHouseholds,
+        DumpWealthValidationStatistics,
         DumpWealthIncomeStatistics,
         DumpDemographicStatistics,
         DumpAlignmentStatistics,
@@ -203,6 +211,14 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         case DumpHouseholds:
             try {
                 exportHouseholds.export();
+            } catch (Exception e) {
+                log.error(e.getMessage());
+            }
+            break;
+        case DumpWealthValidationStatistics:
+            wealthValidationStats.update(model);
+            try {
+                exportWealthValidationStatistics.export();
             } catch (Exception e) {
                 log.error(e.getMessage());
             }
@@ -271,6 +287,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         model = (SimPathsModel) getManager();
 
+        wealthValidationStats = new WealthValidationStats();
         wealthIncomeStats = new WealthIncomeStatistics();
         demographicStats = new DemographicStatistics();
         alignmentStats = new AlignmentStatistics();
@@ -285,6 +302,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             exportBenefitUnits = new DataExport(model.getBenefitUnits(), exportToDatabase, exportToCSV);
         if (persistHouseholds)
             exportHouseholds = new DataExport(model.getHouseholds(), exportToDatabase, exportToCSV);
+        if (persistWealthValidationStatistics)
+            exportWealthValidationStatistics = new DataExport(List.of(wealthValidationStats), exportToDatabase, exportToCSV);
         if (persistWealthIncomeStatistics)
             exportWealthIncomeStatistics = new DataExport(List.of(wealthIncomeStats), exportToDatabase, exportToCSV);
         if (persistDemographicStatistics)
@@ -347,6 +366,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 //		getEngine().getEventQueue().scheduleOnce(new SingleTargetEvent(this, Processes.CalculateEquivalisedHouseholdDisposableIncome), model.getEndYear(), -2);
         if (calculateGiniCoefficients) {
             getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.CalculateGiniCoefficients), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
+        }
+
+        if (persistWealthValidationStatistics) {
+            getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpWealthValidationStatistics), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
         }
 
         if (persistWealthIncomeStatistics) {
@@ -429,7 +452,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         public void update() {
             var filtered = new FilteredCollection<>(model::getPersons, Filters.isEmployed());
-            var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
+            //var income_cs = new CrossSection<>(filtered, Person::getCovidYLabGross);
+            var income_cs = new CrossSection<>(filtered, Person::getGrossEarningsYearly);
             var income_stats = new Stats(income_cs.get()).descrStats();
 
             wealthIncomeStats.setEmployedEarningsP20(income_stats.getPercentile(20.0));
@@ -815,6 +839,14 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     public void setExportToCSV(boolean exportToCSV) {
         this.exportToCSV = exportToCSV;
+    }
+
+    public boolean isPersistWealthValidationStatistics() {
+        return persistWealthValidationStatistics;
+    }
+
+    public void setPersistWealthValidationStatistics(boolean val) {
+        persistWealthValidationStatistics = val;
     }
 
     public boolean isPersistWealthIncomeStatistics() {

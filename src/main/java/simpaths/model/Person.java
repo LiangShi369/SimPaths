@@ -2654,6 +2654,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Age67to68,
         Age69to70,
         Age70to74,
+        Age70plus,
         Age71to72,
         Age73to74,
         Age75to76,
@@ -3985,6 +3986,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             case Age80plus -> {
                 return (demAge >= 80) ? 1. : 0.;
+            }
+            case Age70plus -> {
+                return (demAge >= 70) ? 1. : 0.;
             }
             case Age, Dag, demAge -> {
                 return (double) demAge;

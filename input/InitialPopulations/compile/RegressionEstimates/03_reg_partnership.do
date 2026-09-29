@@ -132,7 +132,6 @@ probit dcpex ///
       eduSampleFlag demAge demAgeSq ///
       eduHighestC4NaL1 eduHighestC4LowL1 eduHighestC4MediumL1 eduHighestC4HighL1 ///
       eduHighestPartnerC3MediumL1 eduHighestPartnerC3LowL1 ///
-      healthSelfRatedFairL1 healthSelfRatedGoodL1 healthSelfRatedVeryGoodL1 healthSelfRatedExcellentL1 ///
 	  healthPhysicalPcsL1 healthMentalMcsL1  ///
 	  healthPhysicalPartnerPcsL1 healthMentalPartnerMcsL1 ///
 	  demPartnerNYearL1 demEnterPartnerFlagL1 demAgePartnerDiffL1 ///

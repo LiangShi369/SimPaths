@@ -159,7 +159,7 @@ probit careNeedFlag ///
 	demMaleFlag ///
 	demAge67to68 demAge69to70 demAge71to72 demAge73to74 demAge75to76 ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///	
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	demPartnerStatusPartnered ///
 	eduHighestC4Medium eduHighestC4Low ///
 	demYear2020 demYear2021 $regions  $ethnicity /// 
@@ -197,7 +197,7 @@ probit careReceivedFlag ///
     demMaleFlag ///
 	demAge67to68 demAge69to70 demAge71to72 demAge73to74 demAge75to76 ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///	
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	demPartnerStatusPartnered ///	
 	eduHighestC4Medium eduHighestC4Low ///
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///
@@ -241,7 +241,7 @@ mlogit CareMarket ///
 	demMaleFlag ///
 	demAge67to68 demAge69to70 demAge71to72 demAge73to74 demAge75to76 ///
 	demAge77to78 demAge79to80 demAge81to82 demAge83to84 demAge85plus ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///	
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	demPartnerStatusPartnered ///		
 	eduHighestC4Medium eduHighestC4Low  ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
@@ -278,7 +278,7 @@ reg careHrsInformalIhs ///
 	careMarketMixed ///
 	demMaleFlag ///
 	demAge demAgeSq ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	demPartnerStatusPartnered ///		
 	 eduHighestC4Medium eduHighestC4Low ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
@@ -329,7 +329,7 @@ reg careHrsFormalIhs ///
     careHrsFormalIhsL1 ///
 	careMarketMixed ///
 	demMaleFlag ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	demPartnerStatusPartnered ///	
 	eduHighestC4Medium eduHighestC4Low ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
@@ -384,7 +384,7 @@ probit careProvidedFlag ///
 	demMaleFlag ///
 	demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	eduHighestC4High eduHighestC4Medium eduHighestC4Low   ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
 	demYear2020 demYear2021 $regions $ethnicity /// 
@@ -427,8 +427,8 @@ probit careProvidedFlag ///
 	careNeedFlag careReceivedFlag ///
     demMaleFlag ///
     careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPartner ///
-    healthSelfRatedPoor healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood  ///
-    healthPartnerSelfRatedFair healthPartnerSelfRatedGood healthPartnerSelfRatedVeryGood healthPartnerSelfRatedExcellent ///
+    healthPhysicalPcsL1 healthMentalMcsL1  ///
+    healthPhysicalPartnerPcsL1 healthMentalPartnerMcsL1 ///
     eduHighestC4High eduHighestC4Medium  ///	
     yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
     demYear2020 demYear2021 $regions  $ethnicity /// 
@@ -478,7 +478,7 @@ ologit careHrsProvidedWeekCategory ///
     demMaleFlag ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
-	healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood healthSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
 	eduHighestC4High eduHighestC4Medium eduHighestC4Low   ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
 	demYear2020 demYear2021 $regions  $ethnicity /// 
@@ -518,8 +518,8 @@ ologit careHrsProvidedWeekCategory ///
 	demAge20to24 demAge25to29 demAge30to34 demAge35to39 demAge40to44 demAge45to49 demAge50to54 ///
 	demAge55to59 demAge60to64 demAge65to69 demAge70to74 demAge75to79 demAge80to84 demAge85plus ///
     careReceivedPartnerFlag careMarketFormalPartner careMarketInformalPartner careMarketMixedPartner ///
-	healthSelfRatedPoor healthSelfRatedFair healthSelfRatedGood healthSelfRatedVeryGood  ///
-	healthPartnerSelfRatedFair healthPartnerSelfRatedGood healthPartnerSelfRatedVeryGood healthPartnerSelfRatedExcellent ///
+	healthPhysicalPcsL1 healthMentalMcsL1  ///
+	healthPhysicalPartnerPcsL1 healthMentalPartnerMcsL1 ///
 	eduHighestC4High eduHighestC4Medium  ///	
 	yHhQuintilesMonthC5Q2 yHhQuintilesMonthC5Q3 yHhQuintilesMonthC5Q4 yHhQuintilesMonthC5Q5 ///	
 	demYear2020 demYear2021 $regions  $ethnicity /// 

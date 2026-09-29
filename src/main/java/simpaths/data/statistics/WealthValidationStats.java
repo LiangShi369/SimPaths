@@ -5,16 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 import microsim.data.db.PanelEntityKey;
-import simpaths.data.Parameters;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
 import simpaths.model.benefitunit.WealthFinancial;
-import simpaths.model.enums.Education;
-import simpaths.model.enums.Indicator;
 
 @Entity
-public class Statistics3 {
+public class WealthValidationStats {
 
     @Id
     private PanelEntityKey key = new PanelEntityKey(1L);
