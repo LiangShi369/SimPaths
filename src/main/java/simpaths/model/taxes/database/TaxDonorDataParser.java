@@ -4,8 +4,8 @@ package simpaths.model.taxes.database;
 import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -460,9 +460,6 @@ public class TaxDonorDataParser {
         // prepare file and buffer to write data
         Map<Integer, String> euromodPolicySchedule = Parameters.calculateEUROMODpolicySchedule(country);
         Path target = FileSystems.getDefault().getPath(Parameters.INPUT_DIRECTORY, Parameters.getTaxDonorInputFileName() + ".csv");
-        if (target.toFile().exists()) {
-            target.toFile().delete();		// delete previous version of the file to allow the new one to be constructed
-        }
         BufferedWriter bufferWriter = null;
 
         try {
@@ -522,8 +519,7 @@ public class TaxDonorDataParser {
             }
 
             // write data
-            target.toFile().createNewFile();
-            bufferWriter = new BufferedWriter(new FileWriter(target.toFile(), true));
+            bufferWriter = Files.newBufferedWriter(target);
 
             // structure to hold all data to be parsed from the EUROMOD output files. The first key is the EUROMOD output text filename, while the value is a map that maps the name of the attribute (i.e. the column name) to its array index (i.e. the column number, starting from 0) in the output file, as stored in allFilesByName.
             Map<String, LinkedHashMap<String, Integer>> attributePositionsByNameByFilename = new LinkedHashMap<String, LinkedHashMap<String, Integer>>();
@@ -574,20 +570,18 @@ public class TaxDonorDataParser {
                 bufferWriter.append(newLine);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException("Could not construct tax donor population CSV: " + target, e);
         } catch (Throwable e) {
             e.printStackTrace();
             throw e;
         }
         finally {
-            try {
-                bufferWriter.flush();
-                bufferWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (Throwable e) {
-                e.printStackTrace();
-                throw e;
+            if (bufferWriter != null) {
+                try {
+                    bufferWriter.close();
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Could not close tax donor population CSV: " + target, e);
+                }
             }
         }
 

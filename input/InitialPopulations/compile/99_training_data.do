@@ -184,6 +184,7 @@ rename dwt2 wgtHhCross
 save "$dir_data/temp10", replace
 
 // adjust continuous variables
+gen double pension_total_before_noise = wealthPensValue
 foreach vv of varlist yEmpPersGrossMonth yNonBenPersGrossMonth yMiscPersGrossMonth yPersAndPartnerGrossDiffMonth wealthTotValue wealthPensValue wealthPrptyValue wealthMortgageDebtValue wealthUnsecuredDebtLowValue wealthUnsecuredDebtHighValue ///
 yDispMonth yCapitalPersMonth yPensPersGrossMonth careHrsFormal careHrsInformal careFormalX {
 	gen tmp = `vv'
@@ -195,6 +196,14 @@ yDispMonth yCapitalPersMonth yPensPersGrossMonth careHrsFormal careHrsInformal c
 	drop `vv'
 	rename tmp `vv'
 }
+// Apply the same perturbation to each pension component so the training
+// population retains the source DB/DC split and an additive total.
+replace wealthPensValue = max(0, wealthPensValue)
+foreach component in Dc Db InPayment Other {
+	replace wealthPens`component'Value = max(0, wealthPens`component'Value) * wealthPensValue / pension_total_before_noise if pension_total_before_noise > 0
+	replace wealthPens`component'Value = 0 if pension_total_before_noise <= 0
+}
+drop pension_total_before_noise
 foreach vv of varlist yEmpPersGrossMonth yNonBenPersGrossMonth yMiscPersGrossMonth yCapitalPersMonth yPensPersGrossMonth careHrsFormal careHrsInformal careFormalX {
 	replace `vv' = 0 if (`vv'<0.0)
 }
@@ -212,7 +221,7 @@ save "$dir_data/temp11", replace
 
 // set benefit unit level variables
 use "$dir_data/temp11", clear
-foreach vv of varlist demRgn yHhQuintilesMonthC5 wealthPrptyFlag wgtHhCross wealthTotValue wealthPensValue wealthPrptyValue wealthMortgageDebtValue wealthUnsecuredDebtLowValue wealthUnsecuredDebtHighValue yDispMonth {
+foreach vv of varlist demRgn yHhQuintilesMonthC5 wealthPrptyFlag wgtHhCross wealthTotValue wealthPensValue wealthPensDcValue wealthPensDbValue wealthPensInPaymentValue wealthPensOtherValue wealthPrptyValue wealthMortgageDebtValue wealthUnsecuredDebtLowValue wealthUnsecuredDebtHighValue yDispMonth {
 	
 	rename `vv' `vv'i
 	bys idBu: egen `vv' = mean(`vv'i)
@@ -223,7 +232,7 @@ foreach vv of varlist demRgn yHhQuintilesMonthC5 wealthPrptyFlag wgtHhCross weal
 /**************************************************************************************
 *	export training data
 *************************************************************************************/
-recode demMaleFlag wealthTotValue wealthPensValue wealthPrptyValue wealthMortgageDebtValue wealthUnsecuredDebtLowValue wealthUnsecuredDebtHighValue careNeedFlag careHrsFormal careHrsInformal careFormalX (-9=0)
+recode demMaleFlag wealthTotValue wealthPensValue wealthPensDcValue wealthPensDbValue wealthPensInPaymentValue wealthPensOtherValue wealthPrptyValue wealthMortgageDebtValue wealthUnsecuredDebtLowValue wealthUnsecuredDebtHighValue careNeedFlag careHrsFormal careHrsInformal careFormalX (-9=0)
 export delimited using "$dir_data/training_population_initial_UK_$wealthEndYear.csv", nolabel replace
 
 

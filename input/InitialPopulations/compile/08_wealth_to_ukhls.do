@@ -38,6 +38,7 @@ global seedAdjust = 0
 use "population_initial_fs_UK_$yearWealth", clear
 sort idperson
 drop total_wealth total_pensions housing_wealth mortgage_debt unsecured_low_debt unsecured_high_debt contRateOPEe contRateOPEr contRatePP smp rnk mtc
+capture drop total_pensions_dc total_pensions_db total_pensions_inpayment total_pensions_other
 
 
 /**********************************************************************
@@ -309,6 +310,10 @@ gen rnk = 0
 gen mtc = 0
 gen wealthi = -9
 gen tot_peni = -9
+gen tot_peni_dc = -9
+gen tot_peni_db = -9
+gen tot_peni_inpayment = -9
+gen tot_peni_other = -9
 gen housingi = -9
 gen mortgagei = -9
 gen unsec_lowi = -9
@@ -388,6 +393,10 @@ forval kk = 1/`nn' {
 			local mtc = bu[1]
 			local ww = wealth[1]
 			local pw = tot_pen[1]
+			local pw_dc = tot_pen_dc[1]
+			local pw_db = tot_pen_db[1]
+			local pw_inpayment = tot_pen_inpayment[1]
+			local pw_other = tot_pen_other[1]
 			local hw = dvhvalue[1]
 			local mm = main_mort[1]
 			local ul = unsec_low[1]
@@ -398,6 +407,10 @@ forval kk = 1/`nn' {
 			replace mtc=`mtc' if (_n==`kk')
 			replace wealthi = `ww' if (_n==`kk')
 			replace tot_peni = `pw' if (_n==`kk')
+			replace tot_peni_dc = `pw_dc' if (_n==`kk')
+			replace tot_peni_db = `pw_db' if (_n==`kk')
+			replace tot_peni_inpayment = `pw_inpayment' if (_n==`kk')
+			replace tot_peni_other = `pw_other' if (_n==`kk')
 			replace housingi = `hw' if (_n==`kk')
 			replace mortgagei = `mm' if (_n==`kk')
 			replace unsec_lowi = `ul' if (_n==`kk')
@@ -419,7 +432,10 @@ keep if (treat)
 append using "ukhls_wealthtemp2.dta"
 sort bu
 recode wealthi (mis=0)
-recode tot_peni (mis=0)
+recode tot_peni (mis=0) (-9=0)
+foreach component in dc db inpayment other {
+	recode tot_peni_`component' (mis=0) (-9=0)
+}
 recode housingi (mis=0)
 recode mortgagei (mis=0)
 recode unsec_lowi (mis=0)
@@ -428,6 +444,10 @@ recode op_membui (mis=0)
 recode pp_membui (mis=0)
 by bu: egen total_wealth = sum(wealthi)
 by bu: egen total_pensions = sum(tot_peni)
+foreach component in dc db inpayment other {
+	by bu: egen total_pensions_`component' = sum(tot_peni_`component')
+}
+assert abs(total_pensions - total_pensions_dc - total_pensions_db - total_pensions_inpayment - total_pensions_other) < 0.01
 by bu: egen housing_wealth = sum(housingi)
 by bu: egen mortgage_debt = sum(mortgagei)
 by bu: egen unsecured_low_debt = sum(unsec_lowi)
@@ -443,6 +463,9 @@ replace contRatePP = 0.05 if ((treat & pp_membu==1) | (pp_membu==2 & (dag>17)))
 
 recode total_wealth (-9=0)
 recode total_pensions (-9=0)
+foreach component in dc db inpayment other {
+	recode total_pensions_`component' (-9=0)
+}
 recode housing_wealth (-9=0)
 recode mortgage_debt (-9=0)
 recode unsecured_low_debt (-9=0)

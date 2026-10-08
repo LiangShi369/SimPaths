@@ -624,6 +624,15 @@ foreach file in "${dir_was_data}/was_round_5_person_eul_oct_2020.dta" ///
 		gen tot_p = db_op + dc_pen + dvspen*(dvspen>0) + dvpinpval*(dvpinpval>0)
 		egen tot_pen = sum(tot_p), by (case bu)
 		label var tot_pen "value of aggregate pension rights"
+		// Retain the donor's pension types through matching. Only the DC part is an
+		// remaining unannuitised fund that can be transferred at death in the model.
+		egen tot_pen_dc = sum(dc_pen), by (case bu)
+		egen tot_pen_db = sum(db_op), by (case bu)
+		gen pen_inpayment_i = dvpinpval*(dvpinpval>0)
+		gen pen_other_i = dvspen*(dvspen>0)
+		egen tot_pen_inpayment = sum(pen_inpayment_i), by (case bu)
+		egen tot_pen_other = sum(pen_other_i), by (case bu)
+		assert abs(tot_pen - tot_pen_dc - tot_pen_db - tot_pen_inpayment - tot_pen_other) < 0.01 if tot_pen < .
 		gen op_tot = db_op + dc_op
 		egen tot_open = sum(op_tot), by (case bu)
 		label var tot_open "value of aggregate occupational pension rights"
@@ -755,7 +764,7 @@ foreach file in "${dir_was_data}/was_round_5_person_eul_oct_2020.dta" ///
 
 			replace CPI = inflation[`yy'-${inflation_minyear}+1,1] if year == `yy'
 		}
-		foreach var in tot_pen dvhvalue main_mort wealth inc {
+		foreach var in tot_pen tot_pen_dc tot_pen_db tot_pen_inpayment tot_pen_other dvhvalue main_mort wealth inc {
 			
 			replace `var' = `var' / CPI
 		}
@@ -765,7 +774,7 @@ foreach file in "${dir_was_data}/was_round_5_person_eul_oct_2020.dta" ///
 		// Variables below: total value of ISAs, net value of own-business assets, net value of financial and non-financial (non-property) assets, aggregate occupational pension rights, ww, private/personal pension rights (non-occupational)
 		keep was_round case person person_id bu bu_rp year sex grad gradsp dvage17 na nk* single_man ///
 			single_woman couple couple_ref gor2 dhe2 healths p_healths dlltsd dlltsdsp ///
-			idnk04 pct qtl emp empsp tot_pen dvhvalue main_mort wealth inc was dwt  ///
+			idnk04 pct qtl emp empsp tot_pen tot_pen_dc tot_pen_db tot_pen_inpayment tot_pen_other dvhvalue main_mort wealth inc was dwt  ///
 			isa_fam bus_assets assets tot_open ww tot_pp oprop db_op dc_op dc_pen pinc_now benefits ///
 			totcsc_sum totcsc_trans_sum totcsc_pers_sum tothp_sum tot_los tot_los_exc_slc totmo_sum ///
 			cc_debt cc_debt_trans cc_debt_pers hp_debt loan_debt loan_debt_exc_slc loan_debt_slc ///

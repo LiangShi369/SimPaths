@@ -1,0 +1,17 @@
+# Short diagnostic run for the pooled inheritance mechanism.
+maxNumberOfRuns: 1
+executeWithGui: false
+randomSeed: 606
+startYear: 2021
+endYear: 2022
+popSize: 5000
+
+parameter_args:
+  populationProjectionFilename: align_popProjections.xlsx
+
+model_args:
+  bequestSyntheticRecipientCount: 2
+  transferDcPensionAtDeath: false
+  alignPopulation: true
+  alignCohabitation: false
+  alignFertility: false

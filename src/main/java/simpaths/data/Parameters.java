@@ -132,6 +132,10 @@ public class Parameters {
 		"wealthPrptyFlag",		        //flag indicating if benefit unit owns a house
 		"wealthTotValue",	            //benefit unit total net wealth (includes pensions assets and housing)
         "wealthPensValue",              //benefit unit total private (personal and occupational) pensions
+        "wealthPensDcValue",            //remaining unannuitised DC funds, transferable at death
+        "wealthPensDbValue",            //DB rights, not a transferable fund
+        "wealthPensInPaymentValue",     //capitalised pensions already in payment
+        "wealthPensOtherValue",         //former-partner/unknown rights, not treated as DC
         "wealthPrptyValue",             //benefit unit value of main home (gross of mortgage debt)
         "wealthMortgageDebtValue",      //benefit unit value of mortgage debt
         "wealthUnsecuredDebtLowValue",  //benefit unit value of low-cost unsecured debt
@@ -323,8 +327,8 @@ public class Parameters {
     public static int endYear;
     private static final int MIN_START_YEAR_TESTING = 2019;
     private static final int MAX_START_YEAR_TESTING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
-    private static final int MIN_START_YEAR_TRAINING = 2019;
-    private static final int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static final int MIN_START_YEAR_TRAINING = 2021;
+    private static final int MAX_START_YEAR_TRAINING = 2021; // The bundled training population is for 2021.
     public static final int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
     public static final int MAX_AGE_MATERNITY = 49;  			// Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
@@ -405,6 +409,7 @@ public class Parameters {
     public static double pensionLumpSumCap = 250000;
     private static Map<Integer, Double> fertilityRateByYear;
     private static MultiKeyCoefficientMap populationProjections;
+    private static String populationProjectionFilename = "align_popProjections.xlsx";
     public static final int ALIGN_MIN_AGE_ASSUME_DEATH = 65;
     public static final int ALIGN_MAX_AGE_REQUIRE_MATCH = 65;
     private static int populationProjectionsMaxYear;
@@ -1006,7 +1011,7 @@ public class Parameters {
         fixedRetireAge = ExcelAssistant.loadCoefficientMap(getInputDirectory() + "scenario_retirementAgeFixed.xlsx", countryString, 1);
 
         // alignment parameters
-        populationProjections = ExcelAssistant.loadCoefficientMap(getInputDirectory() + "align_popProjections.xlsx", countryString, 3);
+        populationProjections = ExcelAssistant.loadCoefficientMap(getInputDirectory() + populationProjectionFilename, countryString, 3);
         setMapBounds(MapBounds.Population, countryString);
 
         //Alignment of education levels
@@ -1980,15 +1985,18 @@ public class Parameters {
         if (trainingFlag) {
             File trainingSchedule = new File(getInputDirectory() + "EUROMODoutput" + File.separator + "training" + File.separator + EUROMODpolicyScheduleFilename + ".xlsx");
             File runSchedule = new File(getInputDirectory() + EUROMODpolicyScheduleFilename + ".xlsx");
-            try {
-                FileUtils.copyFile(trainingSchedule, runSchedule);
-            } catch (IOException e) {
-                System.err.println("Could not replace EUROMODoutput.xlsx from training data");
+            if (!runSchedule.exists()) {
+                try {
+                    FileUtils.copyFile(trainingSchedule, runSchedule);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not initialise the EUROMOD policy schedule from training data", e);
+                }
             }
         }
         
         currentEUROMODpolicySchedule = ExcelAssistant.loadCoefficientMap(getInputDirectory() + EUROMODpolicyScheduleFilename + ".xlsx", country.toString(), 1, 3);
         TreeMap<Integer, String> newEUROMODpolicySchedule = new TreeMap<>();
+        EUROMODpolicyScheduleSystemYearMap.clear();
 
         for (var k : currentEUROMODpolicySchedule.keySet()) {
             if(k.getKey(0) != null) {
@@ -1999,6 +2007,14 @@ public class Parameters {
                     String policyStartYearString = currentEUROMODpolicySchedule.getValue(name, EUROMODpolicyScheduleHeadingScenarioYearBegins).toString();
                     String policySystemYearString = currentEUROMODpolicySchedule.getValue(name, EUROMODpolicyScheduleHeadingScenarioSystemYear).toString();
                     if(policyStartYearString != null && !policyStartYearString.isEmpty()) {
+                        File policyFile = new File(getEuromodOutputDirectory(), name);
+                        if (!policyFile.isFile()) {
+                            if (trainingFlag) {
+                                System.out.println("Skipping unavailable training EUROMOD policy file: " + policyFile);
+                                continue;
+                            }
+                            throw new IllegalArgumentException("EUROMOD policy schedule references missing file: " + policyFile);
+                        }
                         Integer policyStartYear = Integer.parseInt(policyStartYearString);
                         Integer policySystemYear = Integer.parseInt(policySystemYearString);
                         if(newEUROMODpolicySchedule.containsKey(policyStartYear)) {
