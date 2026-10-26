@@ -26,7 +26,7 @@ The `Person.csv` exporter uses Java field names. Its three contribution-rate col
 
 The other four renamed fields remain nested in the transient `PrivatePension` object. They do not become separate `Person.csv` columns through this rename. Regression coefficient labels and equations retain their existing names and meanings.
 
-The revised variable codebook will be added separately after review.
+The reviewed variable codebook is included in [SimPaths_Variable_Codebook.xlsx](SimPaths_Variable_Codebook.xlsx).
 
 ## Verification
 
@@ -35,4 +35,4 @@ The revised variable codebook will be added separately after review.
 - A UK 2019–2020 comparison against the unmodified base commit used model seed 100, target population 2,000 and the same processed training population. Fifteen of sixteen CSV files matched exactly after translating the three renamed contribution-rate headers, including every Person record, all wealth/inheritance outputs and all aggregate statistics.
 - `BenefitUnit.csv` also matched in every field except `yBenLegacyReceivedFlag` and `yBenUCReceivedFlag`. The same two flags varied between two identically configured unmodified baseline runs. Exact equality of these flags is therefore a pre-existing repeatability limitation. No tax-benefit or random-number logic was changed.
 - The final comparison used `-Djava.util.concurrent.ForkJoinPool.common.parallelism=0`; this temporary validation setting did not remove the flag variability. Fresh and cached population initialisations were kept separate for the comparison.
-- All initial-population do-files and the codebook remain unchanged in this implementation commit.
+- All initial-population do-files remain unchanged. The reviewed codebook was added in a separate documentation commit.
