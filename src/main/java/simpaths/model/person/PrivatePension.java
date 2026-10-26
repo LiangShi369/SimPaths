@@ -11,38 +11,38 @@ import simpaths.model.enums.TimeSeriesVariable;
 
 public class PrivatePension {
 
-    private boolean memberPP;                            //indicator that is active member of personal pension in current year
-    private boolean memberOP;                            //indicator that is active member of occupational pension in current year
-    private double contRateOPEe;                         //contribution rate of employee to occupational pension
-    private double contRateOPEr;                         //contribution rate of employer to occupational pension
-    private double contRatePP;                           //contribution rate to personal pension
+    private boolean wealthPensPpMemberFlag;                            //indicator that is active member of personal pension in current year
+    private boolean wealthPensOpMemberFlag;                            //indicator that is active member of occupational pension in current year
+    private double wealthPensOpEeContRate;                         //contribution rate of employee to occupational pension
+    private double wealthPensOpErContRate;                         //contribution rate of employer to occupational pension
+    private double wealthPensPpContRate;                           //contribution rate to personal pension
     private double wealth;                               //remaining modelled private pension pot
-    private boolean isPensioner;                         //indicator that private pension income has been accessed
-    private double lumpSumPayment;                       //value of lump sum payment at time of pension access
+    private boolean wealthPensAccessFlag;                         //indicator that private pension income has been accessed
+    private double wealthPensLumpSumYear;                       //value of lump sum payment at time of pension access
     private double pensionIncomeAnnual;                  //private pension annuity income per year
 
     public PrivatePension() {
-        memberPP = false;
-        memberOP = false;
-        isPensioner = false;
-        contRateOPEr = 0.0;
-        contRateOPEe = 0.0;
-        contRatePP = 0.0;
+        wealthPensPpMemberFlag = false;
+        wealthPensOpMemberFlag = false;
+        wealthPensAccessFlag = false;
+        wealthPensOpErContRate = 0.0;
+        wealthPensOpEeContRate = 0.0;
+        wealthPensPpContRate = 0.0;
         wealth = 0.0;
         pensionIncomeAnnual = 0.0;
-        lumpSumPayment = 0.0;
+        wealthPensLumpSumYear = 0.0;
     }
 
     public PrivatePension(PrivatePension original) {
-        this.memberPP = original.memberPP;
-        this.memberOP = original.memberOP;
-        this.isPensioner = original.isPensioner;
-        this.contRateOPEr = original.contRateOPEr;
-        this.contRateOPEe = original.contRateOPEe;
-        this.contRatePP = original.contRatePP;
+        this.wealthPensPpMemberFlag = original.wealthPensPpMemberFlag;
+        this.wealthPensOpMemberFlag = original.wealthPensOpMemberFlag;
+        this.wealthPensAccessFlag = original.wealthPensAccessFlag;
+        this.wealthPensOpErContRate = original.wealthPensOpErContRate;
+        this.wealthPensOpEeContRate = original.wealthPensOpEeContRate;
+        this.wealthPensPpContRate = original.wealthPensPpContRate;
         this.wealth = original.wealth;
         this.pensionIncomeAnnual = original.pensionIncomeAnnual;
-        this.lumpSumPayment = original.lumpSumPayment;
+        this.wealthPensLumpSumYear = original.wealthPensLumpSumYear;
     }
 
 
@@ -50,22 +50,22 @@ public class PrivatePension {
      * DEDICATED METHODS
      **************************************************************/
 
-    public void membership(Person person, boolean memberOPL1, boolean memberPPL1, double innov1, double innov2) {
+    public void membership(Person person, boolean wealthPensOpMemberFlagL1, boolean wealthPensPpMemberFlagL1, double innov1, double innov2) {
 
         if (Les_c4.EmployedOrSelfEmployed.equals(person.getLabC4())) {
 
-            memberOP = ManagerRegressions.getAnnualEventFromBiennial(person, memberOPL1, innov1, RegressionName.WealthPensionPW1a, RegressionName.WealthPensionPW1b);
-            memberPP = ManagerRegressions.getAnnualEventFromBiennial(person, memberPPL1, innov2, RegressionName.WealthPensionPW2a, RegressionName.WealthPensionPW2b);
+            wealthPensOpMemberFlag = ManagerRegressions.getAnnualEventFromBiennial(person, wealthPensOpMemberFlagL1, innov1, RegressionName.WealthPensionPW1a, RegressionName.WealthPensionPW1b);
+            wealthPensPpMemberFlag = ManagerRegressions.getAnnualEventFromBiennial(person, wealthPensPpMemberFlagL1, innov2, RegressionName.WealthPensionPW2a, RegressionName.WealthPensionPW2b);
         } else {
 
-            memberOP = false;
-            memberPP = false;
+            wealthPensOpMemberFlag = false;
+            wealthPensPpMemberFlag = false;
         }
     }
 
     public void contributionRates(Person person, double innov1, double innov2, double innov3, double innov4, double innov5) {
 
-        if (memberOP) {
+        if (wealthPensOpMemberFlag) {
 
             // consider employee contributions first
             PensionContribRate pcrDiscrete = ManagerRegressions.getEvent(person, RegressionName.WealthPensionPW1c, innov1);
@@ -78,7 +78,7 @@ public class PrivatePension {
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov2);
                 val = Math.sinh(score + gauss * rmse);
                 if (!Parameters.isFinite(val))
-                    throw new RuntimeException("contRateOPEe is not finite");
+                    throw new RuntimeException("wealthPensOpEeContRate is not finite");
                 val = Math.min(100.0, Math.max(0.0, val));
                 int test = (int)Math.round(val);
                 while (test == 0 || test == 3 || test == 5) {
@@ -92,13 +92,13 @@ public class PrivatePension {
                     gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov2);
                     val = Math.sinh(score + gauss * rmse);
                     if (!Parameters.isFinite(val))
-                        throw new RuntimeException("contRateOPEe is not finite");
+                        throw new RuntimeException("wealthPensOpEeContRate is not finite");
                     val = Math.min(100.0, Math.max(0.0, val));
                     test = (int)Math.round(val);
                 }
-                contRateOPEe = val / 100.0;
+                wealthPensOpEeContRate = val / 100.0;
             } else {
-                contRateOPEe = pcrDiscrete.getValue() / 100.0;
+                wealthPensOpEeContRate = pcrDiscrete.getValue() / 100.0;
             }
 
             // consider employer contributions
@@ -112,7 +112,7 @@ public class PrivatePension {
                 gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov4);
                 val = Math.sinh(score + gauss * rmse);
                 if (!Parameters.isFinite(val))
-                    throw new RuntimeException("contRateOPEr is not finite");
+                    throw new RuntimeException("wealthPensOpErContRate is not finite");
                 val = Math.min(100.0, Math.max(0.0, val));
                 int test = (int)Math.round(val);
                 while (test == 0 || test == 3 || test == 5) {
@@ -126,32 +126,32 @@ public class PrivatePension {
                     gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov4);
                     val = Math.sinh(score + gauss * rmse);
                     if (!Parameters.isFinite(val))
-                        throw new RuntimeException("contRateOPEr is not finite");
+                        throw new RuntimeException("wealthPensOpErContRate is not finite");
                     val = Math.min(100.0, Math.max(0.0, val));
                     test = (int)Math.round(val);
                 }
-                contRateOPEr = val / 100.0;
+                wealthPensOpErContRate = val / 100.0;
             } else {
-                contRateOPEr = pcrDiscrete.getValue() / 100.0;
+                wealthPensOpErContRate = pcrDiscrete.getValue() / 100.0;
             }
         } else {
 
-            contRateOPEe = 0.0;
-            contRateOPEr = 0.0;
+            wealthPensOpEeContRate = 0.0;
+            wealthPensOpErContRate = 0.0;
         }
-        if (memberPP) {
+        if (wealthPensPpMemberFlag) {
 
             double score, rmse, gauss;
             score = Parameters.getRegPW2c().getScore(person, Person.Variables.class);
             rmse = Parameters.getRMSEForRegression("PW2c");
             gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innov5);
-            contRatePP = Math.exp(score + gauss * rmse);
-            if (!Parameters.isFinite(contRatePP))
-                throw new RuntimeException("contRatePP is not finite");
-            contRatePP = Math.min(100.0, Math.max(0.0, contRatePP)) / 100.0;
+            wealthPensPpContRate = Math.exp(score + gauss * rmse);
+            if (!Parameters.isFinite(wealthPensPpContRate))
+                throw new RuntimeException("wealthPensPpContRate is not finite");
+            wealthPensPpContRate = Math.min(100.0, Math.max(0.0, wealthPensPpContRate)) / 100.0;
         } else {
 
-            contRatePP = 0.0;
+            wealthPensPpContRate = 0.0;
         }
     }
 
@@ -161,30 +161,30 @@ public class PrivatePension {
         wealth = previous.getWealth() * (1.0 + growthRate);
         if (!Les_c4.EmployedOrSelfEmployed.equals(labC4)) {
 
-            contRateOPEe = 0.0;
-            contRateOPEr = 0.0;
-            contRatePP = 0.0;
+            wealthPensOpEeContRate = 0.0;
+            wealthPensOpErContRate = 0.0;
+            wealthPensPpContRate = 0.0;
         } else {
 
-            if (!memberOP) {
-                contRateOPEe = 0.0;
-                contRateOPEr = 0.0;
+            if (!wealthPensOpMemberFlag) {
+                wealthPensOpEeContRate = 0.0;
+                wealthPensOpErContRate = 0.0;
             }
-            if (!memberPP) {
-                contRatePP = 0.0;
+            if (!wealthPensPpMemberFlag) {
+                wealthPensPpContRate = 0.0;
             }
-            wealth += (contRatePP + contRateOPEe + contRateOPEr) * employmentIncomeAnnual;
+            wealth += (wealthPensPpContRate + wealthPensOpEeContRate + wealthPensOpErContRate) * employmentIncomeAnnual;
         }
     }
 
     public double projectInPaymentPension(int year, double pensionIncomePerYearL1) {
 
-        isPensioner = true;
-        memberPP = false;
-        memberOP = false;
-        contRateOPEr = 0.0;
-        contRateOPEe = 0.0;
-        contRatePP = 0.0;
+        wealthPensAccessFlag = true;
+        wealthPensPpMemberFlag = false;
+        wealthPensOpMemberFlag = false;
+        wealthPensOpErContRate = 0.0;
+        wealthPensOpEeContRate = 0.0;
+        wealthPensPpContRate = 0.0;
         double inflationIndexL1 = Parameters.getTimeSeriesValue(year-1, TimeSeriesVariable.Inflation);
         double inflationIndex = Parameters.getTimeSeriesValue(year, TimeSeriesVariable.Inflation);
         pensionIncomeAnnual = pensionIncomePerYearL1 * inflationIndexL1 / inflationIndex;
@@ -193,18 +193,18 @@ public class PrivatePension {
 
     public double projectPensionAccess(int age, Gender male, int year, PrivatePension previous) {
 
-        isPensioner = true;
-        memberPP = false;
-        memberOP = false;
-        contRateOPEr = 0.0;
-        contRateOPEe = 0.0;
-        contRatePP = 0.0;
+        wealthPensAccessFlag = true;
+        wealthPensPpMemberFlag = false;
+        wealthPensOpMemberFlag = false;
+        wealthPensOpErContRate = 0.0;
+        wealthPensOpEeContRate = 0.0;
+        wealthPensPpContRate = 0.0;
         double pot = previous.getWealth();
-        lumpSumPayment = Math.min(pot * Parameters.pensionLumpSumShare, Parameters.pensionLumpSumCap);
+        wealthPensLumpSumYear = Math.min(pot * Parameters.pensionLumpSumShare, Parameters.pensionLumpSumCap);
         Double annuityPrice = Parameters.annuityRates.getAnnuityRateByGenderAgeYear(male, age, year);
         if (annuityPrice == null)
             throw new RuntimeException("Annuity price not found for " + male + " " + age + " " + year);
-        pensionIncomeAnnual = (pot - lumpSumPayment) / annuityPrice;
+        pensionIncomeAnnual = (pot - wealthPensLumpSumYear) / annuityPrice;
         // The modelled pot is exhausted by the lump sum and annuity purchase.
         wealth = 0.0;
         return pensionIncomeAnnual / 12.0;
@@ -215,20 +215,20 @@ public class PrivatePension {
      * GETTERS AND SETTERS
      **************************************************************/
 
-    public double getLumpSumPayment() {
-        return lumpSumPayment;
+    public double getWealthPensLumpSumYear() {
+        return wealthPensLumpSumYear;
     }
 
-    public void setLumpSumPayment(double lumpSumPayment) {
-        this.lumpSumPayment = lumpSumPayment;
+    public void setWealthPensLumpSumYear(double wealthPensLumpSumYear) {
+        this.wealthPensLumpSumYear = wealthPensLumpSumYear;
     }
 
-    public boolean isPensioner() {
-        return isPensioner;
+    public boolean isWealthPensAccessFlag() {
+        return wealthPensAccessFlag;
     }
 
-    public void setPensioner(boolean pensioner) {
-        isPensioner = pensioner;
+    public void setWealthPensAccessFlag(boolean wealthPensAccessFlag) {
+        this.wealthPensAccessFlag = wealthPensAccessFlag;
     }
 
     public double getPensionIncomeAnnual() {
@@ -239,50 +239,50 @@ public class PrivatePension {
         this.pensionIncomeAnnual = pensionIncomeAnnual;
     }
 
-    public boolean isMemberPP() {
-        return memberPP;
+    public boolean isWealthPensPpMemberFlag() {
+        return wealthPensPpMemberFlag;
     }
 
-    public void setMemberPP(boolean memberPP) {
-        this.memberPP = memberPP;
+    public void setWealthPensPpMemberFlag(boolean wealthPensPpMemberFlag) {
+        this.wealthPensPpMemberFlag = wealthPensPpMemberFlag;
     }
 
-    public boolean isMemberOP() {
-        return memberOP;
+    public boolean isWealthPensOpMemberFlag() {
+        return wealthPensOpMemberFlag;
     }
 
-    public void setMemberOP(boolean memberOP) {
-        this.memberOP = memberOP;
+    public void setWealthPensOpMemberFlag(boolean wealthPensOpMemberFlag) {
+        this.wealthPensOpMemberFlag = wealthPensOpMemberFlag;
     }
 
-    public double getContRateOPEr() {
-        return contRateOPEr;
+    public double getWealthPensOpErContRate() {
+        return wealthPensOpErContRate;
     }
 
-    public void setContRateOPEr(double contRateOPEr) {
+    public void setWealthPensOpErContRate(double wealthPensOpErContRate) {
 
-        this.contRateOPEr = contRateOPEr;
-        memberOP = (contRateOPEe + contRateOPEr > 0.001);
+        this.wealthPensOpErContRate = wealthPensOpErContRate;
+        wealthPensOpMemberFlag = (wealthPensOpEeContRate + wealthPensOpErContRate > 0.001);
     }
 
-    public double getContRateOPEe() {
-        return contRateOPEe;
+    public double getWealthPensOpEeContRate() {
+        return wealthPensOpEeContRate;
     }
 
-    public void setContRateOPEe(double contRateOPEe) {
+    public void setWealthPensOpEeContRate(double wealthPensOpEeContRate) {
 
-        this.contRateOPEe = contRateOPEe;
-        memberOP = (contRateOPEe + contRateOPEr > 0.001);
+        this.wealthPensOpEeContRate = wealthPensOpEeContRate;
+        wealthPensOpMemberFlag = (wealthPensOpEeContRate + wealthPensOpErContRate > 0.001);
     }
 
-    public double getContRatePP() {
-        return contRatePP;
+    public double getWealthPensPpContRate() {
+        return wealthPensPpContRate;
     }
 
-    public void setContRatePP(double contRatePP) {
+    public void setWealthPensPpContRate(double wealthPensPpContRate) {
 
-        this.contRatePP = contRatePP;
-        memberPP = (contRatePP > 0.001);
+        this.wealthPensPpContRate = wealthPensPpContRate;
+        wealthPensPpMemberFlag = (wealthPensPpContRate > 0.001);
     }
 
     public double getWealth() {

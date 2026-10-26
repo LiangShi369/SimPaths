@@ -226,7 +226,7 @@ class InheritanceModuleTest {
         when(deceased.getWealthPensValue(false)).thenReturn(20_000.0);
         PrivatePension pension = new PrivatePension();
         pension.setWealth(20_000);
-        pension.setPensioner(true);
+        pension.setWealthPensAccessFlag(true);
         when(deceased.getPrivatePension()).thenReturn(pension);
 
         InheritanceModule module = new InheritanceModule();

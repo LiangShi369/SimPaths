@@ -655,9 +655,9 @@ public class WealthValidationStats {
             }
             if (ii>=0) {
 
-                double crOPEe = person.getContRateOPEe(false);
-                double crOPEr = person.getContRateOPEr(false);
-                double crPP = person.getContRatePP(false);
+                double crOPEe = person.getWealthPensOpEeContRate(false);
+                double crOPEr = person.getWealthPensOpErContRate(false);
+                double crPP = person.getWealthPensPpContRate(false);
                 double pw = person.getWealthPensValue(false);
                 double npw = person.getWealthNonPensValue(false);
 

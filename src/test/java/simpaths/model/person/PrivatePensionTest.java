@@ -17,9 +17,9 @@ class PrivatePensionTest {
         PrivatePension prior = new PrivatePension();
         prior.setWealth(38_000);
         PrivatePension current = new PrivatePension();
-        current.setContRatePP(0.10);
-        current.setContRateOPEe(0.04);
-        current.setContRateOPEr(0.06);
+        current.setWealthPensPpContRate(0.10);
+        current.setWealthPensOpEeContRate(0.04);
+        current.setWealthPensOpErContRate(0.06);
 
         current.projectWealth(prior, 100_000, 0.05, Les_c4.EmployedOrSelfEmployed);
 
@@ -31,16 +31,16 @@ class PrivatePensionTest {
         PrivatePension prior = new PrivatePension();
         prior.setWealth(38_000);
         PrivatePension current = new PrivatePension();
-        current.setContRatePP(0.10);
-        current.setContRateOPEe(0.04);
-        current.setContRateOPEr(0.06);
+        current.setWealthPensPpContRate(0.10);
+        current.setWealthPensOpEeContRate(0.04);
+        current.setWealthPensOpErContRate(0.06);
 
         current.projectWealth(prior, 100_000, 0.05, Les_c4.NotEmployed);
 
         assertEquals(39_900, current.getWealth(), 1e-6);
-        assertEquals(0, current.getContRatePP(), 1e-6);
-        assertEquals(0, current.getContRateOPEe(), 1e-6);
-        assertEquals(0, current.getContRateOPEr(), 1e-6);
+        assertEquals(0, current.getWealthPensPpContRate(), 1e-6);
+        assertEquals(0, current.getWealthPensOpEeContRate(), 1e-6);
+        assertEquals(0, current.getWealthPensOpErContRate(), 1e-6);
     }
 
     @Test
@@ -48,13 +48,13 @@ class PrivatePensionTest {
         PrivatePension original = new PrivatePension();
         original.setWealth(38_000);
         original.setPensionIncomeAnnual(1_000);
-        original.setPensioner(true);
+        original.setWealthPensAccessFlag(true);
 
         PrivatePension copy = new PrivatePension(original);
 
         assertEquals(38_000, copy.getWealth(), 1e-6);
         assertEquals(1_000, copy.getPensionIncomeAnnual(), 1e-6);
-        assertTrue(copy.isPensioner());
+        assertTrue(copy.isWealthPensAccessFlag());
         copy.setWealth(0);
         assertEquals(38_000, original.getWealth(), 1e-6);
     }
@@ -73,21 +73,21 @@ class PrivatePensionTest {
             Parameters.pensionLumpSumShare = 0.25;
             Parameters.pensionLumpSumCap = 250_000;
             PrivatePension pension = new PrivatePension();
-            pension.setContRatePP(0.10);
-            pension.setContRateOPEe(0.04);
-            pension.setContRateOPEr(0.06);
+            pension.setWealthPensPpContRate(0.10);
+            pension.setWealthPensOpEeContRate(0.04);
+            pension.setWealthPensOpErContRate(0.06);
 
             pension.projectPensionAccess(65, Gender.Male, 2030, working);
 
-            assertEquals(25_000, pension.getLumpSumPayment(), 1e-6);
+            assertEquals(25_000, pension.getWealthPensLumpSumYear(), 1e-6);
             assertEquals(7_500, pension.getPensionIncomeAnnual(), 1e-6);
             assertEquals(0, pension.getWealth(), 1e-6);
-            assertTrue(pension.isPensioner());
-            assertFalse(pension.isMemberPP());
-            assertFalse(pension.isMemberOP());
-            assertEquals(0, pension.getContRatePP(), 1e-6);
-            assertEquals(0, pension.getContRateOPEe(), 1e-6);
-            assertEquals(0, pension.getContRateOPEr(), 1e-6);
+            assertTrue(pension.isWealthPensAccessFlag());
+            assertFalse(pension.isWealthPensPpMemberFlag());
+            assertFalse(pension.isWealthPensOpMemberFlag());
+            assertEquals(0, pension.getWealthPensPpContRate(), 1e-6);
+            assertEquals(0, pension.getWealthPensOpEeContRate(), 1e-6);
+            assertEquals(0, pension.getWealthPensOpErContRate(), 1e-6);
         } finally {
             Parameters.annuityRates = savedRates;
             Parameters.pensionLumpSumShare = savedShare;

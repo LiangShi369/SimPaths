@@ -413,7 +413,7 @@ public final class InheritanceModule {
 
     private void settlePension(int year, Person deceased, Person partner) {
         PrivatePension pension = deceased.getPrivatePension();
-        double pot = !pension.isPensioner() &&
+        double pot = !pension.isWealthPensAccessFlag() &&
                 !Les_c4.Retired.equals(deceased.getLabC4())
                 ? Math.max(0.0, pension.getWealth()) : 0.0;
         deceased.getBenefitUnit().removeDeceasedPensionStock(deceased);

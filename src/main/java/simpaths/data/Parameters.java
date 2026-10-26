@@ -192,6 +192,7 @@ public class Parameters {
         "yBenReceivedFlag",             //indicator of benefit receipt
         "yBenUCReceivedFlag",           //indicator of UC receipt
         "yBenNonUCReceivedFlag",        //indicator of other benefit receipt
+        // Stable input CSV/database names; Person maps these to wealth-prefixed Java fields.
         "contRateOPEe",                 //initialisation value of employee contribution rate to occupational pension
         "contRateOPEr",                 //initialisation value of employer contribution rate to occupational pension
         "contRatePP",                   //initialisation value of contribution rate to occupational pension

@@ -629,7 +629,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     double pensionContributionPerMonth(Person person, double earningsPerMonth) {
         if (!Parameters.projectPensionWealth)
             return 0.0;
-        return (person.getPrivatePension().getContRateOPEe() + person.getPrivatePension().getContRatePP()) * earningsPerMonth;
+        return (person.getPrivatePension().getWealthPensOpEeContRate() + person.getPrivatePension().getWealthPensPpContRate()) * earningsPerMonth;
     }
 
 

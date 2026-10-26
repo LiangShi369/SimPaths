@@ -193,9 +193,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Lag(getter="getYPensPersGrossMonth") @Transient private Double yPensPersGrossMonthL1; //Lag(1) of pension income
     @Lag(field="yPensPersGrossMonthL1") @Transient private Double yPensPersGrossMonthL2; //Lag(2) of pension income
     @NullInitialised private Double wealthPensValue;
-    @NullInitialised private Double contRateOPEe;           //employee contribution rate to occupation pension
-    @NullInitialised private Double contRateOPEr;           //employer contribution rate to occupation pension
-    @NullInitialised private Double contRatePP;             //employee contribution rate to personal pension
+    // Keep legacy database columns so existing input and processed populations remain readable.
+    @NullInitialised @Column(name="contRateOPEe") private Double wealthPensOpEeContRate;           //employee contribution rate to occupation pension
+    @NullInitialised @Column(name="contRateOPEr") private Double wealthPensOpErContRate;           //employer contribution rate to occupation pension
+    @NullInitialised @Column(name="contRatePP") private Double wealthPensPpContRate;             //employee contribution rate to personal pension
 
     // non-pension wealth
     @NullInitialised private Double wealthNonPensValue;
@@ -444,9 +445,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         wealthNonPensValue = originalPerson.wealthNonPensValue;
         wealthPensValue = originalPerson.wealthPensValue;
-        contRateOPEe = originalPerson.contRateOPEe;
-        contRateOPEr = originalPerson.contRateOPEr;
-        contRatePP = originalPerson.contRatePP;
+        wealthPensOpEeContRate = originalPerson.wealthPensOpEeContRate;
+        wealthPensOpErContRate = originalPerson.wealthPensOpErContRate;
+        wealthPensPpContRate = originalPerson.wealthPensPpContRate;
         if (originalPerson.privatePension != null)
             privatePension = new PrivatePension(originalPerson.privatePension);
         if (originalPerson.privatePensionL1 != null)
@@ -730,10 +731,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             privatePension.setWealth(wealthPensValue);
             privatePension.setPensionIncomeAnnual(Math.sinh(yPensPersGrossMonth) * 12.0);
-            privatePension.setContRateOPEe(contRateOPEe);
-            privatePension.setContRateOPEr(contRateOPEr);
-            privatePension.setContRatePP(contRatePP);
-            privatePension.setPensioner(yPensPersGrossMonth > 0.05);
+            privatePension.setWealthPensOpEeContRate(wealthPensOpEeContRate);
+            privatePension.setWealthPensOpErContRate(wealthPensOpErContRate);
+            privatePension.setWealthPensPpContRate(wealthPensPpContRate);
+            privatePension.setWealthPensAccessFlag(yPensPersGrossMonth > 0.05);
         }
     }
 
@@ -1004,13 +1005,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             if (privatePension != null) {
 
-                if (!privatePension.isPensioner())
+                if (!privatePension.isWealthPensAccessFlag())
                     throw new RuntimeException("privatePension object non-null for non-pensioner");
             }
             else {
 
                 privatePension = new PrivatePension();
-                privatePension.membership(this, privatePensionL1.isMemberOP(), privatePensionL1.isMemberPP(), statInnovations.getDoubleDraw(5), statInnovations.getDoubleDraw(6));
+                privatePension.membership(this, privatePensionL1.isWealthPensOpMemberFlag(), privatePensionL1.isWealthPensPpMemberFlag(), statInnovations.getDoubleDraw(5), statInnovations.getDoubleDraw(6));
                 privatePension.contributionRates(this, statInnovations.getDoubleDraw(39), statInnovations.getDoubleDraw(40),
                         statInnovations.getDoubleDraw(41), statInnovations.getDoubleDraw(42), statInnovations.getDoubleDraw(43));
             }
@@ -1035,7 +1036,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 privatePension = new PrivatePension();
             }
         }
-        return privatePension.getContRateOPEe() + privatePension.getContRatePP();
+        return privatePension.getWealthPensOpEeContRate() + privatePension.getWealthPensPpContRate();
     }
 
     public void updatePensionWealth() {
@@ -1054,9 +1055,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
 
         wealthPensValue = privatePension.getWealth();
-        contRateOPEe = privatePension.getContRateOPEe();
-        contRateOPEr = privatePension.getContRateOPEr();
-        contRatePP = privatePension.getContRatePP();
+        wealthPensOpEeContRate = privatePension.getWealthPensOpEeContRate();
+        wealthPensOpErContRate = privatePension.getWealthPensOpErContRate();
+        wealthPensPpContRate = privatePension.getWealthPensPpContRate();
     }
 
     private void updateUnemploymentState() {
@@ -2133,7 +2134,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (demAge >= Parameters.MIN_AGE_TO_RETIRE) {
 
                 // --- BRANCH 1: CONTINUING PENSIONERS ---
-                if (Les_c4.Retired.equals(labC4L1) || privatePensionL1.isPensioner()) {
+                if (Les_c4.Retired.equals(labC4L1) || privatePensionL1.isWealthPensAccessFlag()) {
 
                     updateContinuingRetiree();
                 }
@@ -2207,7 +2208,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public double getPensionLumpSum() {
 
-        return (privatePension!=null) ? privatePension.getLumpSumPayment() : 0.0;
+        return (privatePension!=null) ? privatePension.getWealthPensLumpSumYear() : 0.0;
     }
 
 
@@ -3448,10 +3449,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     return 0.;
             }
             case Current_op_memb -> {
-                return (privatePension.isMemberOP()) ? 1.0 : 0.0;
+                return (privatePension.isWealthPensOpMemberFlag()) ? 1.0 : 0.0;
             }
             case Lnop_all -> {
-                return (privatePension.isMemberOP()) ? Math.log(privatePension.getContRateOPEe() + privatePension.getContRateOPEr()) : 0.0;
+                return (privatePension.isWealthPensOpMemberFlag()) ? Math.log(privatePension.getWealthPensOpEeContRate() + privatePension.getWealthPensOpErContRate()) : 0.0;
             }
             case Earnings_Q2 -> {
                 return (Quintiles.Q2.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
@@ -3466,16 +3467,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Quintiles.Q5.equals(getEmploymentEarningsQuintile())) ? 1.0 : 0.0;
             }
             case Employee_cont_0 -> {
-                return (privatePension.getContRateOPEe() < 0.005) ? 1.0 : 0.0;
+                return (privatePension.getWealthPensOpEeContRate() < 0.005) ? 1.0 : 0.0;
             }
             case Employee_cont_3 -> {
-                return (privatePension.getContRateOPEe() > 0.025 && privatePension.getContRateOPEe() < 0.035) ? 1.0 : 0.0;
+                return (privatePension.getWealthPensOpEeContRate() > 0.025 && privatePension.getWealthPensOpEeContRate() < 0.035) ? 1.0 : 0.0;
             }
             case Employee_cont_5 -> {
-                return (privatePension.getContRateOPEe() > 0.045 && privatePension.getContRateOPEe() < 0.055) ? 1.0 : 0.0;
+                return (privatePension.getWealthPensOpEeContRate() > 0.045 && privatePension.getWealthPensOpEeContRate() < 0.055) ? 1.0 : 0.0;
             }
             case Asinhop_empee -> {
-                return FastMath.asinh(privatePension.getContRateOPEe() * 100.0);
+                return FastMath.asinh(privatePension.getWealthPensOpEeContRate() * 100.0);
             }
             case Dhhtp_c8_4_L1 -> {
                 // Couple with children, spouse employed
@@ -6232,55 +6233,55 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return i_yEarningsQuintileC5;
     }
 
-    public Double getContRateOPEe() {
-        return getContRateOPEe(true);
+    public Double getWealthPensOpEeContRate() {
+        return getWealthPensOpEeContRate(true);
     }
-    public double getContRateOPEe(boolean throwError) {
-        if (!Parameters.isFinite(contRateOPEe)) {
+    public double getWealthPensOpEeContRate(boolean throwError) {
+        if (!Parameters.isFinite(wealthPensOpEeContRate)) {
             if (throwError)
-                throw new IllegalArgumentException("contRateOPEe is not finite");
+                throw new IllegalArgumentException("wealthPensOpEeContRate is not finite");
             else
                 return 0.0;
         }
-        return contRateOPEe;
+        return wealthPensOpEeContRate;
     }
 
-    public void setContRateOPEe(Double contRateOPEe) {
-        this.contRateOPEe = contRateOPEe;
+    public void setWealthPensOpEeContRate(Double wealthPensOpEeContRate) {
+        this.wealthPensOpEeContRate = wealthPensOpEeContRate;
     }
 
-    public Double getContRateOPEr() {
-        return getContRateOPEr(true);
+    public Double getWealthPensOpErContRate() {
+        return getWealthPensOpErContRate(true);
     }
-    public double getContRateOPEr(boolean throwError) {
-        if (!Parameters.isFinite(contRateOPEr)) {
+    public double getWealthPensOpErContRate(boolean throwError) {
+        if (!Parameters.isFinite(wealthPensOpErContRate)) {
             if (throwError)
-                throw new IllegalArgumentException("contRateOPEr is not finite");
+                throw new IllegalArgumentException("wealthPensOpErContRate is not finite");
             else
                 return 0.0;
         }
-        return contRateOPEr;
+        return wealthPensOpErContRate;
     }
 
-    public void setContRateOPEr(Double contRateOPEr) {
-        this.contRateOPEr = contRateOPEr;
+    public void setWealthPensOpErContRate(Double wealthPensOpErContRate) {
+        this.wealthPensOpErContRate = wealthPensOpErContRate;
     }
 
-    public Double getContRatePP() {
-        return getContRatePP(true);
+    public Double getWealthPensPpContRate() {
+        return getWealthPensPpContRate(true);
     }
-    public double getContRatePP(boolean throwError) {
-        if (!Parameters.isFinite(contRatePP)) {
+    public double getWealthPensPpContRate(boolean throwError) {
+        if (!Parameters.isFinite(wealthPensPpContRate)) {
             if (throwError)
-                throw new IllegalArgumentException("contRatePP is not finite");
+                throw new IllegalArgumentException("wealthPensPpContRate is not finite");
             else
                 return 0.0;
         }
-        return contRatePP;
+        return wealthPensPpContRate;
     }
 
-    public void setContRatePP(Double contRatePP) {
-        this.contRatePP = contRatePP;
+    public void setWealthPensPpContRate(Double wealthPensPpContRate) {
+        this.wealthPensPpContRate = wealthPensPpContRate;
     }
 
     public PrivatePension getPrivatePension() {
