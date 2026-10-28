@@ -1,0 +1,4 @@
+run_id,csv_dir
+1,/path/to/first_completed_run/csv
+2,/path/to/second_completed_run/csv
+3,/path/to/third_completed_run/csv
