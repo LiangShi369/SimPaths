@@ -104,26 +104,6 @@ Default comparison windows preserve the original exercise: consumption 2016–20
 
 The `data` directory holds prepared inputs and 20 calculation/comparison datasets (3 consumption, 7 housing, 6 pension, 4 debt). Headers list each output. The run log is `checks/wealth_validation.log`. There are 14 reported JPGs in total. Supplementary plotting blocks are not retained; the additional statistics remain calculated and saved. Survey microdata, generated graphs and local paths are not committed.
 
-## Checks
+## Verification
 
-The UKHLS preparation is tested on a synthetic pooled file against all 70 statistics calculated by the reference method, including full-pool adult grouping, mixed-case variable names, missing-value semantics and actual counts. The three-figure pension plotting checks cover ties, empty contributor/quintile groups and correct annual/period run aggregation. No real UKHLS microdata or cloud file is needed for these tests. Real-data validation requires the supplied UKHLS file; a synthetic test is not evidence of fit to UKHLS. The original 18 modules are unchanged and their new master hook is disabled by default. For portable targeted checks, run from the repository root:
-
-```stata
-do "validation/02_simulated_output_validation/tests/test_wealth_import.do"
-do "validation/02_simulated_output_validation/tests/test_UKHLS_pension_targets.do"
-do "validation/02_simulated_output_validation/tests/test_pension_edge_cases.do"
-```
-
-The debt target-construction check uses synthetic WAS records and needs no external data:
-
-```stata
-do "validation/02_simulated_output_validation/tests/test_unsecured_debt_targets.do"
-```
-
-After preparing debt targets from the consolidated WAS `.dta` under the default output root:
-
-```stata
-do "validation/02_simulated_output_validation/tests/test_unsecured_debt_edge_cases.do"
-```
-
-The debt test accepts an optional second argument for another target directory. The housing test additionally needs a prepared WAS BU target (optional second argument). Synthetic checks cover zero-holder and empty-risk groups, ties, missing ages/stocks, origin ages, one-time price conversion and between-run SDs. They write only ignored `checks` outputs. Run manifests/configuration for real simulations remain local.
+Development checks reproduced all 70 pension statistics from the reference method and checked weighting, transitions, missing/tied cases and run aggregation. Those local test scripts, synthetic fixtures and inspection figures are excluded from this publication. Synthetic checks establish calculation correctness; empirical validation requires the documented real survey inputs. The original 18 plotting modules are unchanged, and their new master hook is disabled by default.
