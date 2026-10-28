@@ -3,6 +3,8 @@
 * AUTHOR: Liang Shi
 * LAST UPDATE: 28 October 2026
 * Arguments: manifest_file output_dir initial_year consumption housing pensions debt
+* The wealth master generates the manifest from its inline run folders.
+* No manually maintained run-list CSV is required for the master workflow.
 * Manifest CSV: run_id,csv_dir. One unique integer label per completed run;
 * csv_dir names that run's CSV directory (quote paths containing commas).
 * Labels are assigned consistently across BU and Person files, independently of

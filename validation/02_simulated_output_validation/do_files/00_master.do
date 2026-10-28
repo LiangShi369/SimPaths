@@ -92,9 +92,9 @@ global dir_UKHLS_data "$dir_ind/input_processing/initial_populations/data"
 *******************************************************************************/
 
 * Optional wealth modules (04_19-04_22). Keep 0 for the original workflow.
-* For wealth validation alone, use 00_master_wealth.do; see README_wealth_validation.md.
+* Configure paths/runs in 00_master_wealth.do before enabling these modules.
+* For wealth validation alone, run that master directly without arguments.
 global run_wealth_validation 0
-global wealth_validation_config ""
 
 global use_assert "0"
 
@@ -231,8 +231,8 @@ foreach align in `alignments' {
 
 }
 
-* Optional wealth validation has its own run manifest and survey configuration.
+* Optional wealth validation has inline run folders and survey settings in its master.
 * It runs after the existing modules and does not require changing their inputs.
 if "${run_wealth_validation}" == "1" {
-    do "${dir_do_files}/00_master_wealth.do" "${wealth_validation_config}"
+    do "${dir_do_files}/00_master_wealth.do"
 }
