@@ -61,7 +61,7 @@ if ${wealth_housing} | ${wealth_pensions} {
     confirm file "${wealth_WAS_dir}/was_wealthdata_5_8_longitudinal.dta"
     confirm file "${wealth_WAS_debt_file}"
 }
-if ${wealth_pensions} confirm file "${wealth_pension_workbook}"
+if ${wealth_pensions} confirm file "${wealth_UKHLS_file}"
 if ${wealth_debt} confirm file "${wealth_WAS_debt_file}"
 capture mkdir `"`output'"'
 capture mkdir `"`data'"'
@@ -80,8 +80,8 @@ if ${wealth_housing} | ${wealth_pensions} {
         "${wealth_WAS_dir}" `"`data'"' 2014 2022 "${wealth_WAS_debt_file}"
 }
 if ${wealth_pensions} {
-    do `"`code'/03_create_UKHLS_pension_excel_targets.do"' ///
-        "${wealth_pension_workbook}" `"`data'"'
+    do `"`code'/03_create_UKHLS_pension_validation_targets.do"' ///
+        "${wealth_UKHLS_file}" `"`data'"' ${wealth_pensions_first} ${wealth_pensions_last}
 }
 if ${wealth_debt} {
     do `"`code'/03_create_unsecured_debt_validation_targets.do"' ///
@@ -107,7 +107,7 @@ if ${wealth_housing} {
 }
 if ${wealth_pensions} {
     do `"`code'/04_21_plot_pensions.do"' ///
-        `"`data'/ukhls_pension_excel_targets.dta"' `"`data'/was_validation_sample.dta"' ///
+        `"`data'/ukhls_pension_targets.dta"' `"`data'/was_validation_sample.dta"' ///
         `"`data'/pension_person_simulation_sample.dta"' `"`graphs'/pensions"' `"`data'"' ///
         ${wealth_pensions_first} ${wealth_pensions_last} ${wealth_pensions_rate_first}
 }

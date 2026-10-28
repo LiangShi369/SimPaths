@@ -2,16 +2,16 @@
 * PROJECT:      SimPaths UK - simulated output validation
 * OBJECT:       Original pension validation settings with new simulation results
 * AUTHOR:       Liang Shi
-* LAST UPDATE:  27 October 2026
+* LAST UPDATE:  28 October 2026
 *
 * Run from validation root: do "do_files/04_21_plot_pensions.do"
 * Optional arguments:
 *   ukhls_targets was_person simulation_person graph_dir stats_dir first_year last_year rate_first_year
 *
-* SURVEY BENCHMARKS (deliberately retain the workbook's mixed sources)
-* - Participation and PERSONAL wealth: fixed UKHLS results from Sheet1!A19:K25,
-*   imported by 03_create_UKHLS_pension_excel_targets.do. No UKHLS microdata is
-*   needed or reconstructed. Do not interpret these as new WAS estimates.
+* SURVEY BENCHMARKS
+* - Contributor shares and PERSONAL wealth: UKHLS_pooled_ipop.dta, prepared by
+*   03_create_UKHLS_pension_validation_targets.do following pension_wealth_surv.do.
+*   No fixed Excel values are imported. Actual UKHLS sample counts are retained.
 * - Contribution rates: WAS person targets from 03_create_WAS_validation_targets.
 *   Missing rate components become zero; PP is capped at 100%; contributors are
 *   positive combined OP rates or positive PP rate with earnings >5000 GBP.
@@ -30,7 +30,7 @@
 *   these flags measure positive contributions, not reported scheme membership.
 * - Personal wealth statistics use positive holders, all ages as in the original
 *   simulation validator; own-wealth quintiles, not income groups. Survey wealth
-*   remains the original workbook's equal-adult proxy, not a direct observation.
+*   uses the reference's equal-adult proxy, rather than observed personal holdings.
 *   Wealth means total private pension wealth PER PERSON (OP + PP), not PP-only.
 * - Both OP rate distributions condition on a positive combined OP rate, so an
 *   individual component can be zero. Each rate has its own contributor ranking.
@@ -40,16 +40,16 @@
 * - Percentages = simulation fractions *100, exactly once. Amounts are as
 *   recorded, no new deflator, trimming or inferred price-base label.
 * - Default participation/wealth window: 2015-2021, including initial year.
-*   Default contribution-rate window: 2016-2021, as in the workbook.
+*   Default contribution-rate window: 2016-2021, as in the original WAS validation.
 * - Period means average years WITHIN RUN before computing between-run sample SD.
 *   A missing year/group/run is not silently omitted from a comparison. Bands
 *   show mean +/-1.96 SD across runs, not a CI of the mean; no band for one run.
 *
 * OUTPUTS
-* Five JPGs: all seven original Excel charts consolidated into three images
-* (shares; mean/top-quintile wealth; rate quintiles), plus annual rate means and
-* a supplementary period personal-wealth quintile chart. Six .dta statistics
-* files include benchmark_source so UKHLS and WAS cannot be confused.
+* Three reported JPGs: contributor shares, mean/top-quintile personal wealth,
+* and contribution-rate quintiles. Supplementary plotting code is omitted.
+* Six .dta statistics files retain additional annual/period statistics and
+* benchmark_source so UKHLS and WAS cannot be confused.
 * No simulation or estimation is run; no particular output folder is embedded.
 *******************************************************************************/
 version 18
@@ -59,7 +59,7 @@ local data_root "${dir_data}"
 if `"`data_root'"' == "" local data_root "./data"
 local graph_root "${dir_output_files}"
 if `"`graph_root'"' == "" local graph_root "./graphs"
-if `"`ukhls_targets'"' == "" local ukhls_targets `"`data_root'/ukhls_pension_excel_targets.dta"'
+if `"`ukhls_targets'"' == "" local ukhls_targets `"`data_root'/ukhls_pension_targets.dta"'
 if `"`was_person'"' == "" local was_person `"`data_root'/was_validation_sample.dta"'
 if `"`simulation_person'"' == "" local simulation_person `"`data_root'/pension_person_simulation_sample.dta"'
 if `"`graph_dir'"' == "" local graph_dir `"`graph_root'/pensions"'
@@ -151,10 +151,15 @@ postfile `a' byte source double run int year byte outcome long n_all long n_elig
 postfile `q' byte source double run int year byte outcome byte quintile long n double mean ///
     using "`quintiles'", replace
 
-* Fixed UKHLS means: retain their recorded precision, and do not invent sample
-* counts or empirical percentiles from aggregate quintile means.
+* UKHLS annual means and actual counts rebuilt from the pooled microdata.
+* Shares already have percentage units. The wealth proxy and quintiles follow
+* pension_wealth_surv.do; empty groups remain missing, with a recorded zero count.
 use `"`ukhls_targets'"', clear
 isid year
+confirm numeric variable op_share pp_share op_employed_share pp_employed_share ///
+    wealth_mean wealth_q1 wealth_q2 wealth_q3 wealth_q4 wealth_q5 ///
+    n_all n_employed n_wealth n_wealth_q1 n_wealth_q2 n_wealth_q3 n_wealth_q4 n_wealth_q5
+assert benchmark_source=="UKHLS"
 keep if inrange(year, `first_year', `last_year')
 assert _N == `last_year' - `first_year' + 1
 sort year
@@ -162,18 +167,26 @@ forvalues i = 1/`=_N' {
     local yy = year[`i']
     forvalues oo = 1/4 {
         local variable op_share
+        local count n_all
         if `oo' == 2 local variable pp_share
         if `oo' == 3 local variable op_employed_share
         if `oo' == 4 local variable pp_employed_share
-        assert inrange(`variable',0,100)
-        post `a' (0) (-1) (`yy') (`oo') (.) (.) (.) (`variable'[`i'])
+        if inlist(`oo',3,4) local count n_employed
+        assert inrange(`variable',0,100) if `count'>0
+        assert missing(`variable') if `count'==0
+        post `a' (0) (-1) (`yy') (`oo') (`count'[`i']) (`count'[`i']) (`count'[`i']) (`variable'[`i'])
     }
-    post `a' (0) (-1) (`yy') (8) (.) (.) (.) (wealth_mean[`i'])
+    post `a' (0) (-1) (`yy') (8) (n_all[`i']) (n_wealth[`i']) (n_wealth[`i']) (wealth_mean[`i'])
     forvalues qq = 0/5 {
         local variable wealth_mean
-        if `qq' > 0 local variable wealth_q`qq'
-        assert `variable' > 0 & `variable' < .
-        post `q' (0) (-1) (`yy') (8) (`qq') (.) (`variable'[`i'])
+        local count n_wealth
+        if `qq' > 0 {
+            local variable wealth_q`qq'
+            local count n_wealth_q`qq'
+        }
+        assert `variable'>0 & `variable'<. if `count'>0
+        assert missing(`variable') if `count'==0
+        post `q' (0) (-1) (`yy') (8) (`qq') (`count'[`i']) (`variable'[`i'])
     }
 }
 
@@ -230,16 +243,16 @@ program define _pension_labels
     label define pension_source 0 "Survey benchmark" 1 "SimPaths", replace
     label values outcome pension_outcome
     label values source pension_source
-    gen str16 benchmark_source = "UKHLS (Excel)"
+    gen str16 benchmark_source = "UKHLS"
     replace benchmark_source = "WAS" if inrange(outcome,5,7)
     char _dta[units] "Shares/rates percent; personal wealth GBP as recorded; no added deflation"
-    char _dta[UKHLS_provenance] "Fixed workbook benchmarks, not reconstructed microdata; survey counts unavailable"
+    char _dta[UKHLS_provenance] "Rebuilt from UKHLS_pooled_ipop.dta using pension_wealth_surv.do; actual unweighted counts"
 end
 use "`annual'", clear
 _pension_labels
 isid source run year outcome
-label var n_all "Record count before contributor/positive-wealth screen; UKHLS unknown"
-label var n_eligible "Record count in mean; UKHLS unknown"
+label var n_all "Record count before contributor/positive-wealth screen"
+label var n_eligible "Record count in mean"
 sort source run outcome year
 save `"`stats_dir'/pension_annual_statistics.dta"', replace
 preserve
@@ -282,8 +295,8 @@ merge 1:1 outcome year quintile using "`survey_stats'", assert(match) nogen
 sort outcome year quintile
 save `"`stats_dir'/pension_quintile_annual_comparison.dta"', replace
 restore
-* The wealth time series retains 2015; this supplementary period chart uses the
-* same 2016-2021 projected period as the rate quintile chart, clearly labelled.
+* Retain period statistics (including unplotted wealth quintiles) for reuse.
+* As in the reported rate-quintile comparison, average years within each run.
 keep if inrange(year, `rate_first_year', `last_year')
 collapse (mean) mean (count) n_years=mean, by(source run outcome quintile benchmark_source)
 gen int expected_years = `period_years'
@@ -350,7 +363,7 @@ end
 local variation_note "Mean +/- 1.96 SD across `expected_runs' runs; between-run variation."
 if `expected_runs' == 1 local variation_note "One simulation run; no between-run variation band."
 
-* The first three core figures cover all seven original Excel chart subjects.
+* Only the three selected reported figure groups are drawn below.
 use `"`stats_dir'/pension_annual_comparison.dta"', clear
 forvalues oo = 1/4 {
     local title "Occupational pension: all persons"
@@ -361,8 +374,8 @@ forvalues oo = 1/4 {
         name(pension_share`oo') first(`first_year') last(`last_year')
 }
 graph combine pension_share1 pension_share2 pension_share3 pension_share4, cols(2) ///
-    title("Pension contributor shares: original UKHLS benchmarks", size(medium)) ///
-    note("Green: SimPaths. Dashed navy: fixed UKHLS values from Excel." ///
+    title("Pension contributor shares: UKHLS benchmarks", size(medium)) ///
+    note("Green: SimPaths. Dashed navy: UKHLS microdata targets." ///
          "`variation_note'" ///
          "Positive OP/PP contribution rates, unweighted persons; no WAS earnings screen." ///
          "Comparison `first_year'-`last_year'; the default window includes initial year 2015.", size(small)) ///
@@ -375,8 +388,8 @@ _pension_line if outcome == 8 & quintile == 0, title("Mean among positive holder
 _pension_line if outcome == 8 & quintile == 5, title("Mean within top wealth quintile") ///
     unit("GBP thousands, as recorded") scale(.001) name(pension_wealth_q5) first(`first_year') last(`last_year')
 graph combine pension_wealth_mean pension_wealth_q5, cols(2) ///
-    title("Private pension wealth per person: original UKHLS benchmarks", size(medium)) ///
-    note("Green: SimPaths. Dashed navy: fixed UKHLS values from Excel." ///
+    title("Private pension wealth per person: UKHLS benchmarks", size(medium)) ///
+    note("Green: SimPaths. Dashed navy: UKHLS microdata targets." ///
          "Positive personal-wealth holders; UKHLS retains the original equal-adult allocation proxy." ///
          "`variation_note' No additional price adjustment or trimming.", size(small)) ///
     graphregion(color(white)) xsize(12) ysize(6) name(pension_wealth, replace)
@@ -399,29 +412,4 @@ graph combine pension_q5 pension_q6 pension_q7, cols(3) ///
     graphregion(color(white)) xsize(14) ysize(6) name(pension_rate_quintiles, replace)
 graph export `"`graph_dir'/validation_UK_pension_rate_quintiles.jpg"', replace width(2800) height(1250) quality(100)
 
-* Supplementary figures use existing source statistics, without inventing
-* unavailable UKHLS medians/percentiles or changing the original comparisons.
-_pension_bars if outcome == 8, title("Private pension wealth per person by own-wealth quintile") ///
-    unit("Mean wealth, GBP thousands as recorded") scale(.001) benchmark("UKHLS (Excel)") name(pension_wealth_quintiles)
-graph combine pension_wealth_quintiles, cols(1) xsize(11) ysize(6) graphregion(color(white)) ///
-    note("Supplementary equal-year means, `rate_first_year'-`last_year'; positive personal-wealth holders." ///
-         "UKHLS fixed workbook values; original equal-adult proxy. Overall is the direct holder mean." ///
-         "`variation_note' No added deflation or trimming.", size(small)) name(pension_wealth_qfigure, replace)
-graph export `"`graph_dir'/validation_UK_pension_wealth_quintiles.jpg"', replace width(2400) height(1350) quality(100)
-
-use `"`stats_dir'/pension_annual_comparison.dta"', clear
-forvalues oo = 5/7 {
-    local title "Occupational DC: employee"
-    if `oo' == 6 local title "Occupational DC: employer"
-    if `oo' == 7 local title "Personal pension"
-    _pension_line if outcome == `oo', title("`title'") unit("Mean contribution rate (%)") ///
-        name(pension_rate`oo') first(`rate_first_year') last(`last_year')
-}
-graph combine pension_rate5 pension_rate6 pension_rate7, cols(3) ///
-    title("Pension contribution rates among contributors", size(medium)) ///
-    note("Green: SimPaths. Dashed navy: WAS. `variation_note'" ///
-         "Both OP rates condition on positive combined contributions; WAS PP retains earnings > GBP 5,000." ///
-         "Supplementary annual view of the original contribution-rate statistics.", size(small)) ///
-    graphregion(color(white)) xsize(14) ysize(6) name(pension_rates, replace)
-graph export `"`graph_dir'/validation_UK_pension_contribution_rates.jpg"', replace width(2800) height(1250) quality(100)
-display as result "PENSION VALIDATION COMPLETE: original UKHLS/WAS settings, five figures, `expected_runs' run(s)."
+display as result "PENSION VALIDATION COMPLETE: UKHLS/WAS targets, three reported figures, `expected_runs' run(s)."

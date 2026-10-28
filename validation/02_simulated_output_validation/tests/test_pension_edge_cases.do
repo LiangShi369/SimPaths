@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Original-settings synthetic test: fixed survey means, tied/empty quintiles,
+* Original-settings synthetic test: microdata-target counts, tied/empty quintiles,
 * empty contributor years, and between-run SD after within-run period averaging.
 * No additional actual SimPaths runs. Argument: validation_root.
 *******************************************************************************/
@@ -21,8 +21,13 @@ foreach v in op_share pp_share op_employed_share pp_employed_share {
     gen double `v' = 100
 }
 gen double wealth_mean = 100
+gen long n_all=12
+gen long n_employed=12
+gen long n_wealth=12
+gen str16 benchmark_source="UKHLS"
 forvalues q=1/5 {
-    gen double wealth_q`q' = 100
+    gen double wealth_q`q' = cond(`q'==1,100,.)
+    gen long n_wealth_q`q' = cond(`q'==1,12,0)
 }
 save "`uk'", replace
 clear
@@ -52,7 +57,7 @@ gen double wealthPensValue = cond(run==1,100,300)
 save "`sim'", replace
 do `"`validation_root'/do_files/04_21_plot_pensions.do"' "`uk'" "`was'" "`sim'" "`out'" "`out'" 2016 2017 2016
 use `"`out'/pension_annual_statistics.dta"', clear
-assert missing(n_all) & missing(n_eligible) if source==0 & outcome<=4
+assert n_all==12 & n_eligible==12 & weighted_n==12 if source==0 & outcome<=4
 assert mean==100 if source==0 & outcome==8
 use `"`out'/pension_quintile_statistics.dta"', clear
 assert n==0 & missing(mean) if source==1 & quintile>1
@@ -68,5 +73,5 @@ assert abs(sim_mean-2)<1e-12 & abs(sim_sd)<1e-12 if outcome==5 & quintile<=1
 assert abs(sim_low-2)<1e-12 & abs(sim_high-2)<1e-12 if outcome==5 & quintile<=1
 assert missing(sim_mean) & n_runs==0 if quintile>1
 assert missing(sim_mean) & n_runs==1 if outcome==7 & quintile<=1
-display as result "EDGE CASES PASSED: fixed benchmark counts unknown; personal wealth; ties; empty contributors; correct annual/period two-run bands."
+display as result "EDGE CASES PASSED: actual UKHLS counts; personal wealth; ties; empty contributors; correct annual/period two-run bands."
 log close

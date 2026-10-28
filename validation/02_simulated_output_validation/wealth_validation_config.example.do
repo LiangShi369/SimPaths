@@ -19,8 +19,8 @@ global wealth_LCF_dir "/path/to/compiled_LCFS"
 global wealth_WAS_dir "/path/to/compiled_WAS"
 * This enriched file alone is sufficient when only high-cost debt is enabled.
 global wealth_WAS_debt_file "/path/to/enriched_WAS/was_wealthdata_5_8_longitudinal.dta"
-* Fixed UKHLS pension shares/wealth in Sheet1!A19:K25; WAS rates come from WAS above.
-global wealth_pension_workbook "/path/to/pension validation.xlsx"
+* UKHLS microdata for contributor shares/personal wealth; WAS supplies contribution rates.
+global wealth_UKHLS_file "/path/to/UKHLS_pooled_ipop.dta"
 * High-cost debt uses wealth_WAS_debt_file directly; no debt workbook is required.
 
 * Optional comparison windows; defaults below retain the original settings.
