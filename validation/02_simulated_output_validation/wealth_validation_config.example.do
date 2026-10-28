@@ -16,12 +16,15 @@ global wealth_debt 1
 
 * Compiled survey data: see README_wealth_validation.md for required definitions.
 global wealth_LCF_dir "/path/to/compiled_LCFS"
-global wealth_WAS_dir "/path/to/compiled_WAS"
-* This enriched file alone is sufficient when only high-cost debt is enabled.
-global wealth_WAS_debt_file "/path/to/enriched_WAS/was_wealthdata_5_8_longitudinal.dta"
+* One consolidated WAS input supplies housing, pension rates and high-cost debt.
+global wealth_WAS_file "/path/to/compiled_WAS/was_wealthdata_5_8_longitudinal.dta"
 * UKHLS microdata for contributor shares/personal wealth; WAS supplies contribution rates.
 global wealth_UKHLS_file "/path/to/UKHLS_pooled_ipop.dta"
-* High-cost debt uses wealth_WAS_debt_file directly; no debt workbook is required.
+* No Excel workbook or second WAS compilation is required.
+* Optional explicit precomputed UKHLS target .dta; leave blank to rebuild from
+* microdata. It must follow the target schema and declare fixed_excel provenance
+* when using saved workbook survey values; unavailable counts remain missing.
+global wealth_UKHLS_targets_file ""
 
 * Optional comparison windows; defaults below retain the original settings.
 global wealth_consumption_first 2016

@@ -11,7 +11,9 @@
 * SURVEY BENCHMARKS
 * - Contributor shares and PERSONAL wealth: UKHLS_pooled_ipop.dta, prepared by
 *   03_create_UKHLS_pension_validation_targets.do following pension_wealth_surv.do.
-*   No fixed Excel values are imported. Actual UKHLS sample counts are retained.
+*   Alternatively, explicitly supplied fixed UKHLS targets can be read as .dta.
+*   Their provenance must identify fixed_excel; unavailable counts stay missing.
+*   This plotting script does not import Excel or silently substitute benchmarks.
 * - Contribution rates: WAS person targets from 03_create_WAS_validation_targets.
 *   Missing rate components become zero; PP is capped at 100%; contributors are
 *   positive combined OP rates or positive PP rate with earnings >5000 GBP.
@@ -151,7 +153,8 @@ postfile `a' byte source double run int year byte outcome long n_all long n_elig
 postfile `q' byte source double run int year byte outcome byte quintile long n double mean ///
     using "`quintiles'", replace
 
-* UKHLS annual means and actual counts rebuilt from the pooled microdata.
+* UKHLS annual means: normally rebuilt from pooled microdata with actual counts.
+* Explicit fixed targets are allowed with their basis recorded and unknown counts.
 * Shares already have percentage units. The wealth proxy and quintiles follow
 * pension_wealth_surv.do; empty groups remain missing, with a recorded zero count.
 use `"`ukhls_targets'"', clear
@@ -160,6 +163,18 @@ confirm numeric variable op_share pp_share op_employed_share pp_employed_share /
     wealth_mean wealth_q1 wealth_q2 wealth_q3 wealth_q4 wealth_q5 ///
     n_all n_employed n_wealth n_wealth_q1 n_wealth_q2 n_wealth_q3 n_wealth_q4 n_wealth_q5
 assert benchmark_source=="UKHLS"
+local ukhls_basis : char _dta[benchmark_basis]
+if "`ukhls_basis'"=="" local ukhls_basis "microdata"
+if !inlist("`ukhls_basis'","microdata","fixed_excel") exit 198
+local ukhls_note "UKHLS microdata targets"
+local ukhls_provenance "Rebuilt from UKHLS_pooled_ipop.dta; actual unweighted counts"
+if "`ukhls_basis'"=="fixed_excel" {
+    local ukhls_note "UKHLS saved Excel survey targets"
+    local ukhls_provenance "Fixed UKHLS workbook targets; not rebuilt from microdata; counts unavailable"
+    foreach count in n_all n_employed n_wealth n_wealth_q1 n_wealth_q2 n_wealth_q3 n_wealth_q4 n_wealth_q5 {
+        assert missing(`count')
+    }
+}
 keep if inrange(year, `first_year', `last_year')
 assert _N == `last_year' - `first_year' + 1
 sort year
@@ -236,6 +251,7 @@ postclose `q'
 
 capture program drop _pension_labels
 program define _pension_labels
+    syntax, BASIS(string) PROVENANCE(string)
     label define pension_outcome 1 "OP contributors: all persons" 2 "PP contributors: all persons" ///
         3 "OP contributors: employed" 4 "PP contributors: employed" ///
         5 "OP employee contribution rate" 6 "OP employer contribution rate" ///
@@ -246,10 +262,12 @@ program define _pension_labels
     gen str16 benchmark_source = "UKHLS"
     replace benchmark_source = "WAS" if inrange(outcome,5,7)
     char _dta[units] "Shares/rates percent; personal wealth GBP as recorded; no added deflation"
-    char _dta[UKHLS_provenance] "Rebuilt from UKHLS_pooled_ipop.dta using pension_wealth_surv.do; actual unweighted counts"
+    gen str16 benchmark_basis = "`basis'"
+    replace benchmark_basis = "microdata" if inrange(outcome,5,7)
+    char _dta[UKHLS_provenance] "`provenance'"
 end
 use "`annual'", clear
-_pension_labels
+_pension_labels, basis("`ukhls_basis'") provenance("`ukhls_provenance'")
 isid source run year outcome
 label var n_all "Record count before contributor/positive-wealth screen"
 label var n_eligible "Record count in mean"
@@ -274,13 +292,13 @@ sort outcome year
 save `"`stats_dir'/pension_annual_comparison.dta"', replace
 
 use "`quintiles'", clear
-_pension_labels
+_pension_labels, basis("`ukhls_basis'") provenance("`ukhls_provenance'")
 isid source run year outcome quintile
 sort source run outcome year quintile
 save `"`stats_dir'/pension_quintile_statistics.dta"', replace
 preserve
 keep if source == 0
-keep outcome year quintile benchmark_source mean
+keep outcome year quintile benchmark_source benchmark_basis mean
 rename mean survey_mean
 save "`survey_stats'", replace
 restore
@@ -298,13 +316,13 @@ restore
 * Retain period statistics (including unplotted wealth quintiles) for reuse.
 * As in the reported rate-quintile comparison, average years within each run.
 keep if inrange(year, `rate_first_year', `last_year')
-collapse (mean) mean (count) n_years=mean, by(source run outcome quintile benchmark_source)
+collapse (mean) mean (count) n_years=mean, by(source run outcome quintile benchmark_source benchmark_basis)
 gen int expected_years = `period_years'
 replace mean = . if n_years != expected_years
 save `"`stats_dir'/pension_quintile_period_by_run.dta"', replace
 preserve
 keep if source == 0
-keep outcome quintile benchmark_source mean n_years
+keep outcome quintile benchmark_source benchmark_basis mean n_years
 rename (mean n_years) (survey_mean survey_n_years)
 save "`survey_stats'", replace
 restore
@@ -375,7 +393,7 @@ forvalues oo = 1/4 {
 }
 graph combine pension_share1 pension_share2 pension_share3 pension_share4, cols(2) ///
     title("Pension contributor shares: UKHLS benchmarks", size(medium)) ///
-    note("Green: SimPaths. Dashed navy: UKHLS microdata targets." ///
+    note("Green: SimPaths. Dashed navy: `ukhls_note'." ///
          "`variation_note'" ///
          "Positive OP/PP contribution rates, unweighted persons; no WAS earnings screen." ///
          "Comparison `first_year'-`last_year'; the default window includes initial year 2015.", size(small)) ///
@@ -389,7 +407,7 @@ _pension_line if outcome == 8 & quintile == 5, title("Mean within top wealth qui
     unit("GBP thousands, as recorded") scale(.001) name(pension_wealth_q5) first(`first_year') last(`last_year')
 graph combine pension_wealth_mean pension_wealth_q5, cols(2) ///
     title("Private pension wealth per person: UKHLS benchmarks", size(medium)) ///
-    note("Green: SimPaths. Dashed navy: UKHLS microdata targets." ///
+    note("Green: SimPaths. Dashed navy: `ukhls_note'." ///
          "Positive personal-wealth holders; UKHLS retains the original equal-adult allocation proxy." ///
          "`variation_note' No additional price adjustment or trimming.", size(small)) ///
     graphregion(color(white)) xsize(12) ysize(6) name(pension_wealth, replace)

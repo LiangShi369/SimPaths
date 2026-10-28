@@ -3,11 +3,11 @@
 * SECTION:      Simulated output validation - survey target preparation
 * OBJECT:       Prepare WAS validation microdata
 * Authors:      Liang Shi, Justin van der Ven
-* LAST UPDATE:  27 October 2026
+* LAST UPDATE:  28 October 2026
 *
-* INPUT:  Base was_wealthdata_5_8_longitudinal.dta, compiled from WAS R5-R8,
-*         plus an enriched longitudinal WAS file supplying the debt components.
-*         Only debt fields are merged; base wealth/pension variables are retained.
+* INPUT:  One consolidated was_wealthdata_5_8_longitudinal.dta, compiled from
+*         WAS R5-R8 with finalised debt/wealth definitions AND pension-rate fields.
+*         See 02_compile_WAS_wealth_data.do for reproducible raw-data construction.
 * OUTPUT: was_validation_sample.dta (person records with sample flags), and
 *         was_bu_validation_sample.dta (one reference record per benefit unit).
 *
@@ -16,12 +16,10 @@
 * statistics, read completed simulations, and draw figures. No model is estimated
 * or simulation launched here. The source dataset is never overwritten.
 *
-* RUN: do "03_create_WAS_validation_targets.do" "survey folder" "target folder"
+* RUN: do "03_create_WAS_validation_targets.do" "compiled WAS.dta" "target folder"
 * Optional third/fourth arguments select first/last INTERVIEW year (inclusive).
-* Optional fifth argument gives the full enriched debt-data filename.
-* With no arguments, use the globals below if defined by a validation master:
-*   dir_WAS_data, dir_data, min_sim_year, max_sim_year, file_WAS_debt.
-* Otherwise use the portable survey_inputs defaults in section 1.
+* With no arguments, use file_WAS_data, dir_data, min_sim_year, max_sim_year,
+* or the portable survey_inputs defaults in section 1.
 *
 * MEASUREMENT:
 * - Person-level pension rates and BU-level wealth coexist in the source.
@@ -38,22 +36,18 @@
 *******************************************************************************/
 version 18
 set more off
-args source_dir target_dir first_year last_year debt_file
+args source_file target_dir first_year last_year
 
 /*******************************************************************************
 * 1 - Directories and validation years
 *******************************************************************************/
 * Relative defaults assume the validation root is the working directory.
 local validation_root "."
-if `"`source_dir'"' == "" local source_dir "${dir_WAS_data}"
-if `"`source_dir'"' == "" local source_dir `"`validation_root'/survey_inputs/WAS"'
+if `"`source_file'"' == "" local source_file "${file_WAS_data}"
+if `"`source_file'"' == "" local source_file ///
+    `"`validation_root'/survey_inputs/WAS/was_wealthdata_5_8_longitudinal.dta"'
 if `"`target_dir'"' == "" local target_dir "${dir_data}"
 if `"`target_dir'"' == "" local target_dir `"`validation_root'/data"'
-* The debt file supplies components absent from the base pension compilation.
-* Supply the full enriched file through the fifth argument or file_WAS_debt.
-if `"`debt_file'"' == "" local debt_file "${file_WAS_debt}"
-if `"`debt_file'"' == "" local debt_file ///
-    `"`source_dir'/was_debt_components.dta"'
 if "`first_year'" == "" local first_year "${min_sim_year}"
 if "`last_year'" == "" local last_year "${max_sim_year}"
 if "`first_year'" == "" local first_year 2014
@@ -63,10 +57,9 @@ if missing(real("`first_year'"), real("`last_year'")) | ///
     display as error "Specify numeric first/last years in ascending order."
     exit 198
 }
-confirm file `"`source_dir'/was_wealthdata_5_8_longitudinal.dta"'
-confirm file `"`debt_file'"'
+confirm file `"`source_file'"'
 capture mkdir `"`target_dir'"'
-use `"`source_dir'/was_wealthdata_5_8_longitudinal.dta"', clear
+use `"`source_file'"', clear
 
 /*******************************************************************************
 * 2 - Check source structure before constructing any targets
@@ -86,31 +79,13 @@ bysort was_round case bu: egen `n_ref' = total(bu_rp == 1)
 assert `n_ref' == 1
 drop `n_ref'
 
-* Attach debt components BEFORE filtering years, so the two complete source
-* files must match. Synthetic person IDs are not sufficient on their own:
-* verify household/BU identity and the canonical linkage key as well.
+* Debt components and pension rates must coexist in this single input file.
+* Fail explicitly on an older pension-only or finalised debt-only compilation;
+* never fill absent debt/rate fields with zero or merge a different specification.
 confirm string variable was_link_key
-local debt_fields cc_debt cc_debt_trans cc_debt_pers hp_debt loan_debt ///
+confirm numeric variable cc_debt cc_debt_trans cc_debt_pers hp_debt loan_debt ///
     loan_debt_exc_slc loan_debt_slc mail_debt highcost_loan_debt ///
     highcost_debt_proxy unsec_debt_total loan_doorstep loan_pawnbroker loan_payday
-* Prevent overlapping source debt columns from silently taking precedence.
-confirm new variable `debt_fields'
-tempfile debt_components
-preserve
-use `"`debt_file'"', clear
-confirm numeric variable was_pid was_round year case bu bu_rp sex `debt_fields'
-confirm string variable was_link_key
-isid was_pid was_round
-keep was_pid was_round year case bu bu_rp sex was_link_key `debt_fields'
-rename (year case bu bu_rp sex was_link_key) ///
-    (debtSourceYear debtSourceCase debtSourceBu debtSourceRef debtSourceSex debtSourceLink)
-save "`debt_components'", replace
-restore
-merge 1:1 was_pid was_round using "`debt_components'", assert(match) nogen
-assert year == debtSourceYear & case == debtSourceCase & bu == debtSourceBu
-assert bu_rp == debtSourceRef & sex == debtSourceSex
-assert was_link_key == debtSourceLink
-drop debtSourceYear debtSourceCase debtSourceBu debtSourceRef debtSourceSex debtSourceLink
 * Source compilation deliberately leaves the high-cost proxy missing in R5.
 assert missing(highcost_debt_proxy) if was_round == 5
 keep if inrange(year, `first_year', `last_year')
@@ -193,8 +168,8 @@ label var valid_opMemberFlag "Reported occupational membership, including DB sch
 /*******************************************************************************
 * 6 - Unsecured debt: observed component balances and four-state status
 *******************************************************************************/
-* Use the definitions in 05 unsecured debt/unsecured_debt_incidence.do and
-* unsecured_debt_amounts.do, without their regression complete-case screens.
+* Use the finalised unsecured_debt.do balance definitions, without its
+* regression sample restrictions or estimation steps.
 * These are BU balances repeated across members, in source interview-year GBP.
 * Student loans are excluded from the low-cost component. Explicit high-cost
 * loans are removed from that component to avoid counting them twice.
@@ -245,8 +220,9 @@ char _dta[money_basis] "Source interview-year GBP for core wealth stocks; no def
 char _dta[rate_units] "Percentage points; raw source rates retained"
 char _dta[bu_selection] "Use sample_bu==1; person-level wealth repeats within BU"
 char _dta[debt_available] "1"
-char _dta[debt_source] `"`debt_file'"'
-char _dta[debt_match] "Full 1:1 was_pid/was_round; household, BU, year, reference, sex and linkage checked"
+char _dta[debt_source] `"`source_file'"'
+char _dta[WAS_source] `"`source_file'"'
+char _dta[WAS_specification] "Consolidated finalised debt/wealth and historical pension validation rates"
 char _dta[debt_money_basis] "Interview-year GBP, no deflation; high-cost proxy missing in R5"
 char _dta[debt_sample] "Use sample_debtTotal/Low/High or sample_debt for the joint state"
 sort idPers statCollectionWave

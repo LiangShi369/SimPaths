@@ -1,6 +1,6 @@
 # Wealth-module output validation
 
-These Stata 18+ do-files compare **completed** SimPaths UK simulations with supplied survey data. They prepare validation inputs, calculate statistics and export figures and datasets. They do not run simulations, estimate behavioural equations or rebuild raw WAS/LCFS waves.
+These Stata 18+ do-files compare **completed** SimPaths UK simulations with supplied survey data. They prepare validation inputs, calculate statistics and export figures and datasets. The validation master does not run simulations or estimate behavioural equations. An optional, separate WAS compiler rebuilds the consolidated survey input from licensed raw waves; LCFS compilation remains upstream.
 
 The original `do_files/00_master.do` and modules `04_01`–`04_18` remain the default workflow. The optional wealth entry point runs consumption (`04_19`), housing/mortgages (`04_20`), pensions (`04_21`) and high-cost unsecured debt (`04_22`).
 
@@ -27,24 +27,37 @@ The wealth master calls `01_prepare_wealth_simulated_data.do` to create the four
 | Module | Required external input | Target preparation |
 | --- | --- | --- |
 | Consumption | `lcfs_sorted.dta`, compiled from LCFS with the Council Tax definitions below | `03_create_LCF_validation_targets.do` |
-| Housing/mortgage | Base `was_wealthdata_5_8_longitudinal.dta`, plus the enriched WAS debt file | `03_create_WAS_validation_targets.do` |
-| Pension contribution rates | The same WAS files | `03_create_WAS_validation_targets.do` |
+| Housing/mortgage | Consolidated `was_wealthdata_5_8_longitudinal.dta` | `03_create_WAS_validation_targets.do` |
+| Pension contribution rates | The same consolidated WAS file | `03_create_WAS_validation_targets.do` |
 | Pension contributor shares and wealth | `UKHLS_pooled_ipop.dta` | `03_create_UKHLS_pension_validation_targets.do` |
-| High-cost unsecured debt | Enriched `was_wealthdata_5_8_longitudinal.dta` containing `highcost_debt_proxy` | `03_create_unsecured_debt_validation_targets.do` |
+| High-cost unsecured debt | The same consolidated WAS file, including `highcost_debt_proxy` | `03_create_unsecured_debt_validation_targets.do` |
 
-The survey preparation scripts also run individually with explicit path arguments, documented in their headers. Their relative fallback input directory is `survey_inputs`; use the configuration to point to existing files elsewhere. All survey inputs are read-only `.dta` files. Pension shares/wealth are reconstructed from UKHLS microdata; debt targets are reconstructed from enriched WAS microdata. No Excel workbook is required by the wealth workflow.
+The survey preparation scripts also run individually with explicit path arguments, documented in their headers. Their relative fallback input directory is `survey_inputs`; use the configuration to point to existing files elsewhere. Default survey inputs are read-only `.dta` files. Pension shares/wealth are reconstructed from UKHLS microdata; debt targets are reconstructed from consolidated WAS microdata. No Excel workbook is required by the default wealth workflow.
 
 **LCFS:** the compiled file must contain `year caseno bu age female na nk weighta wght consmpn disp_inc income_scope_ok`, plus string tags `income_definition="personal_net_ct"` and `expenditure_definition="broad_net_ct"`. Both income and broad expenditure deduct the same adult-share allocation of Council Tax/NI domestic rates. Estimation of consumption remains upstream. Targets retain complete-income-scope one/two-adult BUs with positive weights and nominal weekly income at least £10. The statistic is the weighted mean of BU-level C/Y, not the ratio of aggregate means. Simulation retains its original monthly-income £10 screen; these survey/simulation screens differ in units and price basis.
 
-**WAS:** the base file is the person-level, longitudinal R5–R8 compilation used for wealth/pension modelling. It must have unique `was_pid was_round`, household/BU identity, `was_link_key`, one `bu_rp` reference record per BU, demographic/weight fields, wealth stocks, earnings, contribution rates and membership. The target script lists and checks required names. It keeps the full 2014–2022 interview-year range for linked housing transitions. The enriched file supplies only the 14 debt components listed in that script. Its person/round, interview year, household, BU, reference flag, sex and linkage key must match exactly; base wealth/pension values are preserved. If necessary, a debt-component-only extract with those identity fields is sufficient. Do not pass a base file already containing the same debt fields: the compiler deliberately rejects silent overlap.
+**WAS:** set `wealth_WAS_file` to one consolidated person-level R5–R8 `.dta`. It must contain unique `was_pid was_round`, household/BU identity, `was_link_key`, one `bu_rp` reference row per BU, demographics/weights, finalised debt/wealth stocks, earnings, pension contribution rates and membership. Both housing/pension preparation and debt preparation read this same file; no second-file merge occurs. Older pension-only or debt-only compilations are insufficient for the combined workflow. Target preparation preserves the full 2014–2022 interview-year range for housing transitions.
+
+To rebuild this input from raw WAS, run the separate compiler (the parent of the output folder must exist):
+
+```stata
+do "validation/02_simulated_output_validation/do_files/02_compile_WAS_wealth_data.do" ///
+    "/path/to/raw_WAS" "/path/to/dedicated_compiled_WAS" "/path/to/logs"
+```
+
+The compiler requires the household and person EUL files for rounds 5–8; exact filenames are listed in its two extraction loops. It retains the finalised debt balances and the associated `assets`, `wealth` and `ww` definitions. It additionally constructs `earnings earn_qtl partnered pp_contrate ocdc_contrate_emee ocdc_contrate_emer` using the earlier pension compiler's validation definitions. The percentage-of-earnings validation rates coexist with the finalised income-based contribution measures; they are different denominators, not interchangeable variables. Historical PP reallocation/tie behavior and missing-value arithmetic are documented and retained. The compiled file is saved after linkage/BU checks; this step does not estimate pensions or debt models. Use a dedicated output directory because named compiler intermediates are created and removed there.
 
 **UKHLS pension targets:** set `wealth_UKHLS_file` to `UKHLS_pooled_ipop.dta`. Preparation follows `Pension Wealth/pension_wealth_surv.do` (Justin van de Ven, 12 August 2026). It lowercases names and requires `idbenefitunit pno stm dag les_c4 contrateopee contrateoper contratepp total_pensions`. All statistics are unweighted. OP and PP contributor shares use positive combined OP contributions and positive PP contributions, both overall and among `les_c4==1` people; no WAS earnings screen applies.
 
 The reference defines adults as `dag>17` and counts them by `idbenefitunit` over the **full pooled file before selecting years**. It assigns `total_pensions/na` to adults and zero to children, using the original float proxy. The positive-holder mean and annual own-wealth quintile means are calculated from that proxy. Neither the grouping nor the proxy is replaced by another personal-wealth definition. The literal Stata comparisons are preserved, including Stata's ordering of numeric missing values above finite values. Missing contribution/age counts are saved for audit rather than silently changing the reference's classification.
 
-Outputs are `ukhls_pension_targets.dta` (plus CSV), including actual annual/employed/positive-holder/quintile counts, and `ukhls_pension_validation_sample.dta` for auditing the flags and proxy. The pension plotting script reads these computed targets. Its comments explicitly distinguish **UKHLS shares/wealth** from **WAS contribution rates**. It does not import fixed Excel benchmark values.
+Outputs are `ukhls_pension_targets.dta` (plus CSV), including actual annual/employed/positive-holder/quintile counts, and `ukhls_pension_validation_sample.dta` for auditing the flags and proxy. The pension plotting script reads these computed targets. Its comments explicitly distinguish **UKHLS shares/wealth** from **WAS contribution rates**. This default route does not import fixed Excel benchmark values.
 
-**Debt targets:** set `wealth_WAS_debt_file` to the enriched longitudinal WAS `.dta`. A debt-only run needs no base pension compilation and no workbook. Required numeric fields are `was_pid was_round case bu bu_rp year dwt dvage17 highcost_debt_proxy`. The earlier pension-only `.dta` lacks the proxy and cannot supply these targets. Preparation selects observed BU reference records with valid positive integer `dwt` and observed nonnegative debt, without regression restrictions. It calculates weighted annual prevalence and unconditional/positive-holder balance statistics, labels rounds 6/7/8 by midpoints 2017/2019/2021, and interpolates adjacent summary estimates for 2018/2020. Observed counts and weight sums are not interpolated. Missing debt is excluded, never treated as zero.
+**Explicit precomputed UKHLS targets:** normally leave `wealth_UKHLS_targets_file` blank to rebuild UKHLS targets from microdata. If an accepted fixed set of UKHLS survey values must instead be used, point this optional setting to a prepared `.dta` with the same target columns, `benchmark_source="UKHLS"` and dataset characteristic `benchmark_basis="fixed_excel"`. All source-count fields must be missing when the workbook does not provide them. The master then reads that target file explicitly, without reading the UKHLS microdata. Plot notes and saved statistics identify the fixed Excel basis. No automatic fallback occurs on missing fields, and no historical simulation columns are used as targets. This option does not change the WAS source for contribution rates.
+
+For the existing pension workbook, the optional `03_import_UKHLS_pension_saved_targets.do` reads only `Sheet1!A19:K25` (2015–2021 UKHLS survey values) and writes `ukhls_pension_targets_fixed_excel.dta` plus CSV. It reads an existing workbook; it does not create Excel files or reconstruct microdata. Run it separately with the workbook filename and target directory, then set `wealth_UKHLS_targets_file` explicitly to its output. The default `03_create_UKHLS_pension_validation_targets.do` remains the microdata-based route.
+
+**Debt targets:** set `wealth_WAS_file` to the consolidated longitudinal WAS `.dta`. A debt-only run uses that single file and no workbook. Required numeric fields are `was_pid was_round case bu bu_rp year dwt dvage17 highcost_debt_proxy`. The earlier pension-only `.dta` lacks the proxy and cannot supply these targets. Preparation selects observed BU reference records with valid positive integer `dwt` and observed nonnegative debt, without regression restrictions. It calculates weighted annual prevalence and unconditional/positive-holder balance statistics, labels rounds 6/7/8 by midpoints 2017/2019/2021, and interpolates adjacent summary estimates for 2018/2020. Observed counts and weight sums are not interpolated. Missing debt is excluded, never treated as zero.
 
 Two-year survey transitions link `was_pid` at adjacent rounds, with reference-person status at both endpoints, an exact two-year interview gap, origin age bands and destination cross-sectional weights. Unknown ages remain in all-age comparisons. This reconstructs the original counts and weighted rates directly from microdata.
 
@@ -92,7 +105,7 @@ The debt target-construction check uses synthetic WAS records and needs no exter
 do "validation/02_simulated_output_validation/tests/test_unsecured_debt_targets.do"
 ```
 
-After preparing debt targets from the enriched WAS `.dta` under the default output root:
+After preparing debt targets from the consolidated WAS `.dta` under the default output root:
 
 ```stata
 do "validation/02_simulated_output_validation/tests/test_unsecured_debt_edge_cases.do"
