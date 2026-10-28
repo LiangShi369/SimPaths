@@ -59,10 +59,7 @@ confirm file `"`code'/01_prepare_wealth_simulated_data.do"'
 if ${wealth_consumption} confirm file "${wealth_LCF_dir}/lcfs_sorted.dta"
 if ${wealth_housing} | ${wealth_pensions} | ${wealth_debt} ///
     confirm file "${wealth_WAS_file}"
-if ${wealth_pensions} {
-    if "${wealth_UKHLS_targets_file}" != "" confirm file "${wealth_UKHLS_targets_file}"
-    else confirm file "${wealth_UKHLS_file}"
-}
+if ${wealth_pensions} confirm file "${wealth_UKHLS_file}"
 capture mkdir `"`output'"'
 capture mkdir `"`data'"'
 capture mkdir `"`graphs'"'
@@ -75,23 +72,16 @@ if ${wealth_consumption} {
     do `"`code'/03_create_LCF_validation_targets.do"' ///
         "${wealth_LCF_dir}" `"`data'"' 2015 2023
 }
-if ${wealth_housing} | ${wealth_pensions} {
+if ${wealth_housing} | ${wealth_pensions} | ${wealth_debt} {
+    local was_targets "all"
+    if !${wealth_debt} local was_targets "microdata"
+    if ${wealth_debt} & !${wealth_housing} & !${wealth_pensions} local was_targets "debt"
     do `"`code'/03_create_WAS_validation_targets.do"' ///
-        "${wealth_WAS_file}" `"`data'"' 2014 2022
+        "${wealth_WAS_file}" `"`data'"' 2014 2022 "`was_targets'"
 }
-local ukhls_targets `"`data'/ukhls_pension_targets.dta"'
 if ${wealth_pensions} {
-    if "${wealth_UKHLS_targets_file}" != "" {
-        local ukhls_targets "${wealth_UKHLS_targets_file}"
-    }
-    else {
-        do `"`code'/03_create_UKHLS_pension_validation_targets.do"' ///
-            "${wealth_UKHLS_file}" `"`data'"' ${wealth_pensions_first} ${wealth_pensions_last}
-    }
-}
-if ${wealth_debt} {
-    do `"`code'/03_create_unsecured_debt_validation_targets.do"' ///
-        "${wealth_WAS_file}" `"`data'"'
+    do `"`code'/03_create_UKHLS_validation_targets.do"' "pensions" ///
+        "${wealth_UKHLS_file}" `"`data'"' ${wealth_pensions_first} ${wealth_pensions_last}
 }
 * BU stocks remain at BU level; Person pension stocks remain at person level.
 * The separate importer avoids joining repeated BU wealth onto person records.
@@ -113,7 +103,7 @@ if ${wealth_housing} {
 }
 if ${wealth_pensions} {
     do `"`code'/04_21_plot_pensions.do"' ///
-        `"`ukhls_targets'"' `"`data'/was_validation_sample.dta"' ///
+        `"`data'/ukhls_pension_targets.dta"' `"`data'/was_validation_sample.dta"' ///
         `"`data'/pension_person_simulation_sample.dta"' `"`graphs'/pensions"' `"`data'"' ///
         ${wealth_pensions_first} ${wealth_pensions_last} ${wealth_pensions_rate_first}
 }

@@ -37,7 +37,7 @@ gen double unused_weight=cond(pno==1,1000,1)
 rename contrateopee contRateOPEe
 rename total_pensions Total_Pensions
 save `"`work'/UKHLS_pooled_ipop.dta"', replace
-do `"`validation_root'/do_files/03_create_UKHLS_pension_validation_targets.do"' ///
+do `"`validation_root'/do_files/03_create_UKHLS_validation_targets.do"' "pensions" ///
     `"`work'/UKHLS_pooled_ipop.dta"' `"`work'"' 2015 2021
 
 * Literal reference preparation and ten statistics, without its machine paths.
@@ -73,6 +73,8 @@ forvalues yy=2015/2021 {
 }
 use `"`work'/ukhls_pension_targets.dta"', clear
 assert _N==7 & n_all==12 & n_employed==8
+local basis : char _dta[benchmark_basis]
+assert "`basis'"=="microdata"
 sort year
 local variables op_share pp_share op_employed_share pp_employed_share wealth_mean wealth_q1 wealth_q2 wealth_q3 wealth_q4 wealth_q5
 forvalues column=1/10 {

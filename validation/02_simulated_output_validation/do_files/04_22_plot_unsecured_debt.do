@@ -9,7 +9,7 @@
 *   survey_levels survey_transitions simulation_file cpi_file graph_dir stats_dir first_year last_year initial_year
 *
 * INPUTS
-* - WAS summary targets and CPI from 03_create_unsecured_debt_validation_targets.do.
+* - WAS summary targets and CPI from 03_create_WAS_validation_targets.do.
 *   Rebuilt from enriched longitudinal WAS .dta; no workbook is required.
 *   Keep the documented round-midpoint and interview-year CPIH conventions.
 *   The person/BU WAS microdata targets use interview-year nominal amounts and

@@ -39,7 +39,7 @@ replace highcost_debt_proxy=108.9 if was_pid==2 & was_round==8
 replace highcost_debt_proxy=107.8 if was_pid==1 & was_round==7
 replace highcost_debt_proxy=120.5 if was_pid==4 & was_round==8
 save "`source'", replace
-do `"`validation_root'/do_files/03_create_unsecured_debt_validation_targets.do"' "`source'" `"`work'"'
+do `"`validation_root'/do_files/03_create_WAS_validation_targets.do"' "`source'" `"`work'"' 2014 2022 "debt"
 use `"`work'/unsecured_debt_WAS_levels.dta"', clear
 assert _N==20
 assert was_n_total==4 & was_weight_sum==10 if age_group==0 & !was_interpolated
@@ -63,7 +63,7 @@ assert missing(was_persistence) if age_group==3
 use "`source'", clear
 drop highcost_debt_proxy
 save "`bad_source'", replace
-capture noisily do `"`validation_root'/do_files/03_create_unsecured_debt_validation_targets.do"' "`bad_source'" `"`work'"'
+capture noisily do `"`validation_root'/do_files/03_create_WAS_validation_targets.do"' "`bad_source'" `"`work'"' 2014 2022 "debt"
 assert _rc==111
 display as result "WAS DTA TARGET CHECKS PASSED: weighting, prices, coverage, transitions and interpolation."
 log close

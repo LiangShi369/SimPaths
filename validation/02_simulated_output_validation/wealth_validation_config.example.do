@@ -21,11 +21,6 @@ global wealth_WAS_file "/path/to/compiled_WAS/was_wealthdata_5_8_longitudinal.dt
 * UKHLS microdata for contributor shares/personal wealth; WAS supplies contribution rates.
 global wealth_UKHLS_file "/path/to/UKHLS_pooled_ipop.dta"
 * No Excel workbook or second WAS compilation is required.
-* Optional explicit precomputed UKHLS target .dta; leave blank to rebuild from
-* microdata. It must follow the target schema and declare fixed_excel provenance
-* when using saved workbook survey values; unavailable counts remain missing.
-global wealth_UKHLS_targets_file ""
-
 * Optional comparison windows; defaults below retain the original settings.
 global wealth_consumption_first 2016
 global wealth_consumption_last 2023

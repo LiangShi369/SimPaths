@@ -73,5 +73,21 @@ assert abs(sim_mean-2)<1e-12 & abs(sim_sd)<1e-12 if outcome==5 & quintile<=1
 assert abs(sim_low-2)<1e-12 & abs(sim_high-2)<1e-12 if outcome==5 & quintile<=1
 assert missing(sim_mean) & n_runs==0 if quintile>1
 assert missing(sim_mean) & n_runs==1 if outcome==7 & quintile<=1
-display as result "EDGE CASES PASSED: actual UKHLS counts; personal wealth; ties; empty contributors; correct annual/period two-run bands."
+* The PR requires microdata targets. Reject tagged fixed targets and unavailable
+* source counts explicitly, without drawing a substitute survey comparison.
+tempfile invalid_uk
+use "`uk'", clear
+char _dta[benchmark_basis] "fixed_excel"
+save "`invalid_uk'", replace
+capture noisily do `"`validation_root'/do_files/04_21_plot_pensions.do"' ///
+    "`invalid_uk'" "`was'" "`sim'" "`out'" "`out'" 2016 2017 2016
+assert _rc==198
+use "`uk'", clear
+replace n_all=.
+save "`invalid_uk'", replace
+capture noisily do `"`validation_root'/do_files/04_21_plot_pensions.do"' ///
+    "`invalid_uk'" "`was'" "`sim'" "`out'" "`out'" 2016 2017 2016
+assert _rc==9
+
+display as result "EDGE CASES PASSED: UKHLS microdata/counts required; personal wealth; ties; empty contributors; correct annual/period two-run bands."
 log close
