@@ -17,11 +17,11 @@ global wealth_debt 1
 * Compiled survey data: see README_wealth_validation.md for required definitions.
 global wealth_LCF_dir "/path/to/compiled_LCFS"
 global wealth_WAS_dir "/path/to/compiled_WAS"
+* This enriched file alone is sufficient when only high-cost debt is enabled.
 global wealth_WAS_debt_file "/path/to/enriched_WAS/was_wealthdata_5_8_longitudinal.dta"
 * Fixed UKHLS pension shares/wealth in Sheet1!A19:K25; WAS rates come from WAS above.
 global wealth_pension_workbook "/path/to/pension validation.xlsx"
-* Fixed WAS high-cost debt targets; prior simulation columns are not benchmarks.
-global wealth_debt_workbook "/path/to/high_cost_debt_validation.xlsx"
+* High-cost debt uses wealth_WAS_debt_file directly; no debt workbook is required.
 
 * Optional comparison windows; defaults below retain the original settings.
 global wealth_consumption_first 2016

@@ -30,9 +30,9 @@ The wealth master calls `01_prepare_wealth_simulated_data.do` to create the four
 | Housing/mortgage | Base `was_wealthdata_5_8_longitudinal.dta`, plus the enriched WAS debt file | `03_create_WAS_validation_targets.do` |
 | Pension contribution rates | The same WAS files | `03_create_WAS_validation_targets.do` |
 | Pension contributor shares and wealth | Workbook `pension validation.xlsx`, `Sheet1!A19:K25` | `03_create_UKHLS_pension_excel_targets.do` |
-| High-cost unsecured debt | Workbook `high_cost_debt_validation.xlsx`, sheets `debt level` and `transitions` | `03_create_unsecured_debt_validation_targets.do` |
+| High-cost unsecured debt | Enriched `was_wealthdata_5_8_longitudinal.dta` containing `highcost_debt_proxy` | `03_create_unsecured_debt_validation_targets.do` |
 
-The survey preparation scripts also run individually with explicit path arguments, documented in their headers. Their relative fallback input directory is `survey_inputs`; use the configuration to point to existing files elsewhere. The survey files and workbooks are read only. Historical simulation columns in workbooks are never used as survey targets.
+The survey preparation scripts also run individually with explicit path arguments, documented in their headers. Their relative fallback input directory is `survey_inputs`; use the configuration to point to existing files elsewhere. The survey files and the UKHLS pension workbook are read only. High-cost debt requires only the enriched WAS `.dta` as its survey input; the debt workbook is not required. Historical simulation columns are never used as survey targets.
 
 **LCFS:** the compiled file must contain `year caseno bu age female na nk weighta wght consmpn disp_inc income_scope_ok`, plus string tags `income_definition="personal_net_ct"` and `expenditure_definition="broad_net_ct"`. Both income and broad expenditure deduct the same adult-share allocation of Council Tax/NI domestic rates. Estimation of consumption remains upstream. Targets retain complete-income-scope one/two-adult BUs with positive weights and nominal weekly income at least £10. The statistic is the weighted mean of BU-level C/Y, not the ratio of aggregate means. Simulation retains its original monthly-income £10 screen; these survey/simulation screens differ in units and price basis.
 
@@ -40,7 +40,11 @@ The survey preparation scripts also run individually with explicit path argument
 
 **UKHLS pension targets:** the workbook contains fixed, previously calculated UKHLS benchmarks, not WAS estimates. They are accepted at stored precision and are not rebuilt from UKHLS microdata here. Contributor shares measure positive OP/PP contributions, overall and among employed people. Survey personal pension wealth uses the original equal-adult allocation proxy, restricted to positive holders; simulation uses observed/exported personal total private pension wealth. Source counts and extra percentiles cannot be reconstructed from these fixed means and remain unavailable. The pension do-file comments explicitly distinguish **UKHLS shares/wealth** from **WAS contribution rates**.
 
-**Debt targets:** the workbook contains weighted WAS high-cost summaries at round midpoints 2017/2019/2021, with existing interpolations for 2018/2020. Balances are already in 2015 GBP. The original CPI constants convert nominal simulation amounts exactly once. These fixed benchmarks are distinct from interview-year, nominal WAS microdata targets. The module does not validate total or low-cost unsecured debt.
+**Debt targets:** set `wealth_WAS_debt_file` to the enriched longitudinal WAS `.dta`. A debt-only run needs no base pension compilation and no workbook. Required numeric fields are `was_pid was_round case bu bu_rp year dwt dvage17 highcost_debt_proxy`. The earlier pension-only `.dta` lacks the proxy and cannot supply these targets. Preparation selects observed BU reference records with valid positive integer `dwt` and observed nonnegative debt, without regression restrictions. It calculates weighted annual prevalence and unconditional/positive-holder balance statistics, labels rounds 6/7/8 by midpoints 2017/2019/2021, and interpolates adjacent summary estimates for 2018/2020. Observed counts and weight sums are not interpolated. Missing debt is excluded, never treated as zero.
+
+Two-year survey transitions link `was_pid` at adjacent rounds, with reference-person status at both endpoints, an exact two-year interview gap, origin age bands and destination cross-sectional weights. Unknown ages remain in all-age comparisons. This reconstructs the original counts and weighted rates directly from microdata.
+
+To reproduce the existing monetary benchmarks, nominal WAS debt is deflated by **interview-year CPIH (ONS L522)** before round aggregation. The fixed annual 2016–2022 CPIH constants are embedded in the do-file, citing the [ONS historical release](https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l522/mm23/previous/v103); no external price-index file or network access is required. The previous simulation **CPI (D7BT)** constants are retained separately, preserving the existing simulation calculations. CPIH and CPI are different series: this inherited distinction is now explicit. Reconstructed amounts can differ from the old workbook's stored values by float/rounding precision. The module does not validate total or low-cost unsecured debt.
 
 ## Simulated fields and conventions
 
@@ -57,7 +61,7 @@ Every statistic is calculated within run first, then averaged equally across run
 
 ## Outputs
 
-Default comparison windows preserve the original exercise: consumption 2016–2023, housing and pension shares/wealth 2015–2021, pension rates 2016–2021, high-cost debt 2017–2021. Edit the configuration to select supported subwindows; fixed UKHLS/debt targets cover only their supplied periods. Keep complete WAS rounds for linked transitions. Consumption excludes the initial simulation year.
+Default comparison windows preserve the original exercise: consumption 2016–2023, housing and pension shares/wealth 2015–2021, pension rates 2016–2021, high-cost debt 2017–2021. Edit the configuration to select supported subwindows; fixed UKHLS targets and the debt R6–R8 comparison cover only their supplied periods. Keep complete WAS rounds for linked transitions. Consumption excludes the initial simulation year.
 
 | Graph subdirectory | JPGs | Main comparisons |
 | --- | ---: | --- |
@@ -77,7 +81,13 @@ do "validation/02_simulated_output_validation/tests/test_wealth_import.do"
 do "validation/02_simulated_output_validation/tests/test_pension_edge_cases.do"
 ```
 
-After preparing debt targets under the default output root:
+The debt target-construction check uses synthetic WAS records and needs no external data:
+
+```stata
+do "validation/02_simulated_output_validation/tests/test_unsecured_debt_targets.do"
+```
+
+After preparing debt targets from the enriched WAS `.dta` under the default output root:
 
 ```stata
 do "validation/02_simulated_output_validation/tests/test_unsecured_debt_edge_cases.do"

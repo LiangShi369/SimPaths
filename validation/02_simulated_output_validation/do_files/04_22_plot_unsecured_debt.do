@@ -10,7 +10,8 @@
 *
 * INPUTS
 * - WAS summary targets and CPI from 03_create_unsecured_debt_validation_targets.do.
-*   Keep the original high-cost workbook's reference-year and price conventions.
+*   Rebuilt from enriched longitudinal WAS .dta; no workbook is required.
+*   Keep the documented round-midpoint and interview-year CPIH conventions.
 *   The person/BU WAS microdata targets use interview-year nominal amounts and
 *   are NOT interchangeable with these fixed 2015-GBP midpoint summaries.
 * - unsecured_debt_simulation_sample.dta: unique numeric run year idBu,
@@ -30,7 +31,7 @@
 * - Age groups 1/2/3: reference-person ages 15-29/30-54/55-74. Group 0 includes
 *   ALL BUs, including other/missing ages. The three age groups are not exhaustive.
 * - Annual years 2017-2021 preserve observed WAS midpoint estimates in 2017/2019/
-*   2021 and the workbook's interpolations in 2018/2020 (open markers).
+*   2021 and adjacent-round summary interpolations in 2018/2020 (open markers).
 * - Two-year entry conditions on no high-cost debt at the start; persistence
 *   conditions on positive debt at the start. Both endpoints must exist. Ages
 *   refer to the origin BU reference person. Persistence is endpoint holding,
@@ -64,7 +65,7 @@
 * - See unsecured_debt_initialisation_review.md for the inspected input evidence.
 *
 * OUTPUTS: three JPG figures, four reusable statistics .dta files. Survey targets
-* and model CSVs are read only. No simulation, estimation or Excel refresh runs.
+* and model CSVs are read only. No simulation or estimation is run.
 * No recorded run folder, seed or fixed number of runs belongs in this file.
 *******************************************************************************/
 version 18

@@ -62,7 +62,7 @@ if ${wealth_housing} | ${wealth_pensions} {
     confirm file "${wealth_WAS_debt_file}"
 }
 if ${wealth_pensions} confirm file "${wealth_pension_workbook}"
-if ${wealth_debt} confirm file "${wealth_debt_workbook}"
+if ${wealth_debt} confirm file "${wealth_WAS_debt_file}"
 capture mkdir `"`output'"'
 capture mkdir `"`data'"'
 capture mkdir `"`graphs'"'
@@ -85,7 +85,7 @@ if ${wealth_pensions} {
 }
 if ${wealth_debt} {
     do `"`code'/03_create_unsecured_debt_validation_targets.do"' ///
-        "${wealth_debt_workbook}" `"`data'"'
+        "${wealth_WAS_debt_file}" `"`data'"'
 }
 * BU stocks remain at BU level; Person pension stocks remain at person level.
 * The separate importer avoids joining repeated BU wealth onto person records.
